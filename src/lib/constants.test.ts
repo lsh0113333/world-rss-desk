@@ -79,6 +79,10 @@ describe("panelTitle", () => {
     expect(panelTitle("KR", "economy")).toBe("🇰🇷 한국 · 경제");
   });
 
+  it("does not repeat a category that equals the country name", () => {
+    expect(panelTitle("WORLD", "world")).toBe("🌐 국제");
+  });
+
   it("omits the missing part", () => {
     expect(panelTitle("US")).toBe("🇺🇸 미국");
     expect(panelTitle(undefined, "tech")).toBe("IT");

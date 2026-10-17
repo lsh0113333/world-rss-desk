@@ -74,6 +74,8 @@ export function panelTitle(country?: CountryCode, category?: Category): string {
     const meta = getCountry(country);
     parts.push(meta ? `${meta.flag} ${meta.name}` : country);
   }
-  if (category) parts.push(getCategory(category).label);
+  const label = category ? getCategory(category).label : undefined;
+  // 'WORLD · world'처럼 나라명과 분야명이 같으면 한 번만 ("🌐 국제")
+  if (label && !(country && getCountry(country)?.name === label)) parts.push(label);
   return parts.length > 0 ? parts.join(" · ") : "사용자 패널";
 }
