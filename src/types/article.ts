@@ -24,3 +24,22 @@ export interface FeedsResponse {
   errors: FeedError[];
   fetchedAt: string;
 }
+
+/** 읽기 모드 본문 블록. 외부 HTML을 그대로 그리지 않고 이 데이터만 React 요소로 렌더링한다 */
+export type ReaderBlock =
+  | { type: "p" | "h2" | "h3" | "blockquote" | "li"; text: string }
+  | { type: "img"; src: string; alt?: string };
+
+export interface ReaderDoc {
+  title: string;
+  siteName?: string;
+  byline?: string;
+  publishedAt?: string;
+  blocks: ReaderBlock[];
+}
+
+/** /api/article 응답: 실제 페이지(iframe) / 읽기 모드 / 새 탭 안내 */
+export type ArticleView =
+  | { mode: "frame"; url: string }
+  | ({ mode: "reader"; url: string } & ReaderDoc)
+  | { mode: "link"; url: string; reason: string };

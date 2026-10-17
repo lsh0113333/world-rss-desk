@@ -1,17 +1,17 @@
 import { XMLParser } from "fast-xml-parser";
 import { FeedFetchError } from "@/lib/errors";
 import { cleanText, hashId, parseFeedDate, truncate } from "@/lib/text";
+import { decodeBody, detectCharset, fetchText, MAX_REDIRECTS, USER_AGENT } from "./http";
 import type { Article } from "@/types/article";
 
-/** 'Mozilla/5.0'만 보내면 봇 위장으로 보고 차단하는 매체가 있어 리더임을 밝힌다 */
-export const USER_AGENT = "WorldRSSDesk/0.1 (+RSS reader)";
 export const FETCH_TIMEOUT_MS = 8_000;
 export const MAX_FEED_BYTES = 2 * 1024 * 1024;
-export const MAX_REDIRECTS = 3;
 export const REVALIDATE_SECONDS = 600;
 const SUMMARY_MAX = 300;
 
-export { FeedFetchError };
+export { FeedFetchError, USER_AGENT, MAX_REDIRECTS, detectCharset };
+/** 하위 호환: 피드 본문 디코딩 */
+export const decodeFeedBody = decodeBody;
 
 export interface ParsedFeed {
   title: string | null;
@@ -32,27 +32,6 @@ export interface FetchOptions {
   /** 최초 URL과 모든 리다이렉트 대상에 대해 호출. 거부하려면 throw */
   checkUrl?: (url: URL) => Promise<unknown>;
   fetchImpl?: typeof fetch;
-}
-
-// ---------------------------------------------------------------------------
-// 인코딩
-// ---------------------------------------------------------------------------
-
-export function detectCharset(contentType: string | null, bytes: Uint8Array): string {
-  const fromHeader = /charset=["']?([\w-]+)/i.exec(contentType ?? "");
-  if (fromHeader) return fromHeader[1].toLowerCase();
-  const head = new TextDecoder("latin1").decode(bytes.subarray(0, 200));
-  const fromDecl = /<\?xml[^>]*encoding=["']([\w-]+)["']/i.exec(head);
-  return fromDecl ? fromDecl[1].toLowerCase() : "utf-8";
-}
-
-export function decodeFeedBody(bytes: Uint8Array, contentType: string | null): string {
-  const charset = detectCharset(contentType, bytes);
-  try {
-    return new TextDecoder(charset).decode(bytes);
-  } catch {
-    return new TextDecoder("utf-8").decode(bytes);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -175,71 +154,18 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
 // 네트워크
 // ---------------------------------------------------------------------------
 
-async function readLimited(res: Response, maxBytes: number): Promise<Uint8Array> {
-  const declared = Number(res.headers.get("content-length"));
-  if (declared > maxBytes) throw new FeedFetchError("응답이 너무 큽니다");
-  if (!res.body) return new Uint8Array();
-
-  const reader = res.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new FeedFetchError("응답이 너무 큽니다");
-    }
-    chunks.push(value);
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const c of chunks) {
-    out.set(c, offset);
-    offset += c.byteLength;
-  }
-  return out;
-}
-
-/** 피드 본문을 받아 문자열로 디코딩. 리다이렉트는 직접 따라가며 매 hop마다 checkUrl */
+/** 피드 본문을 받아 문자열로 디코딩 (services/http의 안전 fetch 사용) */
 export async function fetchFeedText(url: string, opts: FetchOptions = {}): Promise<string> {
-  const { timeoutMs = FETCH_TIMEOUT_MS, maxBytes = MAX_FEED_BYTES, fresh = false, checkUrl, fetchImpl = fetch } = opts;
-  const signal = AbortSignal.timeout(timeoutMs);
-  let current = new URL(url);
-
-  try {
-    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-      await checkUrl?.(current);
-      const res = await fetchImpl(current.toString(), {
-        headers: {
-          "User-Agent": USER_AGENT,
-          Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5",
-        },
-        redirect: "manual",
-        signal,
-        ...(fresh ? { cache: "no-store" as const } : { next: { revalidate: REVALIDATE_SECONDS } }),
-      } as RequestInit);
-
-      if (res.status >= 300 && res.status < 400) {
-        const location = res.headers.get("location");
-        if (!location) throw new FeedFetchError(`HTTP ${res.status}`);
-        current = new URL(location, current);
-        continue;
-      }
-      if (!res.ok) throw new FeedFetchError(`HTTP ${res.status}`);
-
-      const bytes = await readLimited(res, maxBytes);
-      return decodeFeedBody(bytes, res.headers.get("content-type"));
-    }
-    throw new FeedFetchError("리다이렉트가 너무 많습니다");
-  } catch (err) {
-    if (err instanceof FeedFetchError) throw err;
-    if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
-      throw new FeedFetchError(`시간 초과 (${Math.round(timeoutMs / 1000)}초)`);
-    }
-    throw new FeedFetchError("연결 실패");
-  }
+  const { text } = await fetchText(url, {
+    timeoutMs: opts.timeoutMs ?? FETCH_TIMEOUT_MS,
+    maxBytes: opts.maxBytes ?? MAX_FEED_BYTES,
+    fresh: opts.fresh,
+    revalidateSeconds: REVALIDATE_SECONDS,
+    accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5",
+    checkUrl: opts.checkUrl,
+    fetchImpl: opts.fetchImpl,
+  });
+  return text;
 }
 
 export async function loadFeed(url: string, opts: FetchOptions & ParseOptions = {}): Promise<ParsedFeed> {
