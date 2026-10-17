@@ -4,41 +4,54 @@
 ```
 src/
 ├── app/
-│   ├── layout.tsx               # 루트 레이아웃, 글로벌 스타일, 메타데이터
+│   ├── layout.tsx               # 루트 레이아웃, 메타데이터, theme-color
+│   ├── page.tsx                 # 메인: <Dashboard /> 렌더링만
+│   ├── globals.css              # Tailwind v4 + 색상 토큰 (라이트/다크)
 │   ├── manifest.ts              # PWA 웹 앱 매니페스트
-│   ├── page.tsx                 # 메인: 패널 그리드 (Server Component 셸 → Client 컴포넌트)
-│   ├── globals.css              # Tailwind v4 + 색상 토큰
+│   ├── icon.tsx, apple-icon.tsx # 파비콘 / iOS 홈 화면 아이콘 (빌드 시 PNG 생성)
+│   ├── icons/[size]/route.tsx   # 매니페스트용 192/512 PNG (정적 생성)
 │   └── api/
 │       └── feeds/route.ts       # GET 병합 기사 API
-├── components/                  # UI 컴포넌트 (Client 경계는 여기서 'use client')
-│   ├── PanelGrid.tsx
-│   ├── Panel.tsx
-│   ├── ArticleRow.tsx
-│   ├── PanelEditor.tsx          # 추가/편집 모달
-│   └── SettingsMenu.tsx         # 내보내기/가져오기/초기화
+├── components/                  # UI 컴포넌트
+│   ├── Dashboard.tsx            # 화면 조립: 상단 바 + 그리드 + 편집창 + 토스트 ('use client')
+│   ├── TopBar.tsx               # 앱 이름, 오프라인, 모두 확인, 전체 새로고침, + 패널, 설정
+│   ├── Panel.tsx                # usePanelFeed 연결 컨테이너
+│   ├── PanelView.tsx            # 패널 표시 전용 (상태별 화면, +N, 새로고침 버튼)
+│   ├── ArticleRow.tsx           # 헤드라인 한 줄
+│   ├── PanelEditor.tsx          # 추가/편집 창 (대륙→나라→분야, 매체, 커스텀 URL)
+│   ├── SettingsMenu.tsx         # 내보내기/가져오기/초기화
+│   ├── UndoToast.tsx            # 삭제 되돌리기 (5초)
+│   └── Icons.tsx                # 인라인 SVG 아이콘
 ├── hooks/
-│   ├── useLayout.ts             # localStorage 기반 레이아웃 상태
-│   └── usePanelFeed.ts          # SWR로 /api/feeds 호출
+│   ├── useLayout.ts             # LayoutRepository 기반 레이아웃 상태 + 조작
+│   ├── usePanelFeed.ts          # SWR로 /api/feeds 호출, 수동 새로고침(fresh=1)
+│   ├── useCooldown.ts           # 새로고침 30초 쿨다운
+│   ├── useOnline.ts             # 온라인/오프라인
+│   └── useNow.ts                # 상대시간용 현재 시각 (1분 갱신)
 ├── types/
 │   ├── catalog.ts               # Continent, Category, CountryCode, CatalogFeed
 │   ├── article.ts               # Article, FeedError, FeedsResponse
 │   └── layout.ts                # Panel, Layout
-├── lib/                         # 순수 로직 (I/O 없음, url-guard의 DNS 조회만 예외)
-│   ├── constants.ts             # 대륙/나라(한글명, 국기)/분야 메타데이터
+├── lib/                         # 순수 로직 (I/O 없음. url-guard의 DNS 조회만 예외 — 서버 전용)
+│   ├── constants.ts             # 대륙/나라(한글명, 국기)/분야 메타데이터, panelTitle
 │   ├── catalog.ts               # 카탈로그 조회 함수
-│   ├── url-guard.ts             # SSRF 방지 URL 검증
-│   ├── layout-store.ts          # 직렬화/검증/마이그레이션/프리셋 (순수 함수)
+│   ├── errors.ts                # FeedFetchError (사용자에게 보여줄 메시지)
+│   ├── text.ts                  # HTML 제거·엔티티 디코딩, 날짜 파싱, 해시
+│   ├── url-guard.ts             # SSRF 방지 URL 검증 (서버 전용)
+│   ├── merge.ts                 # 링크 정규화, 중복 제거 + 72시간 필터 + 정렬 + limit
+│   ├── panel-feed.ts            # 패널 → API URL, 새 기사 판정
+│   ├── layout-store.ts          # 프리셋/검증/마이그레이션/가져오기·내보내기/패널 조작
 │   ├── layout-repository.ts     # LayoutRepository 인터페이스 + LocalStorageLayoutRepository
-│   ├── merge.ts                 # 중복 제거 + 정렬 + limit
-│   └── time.ts                  # 상대시간 포맷 ("12분 전")
+│   ├── time.ts                  # 상대시간 포맷 ("12분 전")
+│   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
 ├── services/
-│   ├── rss.ts                   # 외부 RSS fetch + 파싱/정규화 (서버 전용)
-│   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF XML
+│   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
+│   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF/EUC-KR XML
 └── data/
-    └── catalog.json             # 큐레이션 피드 카탈로그
+    └── catalog.json             # 큐레이션 피드 카탈로그 (81개)
 scripts/
-├── execute.py                   # Harness 실행기
-└── check-feeds.ts               # 카탈로그 URL 실동작 점검 (npm run feeds:check, 네트워크 사용)
+├── execute.py                   # Harness 실행기 (현재 미사용)
+└── check-feeds.ts               # 카탈로그 피드 실동작 점검 (npm run feeds:check, 네트워크 사용)
 ```
 테스트 파일은 대상 옆에 `*.test.ts(x)`로 둔다.
 
