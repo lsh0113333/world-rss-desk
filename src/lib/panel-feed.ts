@@ -1,6 +1,7 @@
 import type { Article } from "@/types/article";
 import type { Panel } from "@/types/layout";
-import { getFeedById } from "./catalog";
+import type { CatalogFeed } from "@/types/catalog";
+import { feedsFor, getFeedById } from "./catalog";
 
 /** 패널 → /api/feeds URL (SWR 키). 카탈로그에서 빠진 id는 제외. 피드가 없으면 null */
 export function buildFeedsUrl(panel: Panel, opts: { fresh?: boolean } = {}): string | null {
@@ -36,4 +37,17 @@ export function sourceNotes(panel: Panel): Record<string, string> {
     if (feed?.note) notes[feed.name] = feed.note;
   }
   return notes;
+}
+
+/** 패널 칩 목록: 나라·분야에 해당하는 카탈로그 피드 + 그 밖에 선택돼 있는 피드 */
+export function panelFeedOptions(panel: Panel): CatalogFeed[] {
+  const base = panel.country || panel.category ? feedsFor(panel.country, panel.category) : [];
+  const extra = panel.feedIds.map((id) => getFeedById(id)).filter((f): f is CatalogFeed => !!f && !base.includes(f));
+  return [...base, ...extra];
+}
+
+/** 칩 토글. 최대 개수를 넘는 추가는 무시 */
+export function toggleFeed(feedIds: string[], id: string, max: number): string[] {
+  if (feedIds.includes(id)) return feedIds.filter((x) => x !== id);
+  return feedIds.length >= max ? feedIds : [...feedIds, id];
 }

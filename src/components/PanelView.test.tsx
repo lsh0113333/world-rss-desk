@@ -146,3 +146,33 @@ describe("PanelView", () => {
     expect(within(screen.getByRole("article")).getByText("새로고침 실패: HTTP 500")).toBeInTheDocument();
   });
 });
+
+describe("PanelView — selection", () => {
+  it("selects an article on plain click instead of navigating", async () => {
+    const onSelect = vi.fn();
+    setup({ onSelect });
+    await userEvent.click(screen.getByRole("link", { name: /헤드라인 1/ }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
+  });
+
+  it("lets modifier clicks open a new tab normally", async () => {
+    const onSelect = vi.fn();
+    setup({ onSelect });
+    const user = userEvent.setup();
+    await user.keyboard("{Control>}");
+    await user.click(screen.getByRole("link", { name: /헤드라인 1/ }));
+    await user.keyboard("{/Control}");
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("marks the selected article", () => {
+    setup({ selectedId: "a2" });
+    expect(screen.getByRole("link", { name: /헤드라인 2/ })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("link", { name: /헤드라인 1/ })).not.toHaveAttribute("aria-current");
+  });
+
+  it("renders the chips slot under the header", () => {
+    setup({ chips: <div>칩 영역</div> });
+    expect(screen.getByText("칩 영역")).toBeInTheDocument();
+  });
+});

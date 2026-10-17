@@ -30,7 +30,8 @@ src/
 │   ├── usePanelFeed.ts          # SWR로 /api/feeds 호출, 수동 새로고침(fresh=1)
 │   ├── useCooldown.ts           # 새로고침 30초 쿨다운
 │   ├── useOnline.ts             # 온라인/오프라인
-│   └── useNow.ts                # 상대시간용 현재 시각 (1분 갱신)
+│   ├── useNow.ts                # 상대시간용 현재 시각 (1분 갱신)
+│   └── useMediaQuery.ts         # 분할 화면 여부 (≥1024px)
 ├── types/
 │   ├── catalog.ts               # Continent, Category, CountryCode, CatalogFeed
 │   ├── article.ts               # Article, FeedError, FeedsResponse

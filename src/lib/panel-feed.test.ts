@@ -64,3 +64,29 @@ describe("feedLabel / sourceNotes", () => {
     expect(sourceNotes(panel({ feedIds: ["cn-cgtn-top", "cn-scmp-top"] }))).toEqual({ CGTN: "중국 정부 시각" });
   });
 });
+
+describe("panelFeedOptions", () => {
+  it("lists the country/category feeds plus selected extras, in catalog order", async () => {
+    const { panelFeedOptions } = await import("./panel-feed");
+    const { feedsFor } = await import("./catalog");
+    const p = panel({ country: "KR", category: "economy", feedIds: ["kr-yonhap-economy", "us-nyt-economy"] });
+    const ids = panelFeedOptions(p).map((f) => f.id);
+    expect(ids.slice(0, feedsFor("KR", "economy").length)).toEqual(feedsFor("KR", "economy").map((f) => f.id));
+    expect(ids).toContain("us-nyt-economy");
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("skips ids no longer in the catalog and works without country", async () => {
+    const { panelFeedOptions } = await import("./panel-feed");
+    expect(panelFeedOptions(panel({ feedIds: ["kr-yonhap-top", "cn-globaltimes-top"] })).map((f) => f.id)).toEqual(["kr-yonhap-top"]);
+  });
+});
+
+describe("toggleFeed", () => {
+  it("adds or removes an id and respects the maximum", async () => {
+    const { toggleFeed } = await import("./panel-feed");
+    expect(toggleFeed(["a", "b"], "a", 12)).toEqual(["b"]);
+    expect(toggleFeed(["a"], "b", 12)).toEqual(["a", "b"]);
+    expect(toggleFeed(["a", "b"], "c", 2)).toEqual(["a", "b"]);
+  });
+});

@@ -159,3 +159,53 @@ describe("Dashboard", () => {
     expect(screen.queryByText("오프라인")).not.toBeInTheDocument();
   });
 });
+
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn((query: string) => ({ matches, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+  );
+}
+
+function articleViewResponse(url: string) {
+  if (url.startsWith("/api/article")) {
+    return Promise.resolve(new Response(JSON.stringify({ mode: "frame", url: "https://news.example.com/kr-yonhap-top" }), { headers: { "content-type": "application/json" } }));
+  }
+  return respond(feedsFor(url));
+}
+
+describe("Dashboard — split view and chips", () => {
+  it("toggling a chip changes the panel's feeds and request", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    const first = (await screen.findAllByRole("article"))[0];
+    await userEvent.click(within(first).getByRole("button", { name: "한국경제" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/feeds?ids=kr-yonhap-top%2Ckr-hankyung-top&limit=10"));
+    expect(savedLayout()?.panels[0].feedIds).toEqual(["kr-yonhap-top", "kr-hankyung-top"]);
+  });
+
+  it("opens the selected article in the right pane on wide screens", async () => {
+    stubMatchMedia(true);
+    fetchMock.mockImplementation(articleViewResponse);
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    expect(await screen.findByText("왼쪽에서 기사를 선택하세요")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("link", { name: /기사 kr-yonhap-top/ }));
+    expect(await screen.findByTitle("기사 kr-yonhap-top")).toHaveAttribute("src", "https://news.example.com/kr-yonhap-top");
+    expect(screen.getByRole("link", { name: /기사 kr-yonhap-top/ })).toHaveAttribute("aria-current", "true");
+    await userEvent.click(screen.getByRole("button", { name: "원문 닫기" }));
+    expect(screen.getByText("왼쪽에서 기사를 선택하세요")).toBeInTheDocument();
+  });
+
+  it("opens the article full screen on narrow screens and goes back to the list", async () => {
+    stubMatchMedia(false);
+    fetchMock.mockImplementation(articleViewResponse);
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    expect(screen.queryByText("왼쪽에서 기사를 선택하세요")).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("link", { name: /기사 kr-yonhap-top/ }));
+    expect(await screen.findByTitle("기사 kr-yonhap-top")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "← 목록" }));
+    expect(screen.queryByTitle("기사 kr-yonhap-top")).not.toBeInTheDocument();
+  });
+});

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { countNew, feedLabel, isNewArticle } from "@/lib/panel-feed";
 import { formatClock } from "@/lib/time";
 import type { Article, FeedError } from "@/types/article";
@@ -20,6 +21,10 @@ export interface PanelViewProps {
   isFirst: boolean;
   isLast: boolean;
   now: Date;
+  /** 헤더 아래 매체 칩 줄 */
+  chips?: ReactNode;
+  selectedId?: string;
+  onSelect?(article: Article): void;
   onRefresh(): void;
   onRetry(): void;
   onMarkSeen(): void;
@@ -87,6 +92,7 @@ export function PanelView(props: PanelViewProps) {
           </button>
         </div>
       </header>
+      {props.chips}
 
       <div className="flex-1 overflow-y-auto">
         {status === "loading" && <Skeleton />}
@@ -103,7 +109,15 @@ export function PanelView(props: PanelViewProps) {
         {status === "ready" && articles && articles.length > 0 && (
           <ul className="divide-y divide-line">
             {articles.map((a) => (
-              <ArticleRow key={a.id} article={a} isNew={isNewArticle(a, lastSeenAt)} note={notes[a.source]} now={now} />
+              <ArticleRow
+                key={a.id}
+                article={a}
+                isNew={isNewArticle(a, lastSeenAt)}
+                selected={a.id === props.selectedId}
+                note={notes[a.source]}
+                now={now}
+                onSelect={props.onSelect}
+              />
             ))}
           </ul>
         )}
