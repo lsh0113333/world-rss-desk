@@ -19,6 +19,9 @@ src/
 │   ├── Sidebar.tsx              # 왼쪽 메뉴: 내 패널 목록, 새 기사 수, 패널 추가
 │   ├── TopStories.tsx           # 오늘의 톱 사진 카드 줄
 │   ├── Thumb.tsx                # 썸네일: RSS 이미지 → /api/thumb → 매체 이니셜
+│   ├── QuickAdd.tsx             # 2번 클릭 패널 추가 (나라 → 분야)
+│   ├── Onboarding.tsx           # 첫 방문 나라·분야 선택
+│   ├── CommandPalette.tsx       # Ctrl+K 명령창
 │   ├── TopBar.tsx               # 앱 이름, 오프라인, 모두 확인, 전체 새로고침, + 패널, 설정
 │   ├── Panel.tsx                # usePanelFeed 연결 컨테이너
 │   ├── PanelView.tsx            # 패널 표시 전용 (상태별 화면, +N, 새로고침 버튼)
@@ -35,7 +38,8 @@ src/
 │   ├── useCooldown.ts           # 새로고침 30초 쿨다운
 │   ├── useOnline.ts             # 온라인/오프라인
 │   ├── useNow.ts                # 상대시간용 현재 시각 (1분 갱신)
-│   └── useMediaQuery.ts         # 분할 화면 여부 (≥1024px)
+│   ├── useMediaQuery.ts         # 데스크톱 너비 여부 (≥1024px)
+│   └── useReadHistory.ts        # 읽은 기사 기록
 ├── types/
 │   ├── catalog.ts               # Continent, Category, CountryCode, CatalogFeed
 │   ├── article.ts               # Article, FeedError, FeedsResponse
@@ -48,12 +52,15 @@ src/
 │   ├── url-guard.ts             # SSRF 방지 URL 검증 (서버 전용)
 │   ├── merge.ts                 # 링크 정규화, 중복 제거 + 72시간 필터 + 정렬 + limit
 │   ├── panel-feed.ts            # 패널 → API URL, 새 기사 판정
-│   ├── layout-store.ts          # 프리셋/검증/마이그레이션/가져오기·내보내기/패널 조작
+│   ├── layout-store.ts          # 프리셋·온보딩/검증/가져오기·내보내기/패널·보드 조작
 │   ├── layout-repository.ts     # LayoutRepository 인터페이스 + LocalStorageLayoutRepository
 │   ├── time.ts                  # 상대시간 포맷 ("12분 전")
 │   ├── frame-policy.ts          # X-Frame-Options / CSP frame-ancestors → iframe 허용 여부
 │   ├── og-image.ts              # HTML에서 og:image / twitter:image 추출
 │   ├── top-stories.ts           # 오늘의 톱 선정 (패널 순서, 링크 중복 제외)
+│   ├── commands.ts              # 명령창 검색 (나라·분야·매체·패널·보드·동작)
+│   ├── read-history.ts          # ReadHistoryRepository + localStorage 구현
+│   ├── layout-download.ts       # 설정 JSON 내려받기
 │   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
 ├── services/
 │   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
@@ -110,7 +117,9 @@ interface Panel {
   lastSeenAt?: string;                // ISO
 }
 
-interface Layout { version: 1; panels: Panel[] }
+interface Board { id: string; name: string }
+interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?: string }
+// Panel에 추가 필드: view?("card"|"list"|"text"), wide?, boardId?(없으면 첫 보드)
 ```
 
 ## API 계약

@@ -88,7 +88,7 @@ describe("validateLayout / migrate", () => {
     ["panel without id", { version: 1, panels: [{ feedIds: [], customUrls: [], limit: 10 }] }],
     ["feedIds with non-strings", { version: 1, panels: [{ id: "a", feedIds: [1], customUrls: [], limit: 10 }] }],
     ["unknown category", { version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, category: "sports" }] }],
-    ["too many panels", { version: 1, panels: Array.from({ length: MAX_PANELS + 1 }, (_, i) => ({ id: `a${i}`, feedIds: [], customUrls: [], limit: 10 })) }],
+    ["too many panels", { version: 1, panels: Array.from({ length: MAX_PANELS * 10 + 1 }, (_, i) => ({ id: `a${i}`, feedIds: [], customUrls: [], limit: 10 })) }],
     ["duplicate panel ids", { version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10 }, { id: "a", feedIds: [], customUrls: [], limit: 10 }] }],
   ])("rejects %s", (_label, raw) => {
     expect(validateLayout(raw)).toBeNull();
@@ -184,5 +184,109 @@ describe("layout operations", () => {
 describe("staleFeedIds", () => {
   it("lists ids that are no longer in the catalog", () => {
     expect(staleFeedIds(panel({ feedIds: ["kr-yonhap-top", "cn-globaltimes-top"] }))).toEqual(["cn-globaltimes-top"]);
+  });
+});
+
+describe("movePanelTo", () => {
+  it("moves a panel to a target index", async () => {
+    const { movePanelTo } = await import("./layout-store");
+    const [a, b, c] = [panel(), panel(), panel()];
+    expect(movePanelTo(layoutOf(a, b, c), c.id, 0).panels).toEqual([c, a, b]);
+    expect(movePanelTo(layoutOf(a, b, c), a.id, 2).panels).toEqual([b, c, a]);
+    const same = layoutOf(a, b);
+    expect(movePanelTo(same, "missing", 0)).toBe(same);
+  });
+});
+
+describe("boards", () => {
+  it("treats a layout without boards as one default board", async () => {
+    const { boardsOf, activeBoardId, panelsOnBoard, DEFAULT_BOARD } = await import("./layout-store");
+    const l = layoutOf(panel(), panel());
+    expect(boardsOf(l)).toEqual([DEFAULT_BOARD]);
+    expect(activeBoardId(l)).toBe(DEFAULT_BOARD.id);
+    expect(panelsOnBoard(l, DEFAULT_BOARD.id)).toHaveLength(2);
+  });
+
+  it("adds a board, switches to it, and assigns new panels to the active board", async () => {
+    const { addBoard, activeBoardId, panelsOnBoard, DEFAULT_BOARD } = await import("./layout-store");
+    const p1 = panel();
+    let l = addBoard(layoutOf(p1), "경제", ids);
+    const boardId = activeBoardId(l);
+    expect(boardId).not.toBe(DEFAULT_BOARD.id);
+    expect(l.boards?.map((b) => b.name)).toEqual(["내 화면", "경제"]);
+    l = addPanel(l, panel());
+    expect(panelsOnBoard(l, boardId)).toHaveLength(1);
+    expect(panelsOnBoard(l, DEFAULT_BOARD.id).map((p) => p.id)).toEqual([p1.id]);
+  });
+
+  it("renames, switches and removes boards (removing its panels)", async () => {
+    const { addBoard, renameBoard, setActiveBoard, removeBoard, boardsOf, activeBoardId, DEFAULT_BOARD } = await import("./layout-store");
+    let l = addBoard(layoutOf(panel()), "테크", ids);
+    const tech = activeBoardId(l);
+    l = addPanel(l, panel());
+    l = renameBoard(l, tech, "IT");
+    expect(boardsOf(l)[1].name).toBe("IT");
+    l = setActiveBoard(l, DEFAULT_BOARD.id);
+    expect(activeBoardId(l)).toBe(DEFAULT_BOARD.id);
+    l = removeBoard(l, tech);
+    expect(boardsOf(l)).toHaveLength(1);
+    expect(l.panels).toHaveLength(1);
+  });
+
+  it("never removes the last board", async () => {
+    const { removeBoard, boardsOf, DEFAULT_BOARD } = await import("./layout-store");
+    const l = layoutOf(panel());
+    expect(boardsOf(removeBoard(l, DEFAULT_BOARD.id))).toHaveLength(1);
+    expect(removeBoard(l, DEFAULT_BOARD.id).panels).toHaveLength(1);
+  });
+
+  it("validates boards and drops dangling board references", () => {
+    const raw = {
+      version: 1,
+      boards: [{ id: "b1", name: "경제" }],
+      activeBoardId: "nope",
+      panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, boardId: "ghost" }],
+    };
+    const l = validateLayout(raw);
+    expect(l?.boards).toEqual([{ id: "b1", name: "경제" }]);
+    expect(l?.activeBoardId).toBeUndefined();
+    expect(l?.panels[0].boardId).toBeUndefined();
+    expect(validateLayout({ version: 1, panels: [], boards: [{ id: 1 }] })).toBeNull();
+  });
+});
+
+describe("movePanel with boards", () => {
+  it("swaps only with neighbours on the same board", async () => {
+    const { addBoard, setActiveBoard, DEFAULT_BOARD } = await import("./layout-store");
+    const a = panel();
+    let l = addBoard(layoutOf(a), "B", ids);
+    l = addPanel(l, panel());
+    l = setActiveBoard(l, DEFAULT_BOARD.id);
+    const c = panel();
+    l = addPanel(l, c);
+    // 순서: a(main), x(B), c(main) → c를 앞으로 옮기면 a와 바뀐다
+    const moved = movePanel(l, c.id, -1);
+    expect(moved.panels.map((p) => p.id)).toEqual([c.id, l.panels[1].id, a.id]);
+  });
+});
+
+describe("buildStarterLayout", () => {
+  it("creates a panel per country × category that has feeds, in the given order", async () => {
+    const { buildStarterLayout } = await import("./layout-store");
+    const l = buildStarterLayout(["KR", "BR"], ["top", "economy"], ids);
+    // 브라질은 경제 피드가 없어서 종합만
+    expect(l.panels.map((p) => [p.country, p.category])).toEqual([
+      ["KR", "top"],
+      ["KR", "economy"],
+      ["BR", "top"],
+    ]);
+    expect(l.panels.every((p) => p.feedIds.length > 0)).toBe(true);
+  });
+
+  it("uses the world category for WORLD and caps at MAX_PANELS", async () => {
+    const { buildStarterLayout } = await import("./layout-store");
+    expect(buildStarterLayout(["WORLD"], ["top"], ids).panels.map((p) => p.category)).toEqual(["world"]);
+    const many = buildStarterLayout(["KR", "US", "JP", "CN", "IN", "GB", "DE", "FR", "EU", "AU"], ["top", "world", "politics", "economy", "tech", "science"], ids);
+    expect(many.panels.length).toBeLessThanOrEqual(MAX_PANELS);
   });
 });

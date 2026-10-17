@@ -19,9 +19,20 @@ export interface Panel {
   view?: PanelView;
   /** 그리드에서 2칸 차지 */
   wide?: boolean;
+  /** 소속 보드. 없으면 첫 번째 보드 */
+  boardId?: string;
+}
+
+/** 보드(탭): 패널 묶음. 예: 아침 브리핑, 경제, 테크 */
+export interface Board {
+  id: string;
+  name: string;
 }
 
 export interface Layout {
   version: 1;
   panels: Panel[];
+  /** 없으면 보드 하나("내 화면")만 있는 것으로 본다 */
+  boards?: Board[];
+  activeBoardId?: string;
 }

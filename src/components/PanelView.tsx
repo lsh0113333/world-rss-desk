@@ -32,7 +32,17 @@ export interface PanelViewProps {
   wide?: boolean;
   /** 사이드바에서 스크롤 이동용 DOM id */
   anchorId?: string;
+  /** 읽은 기사 id */
+  readIds?: Set<string>;
   onSelect?(article: Article): void;
+  onOpen?(article: Article): void;
+  /** 드래그 앤 드롭으로 순서 바꾸기 (헤더를 잡고 끌기) */
+  onDragStart?(): void;
+  onDragEnd?(): void;
+  onDropHere?(): void;
+  /** 다른 패널이 이 위로 끌려오는 중 */
+  isDropTarget?: boolean;
+  onDragEnterHere?(): void;
   onViewChange?(view: PanelViewMode): void;
   onWideChange?(wide: boolean): void;
   onRefresh(): void;
@@ -83,9 +93,31 @@ export function PanelView(props: PanelViewProps) {
   return (
     <article
       id={props.anchorId}
-      className={`flex h-[30rem] scroll-mt-20 flex-col rounded-xl border border-line bg-panel shadow-sm ${props.wide ? "md:col-span-2" : ""}`}
+      onDragOver={props.onDropHere ? (e) => e.preventDefault() : undefined}
+      onDragEnter={props.onDragEnterHere}
+      onDrop={
+        props.onDropHere
+          ? (e) => {
+              e.preventDefault();
+              props.onDropHere?.();
+            }
+          : undefined
+      }
+      className={`flex h-[30rem] scroll-mt-20 flex-col rounded-xl border bg-panel shadow-sm ${props.wide ? "md:col-span-2" : ""} ${
+        props.isDropTarget ? "border-accent ring-2 ring-accent/30" : "border-line"
+      }`}
     >
-      <header className="group flex items-center gap-2 px-4 pb-2 pt-3">
+      <header
+        draggable={!!props.onDragStart}
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", title);
+          props.onDragStart?.();
+        }}
+        onDragEnd={props.onDragEnd}
+        title={props.onDragStart ? "끌어서 순서 바꾸기" : undefined}
+        className={`group flex items-center gap-2 px-4 pb-2 pt-3 ${props.onDragStart ? "cursor-grab active:cursor-grabbing" : ""}`}
+      >
         <h2 className="min-w-0 truncate text-sm font-semibold text-headline">{title}</h2>
         {newCount > 0 && (
           <button
@@ -166,9 +198,11 @@ export function PanelView(props: PanelViewProps) {
                 isNew={isNewArticle(a, lastSeenAt)}
                 fresh={fresh.has(a.id)}
                 selected={a.id === props.selectedId}
+                read={props.readIds?.has(a.id)}
                 note={notes[a.source]}
                 now={now}
                 onSelect={props.onSelect}
+                onOpen={props.onOpen}
               />
             ))}
           </ul>

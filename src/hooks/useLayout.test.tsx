@@ -95,3 +95,32 @@ describe("useLayout", () => {
     expect(result.current.layout?.panels).toHaveLength(8);
   });
 });
+
+describe("useLayout — boards, drag and first visit", () => {
+  it("flags a first visit only when nothing was saved", async () => {
+    const fresh = await setup(null);
+    expect(fresh.result.current.firstVisit).toBe(true);
+    const returning = await setup();
+    expect(returning.result.current.firstVisit).toBe(false);
+  });
+
+  it("moves a panel to an index", async () => {
+    const { result } = await setup();
+    act(() => result.current.moveTo("b", 0));
+    expect(result.current.layout?.panels.map((p) => p.id)).toEqual(["b", "a"]);
+  });
+
+  it("adds, renames, switches and removes boards", async () => {
+    const { result } = await setup();
+    act(() => result.current.addBoard("경제"));
+    const boards = result.current.layout!.boards!;
+    expect(boards.map((b) => b.name)).toEqual(["내 화면", "경제"]);
+    expect(result.current.layout?.activeBoardId).toBe(boards[1].id);
+    act(() => result.current.renameBoard(boards[1].id, "Economy"));
+    expect(result.current.layout?.boards?.[1].name).toBe("Economy");
+    act(() => result.current.setActiveBoard("main"));
+    expect(result.current.layout?.activeBoardId).toBe("main");
+    act(() => result.current.removeBoard(boards[1].id));
+    expect(result.current.layout?.boards).toHaveLength(1);
+  });
+});

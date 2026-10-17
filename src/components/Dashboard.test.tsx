@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -103,17 +103,28 @@ describe("Dashboard", () => {
     expect(screen.getByRole("button", { name: "전체 새로고침" })).toBeDisabled();
   });
 
-  it("adds a panel through the editor", async () => {
+  it("adds a panel in two clicks with quick add", async () => {
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
     await screen.findAllByRole("article");
     await userEvent.click(screen.getByRole("button", { name: "+ 패널" }));
-    await userEvent.click(screen.getByRole("radio", { name: "경제" }));
-    await userEvent.click(screen.getByRole("button", { name: "저장" }));
+    const dialog = screen.getByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: /🇰🇷 한국/ }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "경제" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(3);
-    expect(screen.getByRole("heading", { name: "🇰🇷 한국 · 경제" })).toBeInTheDocument();
+    expect(panelTitles()).toContain("🇰🇷 한국 · 경제");
     await waitFor(() => expect(savedLayout()?.panels).toHaveLength(3));
+  });
+
+  it("opens the full editor from quick add for advanced options", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await screen.findAllByRole("article");
+    await userEvent.click(screen.getByRole("button", { name: "+ 패널" }));
+    await userEvent.click(screen.getByRole("button", { name: /매체 직접 고르기/ }));
+    expect(screen.getByRole("dialog", { name: "패널 추가" })).toBeInTheDocument();
+    expect(screen.getByLabelText("RSS 주소 직접 추가")).toBeInTheDocument();
   });
 
   it("edits a panel title", async () => {
@@ -250,5 +261,70 @@ describe("Dashboard — top stories and sidebar", () => {
     await userEvent.click(within(first).getByRole("button", { name: "보기 방식" }));
     await userEvent.click(within(first).getByRole("menuitemradio", { name: "텍스트" }));
     await waitFor(() => expect(savedLayout()?.panels[0].view).toBe("text"));
+  });
+});
+
+describe("Dashboard — onboarding, command bar, boards, read state, drag", () => {
+  it("offers onboarding on the first visit and builds the chosen layout", async () => {
+    renderDashboard();
+    const dialog = await screen.findByRole("dialog", { name: "세계 소식, 한눈에 보기" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /🇺🇸 미국/ }));
+    await userEvent.click(within(dialog).getByRole("button", { name: /🌐 국제/ }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "내 화면 만들기" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(panelTitles()).toEqual(["🇰🇷 한국 · 종합", "🇰🇷 한국 · 경제"]);
+  });
+
+  it("does not show onboarding to returning users", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await screen.findAllByRole("article");
+    expect(screen.queryByRole("dialog", { name: "세계 소식, 한눈에 보기" })).not.toBeInTheDocument();
+  });
+
+  it("opens the command bar with Ctrl+K and adds a panel", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await screen.findAllByRole("article");
+    await userEvent.keyboard("{Control>}k{/Control}");
+    await userEvent.type(screen.getByRole("combobox", { name: "명령 검색" }), "일본 종합{Enter}");
+    expect(panelTitles()).toContain("🇯🇵 일본 · 종합");
+  });
+
+  it("creates boards and keeps panels separate per board", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await screen.findAllByRole("article");
+    const nav = screen.getAllByRole("navigation", { name: "내 패널" })[0];
+    await userEvent.click(within(nav).getByRole("button", { name: "새 보드" }));
+    await userEvent.type(within(nav).getByRole("textbox", { name: "보드 이름" }), "테크{Enter}");
+    expect(within(nav).getByRole("button", { name: "테크" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByText("패널을 추가하세요")).toBeInTheDocument();
+    await userEvent.click(within(nav).getByRole("button", { name: "내 화면" }));
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("fades articles after they are opened", async () => {
+    stubMatchMedia(true);
+    fetchMock.mockImplementation(articleViewResponse);
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    const link = await panelLink(/기사 kr-yonhap-top/);
+    expect(link).not.toHaveAttribute("data-read");
+    await userEvent.click(link);
+    await userEvent.click(screen.getByRole("button", { name: "원문 닫기" }));
+    expect(await panelLink(/기사 kr-yonhap-top/)).toHaveAttribute("data-read", "true");
+  });
+
+  it("reorders panels by dragging a header onto another panel", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    const [first, second] = await screen.findAllByRole("article");
+    const header = within(first).getByRole("heading").closest("header")!;
+    fireEvent.dragStart(header, { dataTransfer: { setData: vi.fn(), effectAllowed: "" } });
+    fireEvent.dragEnter(second);
+    fireEvent.dragOver(second);
+    fireEvent.drop(second);
+    expect(panelTitles()).toEqual(["🇺🇸 미국 · 종합", "🇰🇷 한국 · 종합"]);
   });
 });

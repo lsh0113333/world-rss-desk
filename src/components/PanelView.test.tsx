@@ -231,3 +231,14 @@ describe("PanelView — view modes", () => {
     expect(screen.getByRole("link", { name: /헤드라인 1/ })).not.toHaveAttribute("data-fresh");
   });
 });
+
+describe("PanelView — read articles", () => {
+  it("fades read articles and reports opens", async () => {
+    const onOpen = vi.fn();
+    setup({ readIds: new Set(["a2"]), onOpen, onSelect: vi.fn() });
+    expect(screen.getByRole("link", { name: /헤드라인 2/ })).toHaveAttribute("data-read", "true");
+    expect(screen.getByRole("link", { name: /헤드라인 1/ })).not.toHaveAttribute("data-read");
+    await userEvent.click(screen.getByRole("link", { name: /헤드라인 1/ }));
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
+  });
+});

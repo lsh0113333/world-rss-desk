@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { parseImportedLayout, serializeLayout } from "@/lib/layout-store";
+import { downloadLayout } from "@/lib/layout-download";
+import { parseImportedLayout } from "@/lib/layout-store";
 import type { Layout } from "@/types/layout";
 import { MoreIcon } from "./Icons";
 
@@ -12,11 +13,6 @@ interface Props {
 }
 
 const item = "block w-full px-3 py-2 text-left text-sm text-body hover:bg-panel-header hover:text-headline cursor-pointer";
-
-function today() {
-  const d = new Date();
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export function SettingsMenu({ layout, onImport, onReset }: Props) {
   const [open, setOpen] = useState(false);
@@ -39,12 +35,7 @@ export function SettingsMenu({ layout, onImport, onReset }: Props) {
 
   function exportLayout() {
     if (!layout) return;
-    const url = URL.createObjectURL(new Blob([serializeLayout(layout)], { type: "application/json" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `world-rss-desk-${today()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadLayout(layout);
     setOpen(false);
   }
 

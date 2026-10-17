@@ -19,6 +19,8 @@ interface Props {
   isLast: boolean;
   selectedId?: string;
   onSelect(article: Article): void;
+  readIds?: Set<string>;
+  onOpen?(article: Article): void;
   onFeedsChange(id: string, feedIds: string[]): void;
   onBusyChange(id: string, busy: boolean): void;
   onMarkSeen(id: string): void;
@@ -30,6 +32,12 @@ interface Props {
   onNewCount?(id: string, count: number): void;
   /** "오늘의 톱" 후보(최신 몇 개) 보고 */
   onTopArticles?(id: string, articles: Article[]): void;
+  /** 드래그 앤 드롭 */
+  isDropTarget?: boolean;
+  onDragStart?(id: string): void;
+  onDragEnd?(): void;
+  onDragEnterHere?(id: string): void;
+  onDropHere?(id: string): void;
 }
 
 export function Panel(props: Props) {
@@ -83,6 +91,13 @@ export function Panel(props: Props) {
       onViewChange={(view) => props.onViewChange(panel.id, view)}
       onWideChange={(wide) => props.onWideChange(panel.id, wide)}
       onSelect={props.onSelect}
+      readIds={props.readIds}
+      isDropTarget={props.isDropTarget}
+      onDragStart={props.onDragStart && (() => props.onDragStart?.(panel.id))}
+      onDragEnd={props.onDragEnd}
+      onDragEnterHere={props.onDragEnterHere && (() => props.onDragEnterHere?.(panel.id))}
+      onDropHere={props.onDropHere && (() => props.onDropHere?.(panel.id))}
+      onOpen={props.onOpen}
       chips={
         <FeedChips
           options={panelFeedOptions(panel)}

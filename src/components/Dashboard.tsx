@@ -7,13 +7,20 @@ import { SPLIT_VIEW_QUERY, useMediaQuery } from "@/hooks/useMediaQuery";
 import { useNow } from "@/hooks/useNow";
 import { useOnline } from "@/hooks/useOnline";
 import { MANUAL_REFRESH_COOLDOWN_MS } from "@/hooks/usePanelFeed";
+import { useReadHistory } from "@/hooks/useReadHistory";
+import type { Command } from "@/lib/commands";
 import { panelTitle } from "@/lib/constants";
-import { MAX_PANELS } from "@/lib/layout-store";
+import { downloadLayout } from "@/lib/layout-download";
+import { activeBoardId, boardsOf, buildStarterLayout, MAX_BOARDS, MAX_PANELS, panelsOnBoard } from "@/lib/layout-store";
 import { pickTopStories } from "@/lib/top-stories";
 import type { Article } from "@/types/article";
+import type { Category, CountryCode } from "@/types/catalog";
 import type { PanelView } from "@/types/layout";
+import { CommandPalette } from "./CommandPalette";
+import { Onboarding } from "./Onboarding";
 import { Panel } from "./Panel";
 import { PanelEditor, type PanelEditorValue } from "./PanelEditor";
+import { QuickAdd } from "./QuickAdd";
 import { ReaderPane } from "./ReaderPane";
 import { SettingsMenu } from "./SettingsMenu";
 import { Sidebar } from "./Sidebar";
@@ -26,6 +33,7 @@ type EditorTarget = { mode: "add" } | { mode: "edit"; panelId: string };
 export function Dashboard() {
   const store = useLayout();
   const { layout, update, clearRemoved } = store;
+  const { readSet, markRead } = useReadHistory();
   const online = useOnline();
   const now = useNow();
   const cooldown = useCooldown(MANUAL_REFRESH_COOLDOWN_MS);
@@ -35,11 +43,17 @@ export function Dashboard() {
   const [newCounts, setNewCounts] = useState<Record<string, number>>({});
   const [topCandidates, setTopCandidates] = useState<Record<string, Article[]>>({});
   const [editor, setEditor] = useState<EditorTarget | null>(null);
+  const [quickAdd, setQuickAdd] = useState(false);
+  const [palette, setPalette] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
   const [selected, setSelected] = useState<Article | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropId, setDropId] = useState<string | null>(null);
 
   const closeReader = useCallback(() => setSelected(null), []);
   const closeEditor = useCallback(() => setEditor(null), []);
+  const closeQuickAdd = useCallback(() => setQuickAdd(false), []);
   const onFeedsChange = useCallback((id: string, feedIds: string[]) => update(id, { feedIds }), [update]);
   const onViewChange = useCallback((id: string, view: PanelView) => update(id, { view }), [update]);
   const onWideChange = useCallback((id: string, isWide: boolean) => update(id, { wide: isWide }), [update]);
@@ -52,20 +66,35 @@ export function Dashboard() {
   const onTopArticles = useCallback((id: string, articles: Article[]) => {
     setTopCandidates((c) => ({ ...c, [id]: articles }));
   }, []);
+  const openArticle = useCallback(
+    (article: Article) => {
+      markRead(article.id);
+      setSelected(article);
+    },
+    [markRead],
+  );
+  const onOpen = useCallback((article: Article) => markRead(article.id), [markRead]);
   const refreshingAll = Object.values(busy).some(Boolean);
 
-  // Esc로 원문 서랍 닫기 (편집 창이 열려 있으면 편집 창이 먼저)
+  // 단축키: Ctrl/⌘+K 명령창, Esc 원문 닫기
   useEffect(() => {
-    if (!selected || editor) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSelected(null);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((p) => !p);
+      } else if (e.key === "Escape" && selected && !editor && !quickAdd && !palette) {
+        setSelected(null);
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, editor]);
+  }, [selected, editor, quickAdd, palette]);
 
+  const boards = layout ? boardsOf(layout) : [];
+  const boardId = layout ? activeBoardId(layout) : "";
+  const panels = layout ? panelsOnBoard(layout, boardId) : [];
   const editingPanel = editor?.mode === "edit" ? layout?.panels.find((p) => p.id === editor.panelId) : undefined;
-  const panels = layout?.panels ?? [];
   const canAdd = !!layout && panels.length < MAX_PANELS;
-  const visibleCounts = Object.fromEntries(panels.map((p) => [p.id, newCounts[p.id] ?? 0]));
 
   function save(value: PanelEditorValue) {
     if (editingPanel) {
@@ -93,13 +122,59 @@ export function Dashboard() {
     document.getElementById(`panel-${panelId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const openAdd = () => {
+  function openAdd() {
     setMenuOpen(false);
-    setEditor({ mode: "add" });
-  };
+    setQuickAdd(true);
+  }
+
+  function startWith(countries: CountryCode[], categories: Category[]) {
+    store.replace(buildStarterLayout(countries, categories));
+    setOnboardingDone(true);
+  }
+
+  function runCommand(c: Command) {
+    switch (c.kind) {
+      case "jump":
+        return jumpTo(c.panelId);
+      case "add":
+        return store.add({ country: c.country, category: c.category });
+      case "outlet":
+        return store.add({ title: c.name, feedIds: c.feedIds });
+      case "board":
+        return store.setActiveBoard(c.boardId);
+      case "action":
+        if (c.action === "markAllSeen") store.markAllSeen();
+        else if (c.action === "refreshAll") refreshAll();
+        else if (c.action === "newBoard") store.addBoard(`보드 ${boards.length + 1}`);
+        else if (c.action === "export" && layout) downloadLayout(layout);
+    }
+  }
+
+  function dropOn(targetId: string) {
+    if (layout && dragId && dragId !== targetId) store.moveTo(dragId, layout.panels.findIndex((p) => p.id === targetId));
+    setDragId(null);
+    setDropId(null);
+  }
 
   const sidebar = (onClose?: () => void) => (
-    <Sidebar panels={panels} newCounts={visibleCounts} canAdd={canAdd} onJump={jumpTo} onAdd={openAdd} onClose={onClose} />
+    <Sidebar
+      boards={boards}
+      activeBoardId={boardId}
+      panels={panels}
+      newCounts={newCounts}
+      canAdd={canAdd}
+      canAddBoard={boards.length < MAX_BOARDS}
+      onJump={jumpTo}
+      onAdd={openAdd}
+      onSelectBoard={(id) => {
+        store.setActiveBoard(id);
+        setMenuOpen(false);
+      }}
+      onAddBoard={store.addBoard}
+      onRenameBoard={store.renameBoard}
+      onRemoveBoard={store.removeBoard}
+      onClose={onClose}
+    />
   );
 
   return (
@@ -118,10 +193,12 @@ export function Dashboard() {
           canAdd={canAdd}
           refreshing={refreshingAll}
           coolingDown={cooldown.active}
+          boardName={boards.find((b) => b.id === boardId)?.name}
           onRefreshAll={refreshAll}
           onMarkAllSeen={store.markAllSeen}
           onAdd={openAdd}
           onOpenMenu={() => setMenuOpen(true)}
+          onOpenPalette={() => setPalette(true)}
           menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} />}
         />
 
@@ -154,7 +231,7 @@ export function Dashboard() {
                 )}
                 now={now}
                 selectedId={selected?.id}
-                onSelect={setSelected}
+                onSelect={openArticle}
               />
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {panels.map((panel, i) => (
@@ -166,7 +243,9 @@ export function Dashboard() {
                     isFirst={i === 0}
                     isLast={i === panels.length - 1}
                     selectedId={selected?.id}
-                    onSelect={setSelected}
+                    readIds={readSet}
+                    onSelect={openArticle}
+                    onOpen={onOpen}
                     onFeedsChange={onFeedsChange}
                     onViewChange={onViewChange}
                     onWideChange={onWideChange}
@@ -176,6 +255,14 @@ export function Dashboard() {
                     onMarkSeen={store.markSeen}
                     onEdit={(id) => setEditor({ mode: "edit", panelId: id })}
                     onMove={store.move}
+                    isDropTarget={dragId !== null && dropId === panel.id && dragId !== panel.id}
+                    onDragStart={setDragId}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setDropId(null);
+                    }}
+                    onDragEnterHere={setDropId}
+                    onDropHere={dropOn}
                   />
                 ))}
               </div>
@@ -189,6 +276,24 @@ export function Dashboard() {
           <ReaderPane article={selected} onClose={closeReader} mobile={!wide} />
         </div>
       )}
+
+      {quickAdd && (
+        <QuickAdd
+          onAdd={(input) => {
+            store.add(input);
+            setQuickAdd(false);
+          }}
+          onClose={closeQuickAdd}
+          onAdvanced={() => {
+            setQuickAdd(false);
+            setEditor({ mode: "add" });
+          }}
+        />
+      )}
+
+      {palette && layout && <CommandPalette layout={layout} onRun={runCommand} onClose={() => setPalette(false)} />}
+
+      {store.firstVisit && !onboardingDone && <Onboarding onDone={startWith} onSkip={() => setOnboardingDone(true)} />}
 
       {editor && (
         <PanelEditor

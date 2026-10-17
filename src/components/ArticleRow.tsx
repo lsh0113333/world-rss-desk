@@ -15,15 +15,20 @@ interface Props {
   variant?: RowVariant;
   note?: string;
   now: Date;
+  /** 이미 읽은 기사 — 흐리게 */
+  read?: boolean;
   /** 일반 클릭 시 호출(원문 패널에 열기). 수정키·가운데 클릭은 기본 동작(새 탭) */
   onSelect?(article: Article): void;
+  /** 어떤 방식으로든 기사를 열었을 때 (읽음 기록용) */
+  onOpen?(article: Article): void;
 }
 
-export function ArticleRow({ article, isNew, selected = false, fresh = false, variant = "text", note, now, onSelect }: Props) {
+export function ArticleRow({ article, isNew, selected = false, fresh = false, read = false, variant = "text", note, now, onSelect, onOpen }: Props) {
   const time = formatRelative(article.publishedAt, now);
   const meta = [article.source, note, time].filter(Boolean).join(" · ");
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
+    onOpen?.(article);
     if (!onSelect || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     onSelect(article);
@@ -31,7 +36,7 @@ export function ArticleRow({ article, isNew, selected = false, fresh = false, va
 
   const title = (
     <span
-      className={`block text-sm leading-snug text-headline ${variant === "hero" ? "font-semibold line-clamp-3" : "line-clamp-2"} ${
+      className={`block text-sm leading-snug ${read && !selected ? "text-faint" : "text-headline"} ${variant === "hero" ? "font-semibold line-clamp-3" : "line-clamp-2"} ${
         selected ? "font-semibold" : ""
       }`}
     >
@@ -48,7 +53,9 @@ export function ArticleRow({ article, isNew, selected = false, fresh = false, va
         rel="noopener noreferrer"
         title={article.summary}
         onClick={handleClick}
+        onAuxClick={(e) => e.button === 1 && onOpen?.(article)}
         aria-current={selected || undefined}
+        data-read={read || undefined}
         data-new={isNew || undefined}
         data-fresh={fresh || undefined}
         className={`group block rounded-lg px-2 py-2 transition-colors hover:bg-panel-header ${selected ? "bg-accent-soft hover:bg-accent-soft" : ""}`}
