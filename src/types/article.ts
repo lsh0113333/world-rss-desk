@@ -11,6 +11,8 @@ export interface Article {
   source: string;
   /** 순수 텍스트, 최대 300자 */
   summary?: string;
+  /** 대표 이미지 (http(s)만). RSS에 없으면 비어 있고 화면에서 /api/thumb로 보완 */
+  image?: string;
 }
 
 export interface FeedError {

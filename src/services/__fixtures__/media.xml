@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Media Test</title>
+    <item>
+      <title>Thumbnail only</title>
+      <link>https://m.example.com/thumb</link>
+      <media:thumbnail width="240" height="135" url="https://img.example.com/thumb240.jpg"/>
+    </item>
+    <item>
+      <title>Several sizes</title>
+      <link>https://m.example.com/sizes</link>
+      <media:content width="140" url="https://img.example.com/a.jpg?width=140&amp;q=85"/>
+      <media:content width="460" url="https://img.example.com/a.jpg?width=460&amp;q=85"/>
+    </item>
+    <item>
+      <title>Enclosure</title>
+      <link>https://m.example.com/enclosure</link>
+      <enclosure length="4096" type="image/jpeg" url="https://img.example.com/enc.jpg"/>
+    </item>
+    <item>
+      <title>Video is not an image</title>
+      <link>https://m.example.com/video</link>
+      <media:content medium="video" url="https://img.example.com/clip.mp4"/>
+      <enclosure type="audio/mpeg" url="https://img.example.com/pod.mp3"/>
+    </item>
+    <item>
+      <title>Image in description</title>
+      <link>https://m.example.com/desc</link>
+      <description><![CDATA[<p><img src="https://img.example.com/inline.png" /> Body text</p>]]></description>
+    </item>
+    <item>
+      <title>Media group</title>
+      <link>https://m.example.com/group</link>
+      <media:group><media:content type="image/jpeg" url="https://img.example.com/group.jpg"/></media:group>
+    </item>
+    <item>
+      <title>Unsafe image</title>
+      <link>https://m.example.com/unsafe</link>
+      <media:content url="javascript:alert(1)" medium="image"/>
+    </item>
+    <item>
+      <title>No image</title>
+      <link>https://m.example.com/none</link>
+      <description>Just text</description>
+    </item>
+  </channel>
+</rss>

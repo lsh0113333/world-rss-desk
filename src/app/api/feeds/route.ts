@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 const MAX_FEEDS = 12;
 const MAX_LIMIT = 50;
 const MAX_AGE_HOURS_LIMIT = 720;
-const CDN_CACHE = "public, s-maxage=600, stale-while-revalidate=1800";
+const CDN_CACHE = "public, s-maxage=120, stale-while-revalidate=600";
 
 function badRequest(error: string) {
   return Response.json({ error }, { status: 400, headers: { "Cache-Control": "no-store" } });

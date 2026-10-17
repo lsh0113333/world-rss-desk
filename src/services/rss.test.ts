@@ -162,7 +162,7 @@ describe("fetchFeedText", () => {
     await fetchFeedText("https://e.com/rss", { fetchImpl, fresh: true });
     await fetchFeedText("https://e.com/rss", { fetchImpl });
     expect(fetchImpl.mock.calls[0][1].cache).toBe("no-store");
-    expect(fetchImpl.mock.calls[1][1].next).toEqual({ revalidate: 600 });
+    expect(fetchImpl.mock.calls[1][1].next).toEqual({ revalidate: 120 });
   });
 
   it("follows redirects and checks every hop", async () => {
@@ -214,5 +214,41 @@ describe("loadFeed", () => {
     const feed = await loadFeed("https://news.example.com/rss", { fetchImpl, source: "Sample", now });
     expect(feed.articles.length).toBeGreaterThan(0);
     expect(feed.articles[0].source).toBe("Sample");
+  });
+});
+
+describe("parseFeed — images", () => {
+  const { articles } = parseFeed(fixture("media.xml").toString("utf8"), { now });
+  const imageOf = (suffix: string) => articles.find((a) => a.link.endsWith(suffix))?.image;
+
+  it("reads media:thumbnail", () => {
+    expect(imageOf("/thumb")).toBe("https://img.example.com/thumb240.jpg");
+  });
+
+  it("picks the widest media:content", () => {
+    expect(imageOf("/sizes")).toBe("https://img.example.com/a.jpg?width=460&q=85");
+  });
+
+  it("reads image enclosures and media:group", () => {
+    expect(imageOf("/enclosure")).toBe("https://img.example.com/enc.jpg");
+    expect(imageOf("/group")).toBe("https://img.example.com/group.jpg");
+  });
+
+  it("ignores video and audio media", () => {
+    expect(imageOf("/video")).toBeUndefined();
+  });
+
+  it("falls back to the first img in the description", () => {
+    expect(imageOf("/desc")).toBe("https://img.example.com/inline.png");
+  });
+
+  it("drops non-http images and leaves articles without images unset", () => {
+    expect(imageOf("/unsafe")).toBeUndefined();
+    expect(imageOf("/none")).toBeUndefined();
+  });
+
+  it("reads images from Atom content", () => {
+    const xml = `<feed xmlns="http://www.w3.org/2005/Atom"><title>A</title><entry><title>t</title><link href="https://a.example.com/1"/><content type="html">&lt;img src="https://img.example.com/atom.jpg"&gt;</content></entry></feed>`;
+    expect(parseFeed(xml).articles[0].image).toBe("https://img.example.com/atom.jpg");
   });
 });

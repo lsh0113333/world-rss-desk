@@ -6,7 +6,7 @@ import type { Article } from "@/types/article";
 
 export const FETCH_TIMEOUT_MS = 8_000;
 export const MAX_FEED_BYTES = 2 * 1024 * 1024;
-export const REVALIDATE_SECONDS = 600;
+export const REVALIDATE_SECONDS = 120;
 const SUMMARY_MAX = 300;
 
 export { FeedFetchError, USER_AGENT, MAX_REDIRECTS, detectCharset };
@@ -82,7 +82,57 @@ function atomLink(entry: Node): string | null {
   return httpUrl(alternate?.["@_href"]);
 }
 
-function toArticle(fields: { title: unknown; link: string | null; date: unknown; summary: unknown; guid: unknown }, source: string, now: Date): Article | null {
+interface ImageCandidate {
+  url: string;
+  width: number;
+}
+
+function mediaCandidates(node: Node): ImageCandidate[] {
+  const out: ImageCandidate[] = [];
+  const push = (raw: unknown, kind: "content" | "thumbnail" | "enclosure") => {
+    for (const m of asArray(raw).map(asNode)) {
+      const type = String(m["@_type"] ?? "");
+      const medium = String(m["@_medium"] ?? "");
+      if (kind !== "thumbnail" && (medium === "video" || medium === "audio" || /^(video|audio)\//.test(type))) continue;
+      if (kind === "enclosure" && type && !type.startsWith("image/")) continue;
+      const url = httpUrl(m["@_url"] ?? m["@_href"]);
+      if (url) out.push({ url, width: Number(m["@_width"]) || 0 });
+    }
+  };
+  push(node["media:content"], "content");
+  push(node["media:thumbnail"], "thumbnail");
+  push(node.enclosure, "enclosure");
+  for (const group of asArray(node["media:group"]).map(asNode)) {
+    push(group["media:content"], "content");
+    push(group["media:thumbnail"], "thumbnail");
+  }
+  for (const link of asArray(node.link).map(asNode)) {
+    if (link["@_rel"] === "enclosure" && String(link["@_type"] ?? "").startsWith("image/")) push(link, "enclosure");
+  }
+  return out;
+}
+
+/** 본문 HTML 안 첫 <img src> */
+function inlineImage(...htmlValues: unknown[]): string | null {
+  for (const value of htmlValues) {
+    const html = typeof value === "string" ? value : String(asNode(value)["#text"] ?? "");
+    const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
+    const url = match ? httpUrl(match[1]) : null;
+    if (url) return url;
+  }
+  return null;
+}
+
+/** 대표 이미지: media 태그 중 가장 넓은 것 → 본문 첫 이미지 */
+function pickImage(node: Node, ...htmlValues: unknown[]): string | null {
+  const candidates = mediaCandidates(node);
+  if (candidates.length) return candidates.reduce((best, c) => (c.width > best.width ? c : best)).url;
+  return inlineImage(...htmlValues);
+}
+
+type EntryFields = { title: unknown; link: string | null; date: unknown; summary: unknown; guid: unknown; image: string | null };
+
+function toArticle(fields: EntryFields, source: string, now: Date): Article | null {
   const title = cleanText(fields.title);
   if (!title || !fields.link) return null;
   const summary = truncate(cleanText(fields.summary), SUMMARY_MAX);
@@ -93,6 +143,7 @@ function toArticle(fields: { title: unknown; link: string | null; date: unknown;
     publishedAt: parseFeedDate(fields.date, now),
     source,
     ...(summary ? { summary } : {}),
+    ...(fields.image ? { image: fields.image } : {}),
   };
 }
 
@@ -111,7 +162,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
   const rdf = asNode(doc["rdf:RDF"]);
 
   let title: string;
-  let entries: { title: unknown; link: string | null; date: unknown; summary: unknown; guid: unknown }[];
+  let entries: EntryFields[];
 
   if (doc.rss !== undefined) {
     const channel = asNode(asArray(rss.channel)[0]);
@@ -122,6 +173,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: item.pubDate ?? item["dc:date"] ?? item.published ?? item.updated,
       summary: item.description ?? item["content:encoded"],
       guid: item.guid,
+      image: pickImage(item, item["content:encoded"], item.description),
     }));
   } else if (doc.feed !== undefined) {
     title = cleanText(atom.title);
@@ -131,6 +183,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: entry.published ?? entry.updated,
       summary: entry.summary ?? entry.content,
       guid: entry.id,
+      image: pickImage(entry, entry.content, entry.summary),
     }));
   } else if (doc["rdf:RDF"] !== undefined) {
     title = cleanText(asNode(rdf.channel).title);
@@ -140,6 +193,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: item["dc:date"] ?? item.pubDate,
       summary: item.description,
       guid: item["@_rdf:about"],
+      image: pickImage(item, item.description),
     }));
   } else {
     throw new FeedFetchError("RSS 형식이 아닙니다");

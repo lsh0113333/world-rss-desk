@@ -102,7 +102,7 @@ describe("GET /api/feeds", () => {
   it("uses CDN cache headers by default and no-store when fresh=1", async () => {
     mockedLoadFeed.mockResolvedValue(feedOf("A", []));
     const cached = await call("ids=kr-yonhap-top");
-    expect(cached.headers.get("cache-control")).toBe("public, s-maxage=600, stale-while-revalidate=1800");
+    expect(cached.headers.get("cache-control")).toBe("public, s-maxage=120, stale-while-revalidate=600");
 
     const fresh = await call("ids=kr-yonhap-top&fresh=1");
     expect(fresh.headers.get("cache-control")).toBe("no-store");
