@@ -88,9 +88,9 @@ interface Layout { version: 1; panels: Panel[] }
 ```
 
 ## API 계약
-`GET /api/feeds?ids=kr-yonhap-top,kr-hankyung-economy&urls=<encodeURIComponent>,…&limit=10`
+`GET /api/feeds?ids=kr-yonhap-top,kr-hankyung-economy&urls=<enc1>&urls=<enc2>&limit=10`
 - `ids`: 카탈로그 id 목록(쉼표 구분). 존재하지 않는 id는 `errors`에 기록한다.
-- `urls`: 커스텀 피드 URL 목록(각각 encodeURIComponent 처리). `assertSafeUrl`을 통과해야 한다.
+- `urls`: 커스텀 피드 URL. **피드마다 파라미터를 반복**한다(URL 안에 쉼표가 있을 수 있어 쉼표로 합치지 않음). 각각 encodeURIComponent 처리, `assertSafeUrl`을 통과해야 한다.
 - `fresh=1`(선택): 수동 새로고침용. 서버 fetch를 `cache: 'no-store'`로 하고 응답도 `Cache-Control: no-store`로 보낸다.
 - `maxAgeHours`(선택, 기본 72): 이보다 오래된 기사는 제외한다. `publishedAt`이 null이면 제외하지 않는다.
 - 제한: ids + urls 합계 최대 12개, `limit` 1~50(기본 10). 넘으면 400.

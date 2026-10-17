@@ -30,7 +30,7 @@ export interface FetchOptions {
   /** true면 Next 데이터 캐시를 건너뛴다 (수동 새로고침) */
   fresh?: boolean;
   /** 최초 URL과 모든 리다이렉트 대상에 대해 호출. 거부하려면 throw */
-  checkUrl?: (url: URL) => Promise<void>;
+  checkUrl?: (url: URL) => Promise<unknown>;
   fetchImpl?: typeof fetch;
 }
 
