@@ -1,0 +1,826 @@
+[
+  {
+    "id": "kr-yonhap-top",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/news.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-yonhap-politics",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/politics.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-yonhap-economy",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/economy.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-yonhap-world",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/international.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-top",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/all-news",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-politics",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/politics",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-economy",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/economy",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-tech",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/it",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "tech",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-world",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/international",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-mk-top",
+    "name": "매일경제",
+    "url": "https://www.mk.co.kr/rss/30000001/",
+    "homepage": "https://www.mk.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-mk-economy",
+    "name": "매일경제",
+    "url": "https://www.mk.co.kr/rss/30100041/",
+    "homepage": "https://www.mk.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-mk-world",
+    "name": "매일경제",
+    "url": "https://www.mk.co.kr/rss/30300018/",
+    "homepage": "https://www.mk.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-etnews-tech",
+    "name": "전자신문",
+    "url": "https://rss.etnews.com/Section902.xml",
+    "homepage": "https://www.etnews.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "tech",
+    "language": "ko"
+  },
+  {
+    "id": "jp-japantimes-top",
+    "name": "The Japan Times",
+    "url": "https://www.japantimes.co.jp/feed/",
+    "homepage": "https://www.japantimes.co.jp",
+    "continent": "asia",
+    "country": "JP",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "jp-japantoday-top",
+    "name": "Japan Today",
+    "url": "https://japantoday.com/feed",
+    "homepage": "https://japantoday.com",
+    "continent": "asia",
+    "country": "JP",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "jp-mainichi-top",
+    "name": "The Mainichi",
+    "url": "https://mainichi.jp/rss/etc/english_latest.rss",
+    "homepage": "https://mainichi.jp/english/",
+    "continent": "asia",
+    "country": "JP",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "jp-japantoday-politics",
+    "name": "Japan Today",
+    "url": "https://japantoday.com/category/politics/feed",
+    "homepage": "https://japantoday.com",
+    "continent": "asia",
+    "country": "JP",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "jp-japantoday-economy",
+    "name": "Japan Today",
+    "url": "https://japantoday.com/category/business/feed",
+    "homepage": "https://japantoday.com",
+    "continent": "asia",
+    "country": "JP",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "jp-japantoday-tech",
+    "name": "Japan Today",
+    "url": "https://japantoday.com/category/tech/feed",
+    "homepage": "https://japantoday.com",
+    "continent": "asia",
+    "country": "JP",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "cn-scmp-top",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/4/feed/",
+    "homepage": "https://www.scmp.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "cn-scmp-economy",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/92/feed/",
+    "homepage": "https://www.scmp.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "cn-scmp-tech",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/36/feed/",
+    "homepage": "https://www.scmp.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "cn-cgtn-top",
+    "name": "CGTN",
+    "url": "https://www.cgtn.com/subscribe/rss/section/china.xml",
+    "homepage": "https://www.cgtn.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "top",
+    "language": "en",
+    "note": "중국 정부 시각"
+  },
+  {
+    "id": "cn-cgtn-economy",
+    "name": "CGTN",
+    "url": "https://www.cgtn.com/subscribe/rss/section/business.xml",
+    "homepage": "https://www.cgtn.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "economy",
+    "language": "en",
+    "note": "중국 정부 시각"
+  },
+  {
+    "id": "cn-cgtn-science",
+    "name": "CGTN",
+    "url": "https://www.cgtn.com/subscribe/rss/section/tech-sci.xml",
+    "homepage": "https://www.cgtn.com",
+    "continent": "asia",
+    "country": "CN",
+    "category": "science",
+    "language": "en",
+    "note": "중국 정부 시각"
+  },
+  {
+    "id": "cn-globaltimes-top",
+    "name": "Global Times",
+    "url": "https://www.globaltimes.cn/rss/outbrain.xml",
+    "homepage": "https://www.globaltimes.cn",
+    "continent": "asia",
+    "country": "CN",
+    "category": "top",
+    "language": "en",
+    "note": "중국 정부 시각"
+  },
+  {
+    "id": "in-toi-top",
+    "name": "The Times of India",
+    "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
+    "homepage": "https://timesofindia.indiatimes.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "in-toi-economy",
+    "name": "The Times of India",
+    "url": "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms",
+    "homepage": "https://timesofindia.indiatimes.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "in-hindu-top",
+    "name": "The Hindu",
+    "url": "https://www.thehindu.com/news/national/feeder/default.rss",
+    "homepage": "https://www.thehindu.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "in-hindu-economy",
+    "name": "The Hindu",
+    "url": "https://www.thehindu.com/business/feeder/default.rss",
+    "homepage": "https://www.thehindu.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "in-hindu-tech",
+    "name": "The Hindu",
+    "url": "https://www.thehindu.com/sci-tech/technology/feeder/default.rss",
+    "homepage": "https://www.thehindu.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "in-et-economy",
+    "name": "The Economic Times",
+    "url": "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
+    "homepage": "https://economictimes.indiatimes.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "in-et-tech",
+    "name": "The Economic Times",
+    "url": "https://economictimes.indiatimes.com/tech/rssfeeds/13357270.cms",
+    "homepage": "https://economictimes.indiatimes.com",
+    "continent": "asia",
+    "country": "IN",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-top",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-politics",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-economy",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-tech",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-science",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-top",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1001/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-politics",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1014/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-economy",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1006/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-tech",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1019/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-science",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1007/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "us-cnbc-top",
+    "name": "CNBC",
+    "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "homepage": "https://www.cnbc.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "us-cnbc-economy",
+    "name": "CNBC",
+    "url": "https://www.cnbc.com/id/20910258/device/rss/rss.html",
+    "homepage": "https://www.cnbc.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "us-cnbc-tech",
+    "name": "CNBC",
+    "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html",
+    "homepage": "https://www.cnbc.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-techcrunch-tech",
+    "name": "TechCrunch",
+    "url": "https://techcrunch.com/feed/",
+    "homepage": "https://techcrunch.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-verge-tech",
+    "name": "The Verge",
+    "url": "https://www.theverge.com/rss/index.xml",
+    "homepage": "https://www.theverge.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-top",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-politics",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/politics/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-economy",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-tech",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/technology/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-science",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-top",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/uk/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-politics",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/politics/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-economy",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/uk/business/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-tech",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/uk/technology/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-science",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/science/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "de-dw-top",
+    "name": "DW",
+    "url": "https://rss.dw.com/rdf/rss-en-ger",
+    "homepage": "https://www.dw.com/en",
+    "continent": "europe",
+    "country": "DE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "de-dw-economy",
+    "name": "DW",
+    "url": "https://rss.dw.com/rdf/rss-en-bus",
+    "homepage": "https://www.dw.com/en",
+    "continent": "europe",
+    "country": "DE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "fr-lemonde-top",
+    "name": "Le Monde",
+    "url": "https://www.lemonde.fr/en/rss/une.xml",
+    "homepage": "https://www.lemonde.fr/en/",
+    "continent": "europe",
+    "country": "FR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "fr-france24-world",
+    "name": "France 24",
+    "url": "https://www.france24.com/en/rss",
+    "homepage": "https://www.france24.com/en/",
+    "continent": "europe",
+    "country": "FR",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "fr-france24-economy",
+    "name": "France 24",
+    "url": "https://www.france24.com/en/business-tech/rss",
+    "homepage": "https://www.france24.com/en/",
+    "continent": "europe",
+    "country": "FR",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "eu-euronews-top",
+    "name": "Euronews",
+    "url": "https://www.euronews.com/rss",
+    "homepage": "https://www.euronews.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eu-dw-top",
+    "name": "DW",
+    "url": "https://rss.dw.com/rdf/rss-en-eu",
+    "homepage": "https://www.dw.com/en",
+    "continent": "europe",
+    "country": "EU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eu-guardian-top",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/world/europe-news/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eu-france24-top",
+    "name": "France 24",
+    "url": "https://www.france24.com/en/europe/rss",
+    "homepage": "https://www.france24.com/en/",
+    "continent": "europe",
+    "country": "EU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eu-politico-politics",
+    "name": "Politico Europe",
+    "url": "https://www.politico.eu/feed/",
+    "homepage": "https://www.politico.eu",
+    "continent": "europe",
+    "country": "EU",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "me-aljazeera-top",
+    "name": "Al Jazeera",
+    "url": "https://www.aljazeera.com/xml/rss/all.xml",
+    "homepage": "https://www.aljazeera.com",
+    "continent": "middle-east",
+    "country": "ME",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "me-mee-top",
+    "name": "Middle East Eye",
+    "url": "https://www.middleeasteye.net/rss",
+    "homepage": "https://www.middleeasteye.net",
+    "continent": "middle-east",
+    "country": "ME",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "me-arabnews-top",
+    "name": "Arab News",
+    "url": "https://www.arabnews.com/rss.xml",
+    "homepage": "https://www.arabnews.com",
+    "continent": "middle-east",
+    "country": "ME",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "br-agenciabrasil-top",
+    "name": "Agência Brasil",
+    "url": "https://agenciabrasil.ebc.com.br/en/rss/ultimasnoticias/feed.xml",
+    "homepage": "https://agenciabrasil.ebc.com.br/en",
+    "continent": "south-america",
+    "country": "BR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "br-riotimes-top",
+    "name": "The Rio Times",
+    "url": "https://www.riotimesonline.com/feed/",
+    "homepage": "https://www.riotimesonline.com",
+    "continent": "south-america",
+    "country": "BR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "au-abc-top",
+    "name": "ABC News",
+    "url": "https://www.abc.net.au/news/feed/51120/rss.xml",
+    "homepage": "https://www.abc.net.au/news",
+    "continent": "oceania",
+    "country": "AU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "au-abc-economy",
+    "name": "ABC News",
+    "url": "https://www.abc.net.au/news/feed/51892/rss.xml",
+    "homepage": "https://www.abc.net.au/news",
+    "continent": "oceania",
+    "country": "AU",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "au-smh-top",
+    "name": "The Sydney Morning Herald",
+    "url": "https://www.smh.com.au/rss/feed.xml",
+    "homepage": "https://www.smh.com.au",
+    "continent": "oceania",
+    "country": "AU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "au-guardian-top",
+    "name": "The Guardian Australia",
+    "url": "https://www.theguardian.com/australia-news/rss",
+    "homepage": "https://www.theguardian.com/au",
+    "continent": "oceania",
+    "country": "AU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "world-bbc-world",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "homepage": "https://www.bbc.com/news/world",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "world-guardian-world",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/world/rss",
+    "homepage": "https://www.theguardian.com/world",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "world-nyt-world",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "homepage": "https://www.nytimes.com/section/world",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "world-scmp-world",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/5/feed/",
+    "homepage": "https://www.scmp.com/news/world",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "world-un-world",
+    "name": "UN News",
+    "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml",
+    "homepage": "https://news.un.org/en/",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  }
+]
