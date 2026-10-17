@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { FeedFetchError } from "@/lib/errors";
 import { cleanText, hashId, parseFeedDate, truncate } from "@/lib/text";
 import type { Article } from "@/types/article";
 
@@ -10,13 +11,7 @@ export const MAX_REDIRECTS = 3;
 export const REVALIDATE_SECONDS = 600;
 const SUMMARY_MAX = 300;
 
-/** 사용자에게 그대로 보여줄 수 있는 메시지를 가진 피드 오류 */
-export class FeedFetchError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "FeedFetchError";
-  }
-}
+export { FeedFetchError };
 
 export interface ParsedFeed {
   title: string | null;
