@@ -102,7 +102,7 @@
 | 대륙 | 나라 | 후보 매체 (step에서 실제 동작 검증) |
 |------|------|------|
 | asia | KR | 연합뉴스, 한국경제, 매일경제, 전자신문 |
-| asia | JP | NHK World (EN), Japan Times |
+| asia | JP | The Japan Times, The Mainichi, Nikkei Asia (경제, 발행 시각 없음) — Japan Today·NHK World는 서버 IP 차단·폐지로 제외 |
 | asia | CN | SCMP, CGTN (관점 비교용) |
 | asia | IN | Times of India, The Hindu |
 | north-america | US | NYT 섹션 RSS, NPR, CNBC, TechCrunch, The Verge |

@@ -140,16 +140,6 @@
     "language": "en"
   },
   {
-    "id": "jp-japantoday-top",
-    "name": "Japan Today",
-    "url": "https://japantoday.com/feed",
-    "homepage": "https://japantoday.com",
-    "continent": "asia",
-    "country": "JP",
-    "category": "top",
-    "language": "en"
-  },
-  {
     "id": "jp-mainichi-top",
     "name": "The Mainichi",
     "url": "https://mainichi.jp/rss/etc/english_latest.rss",
@@ -160,34 +150,15 @@
     "language": "en"
   },
   {
-    "id": "jp-japantoday-politics",
-    "name": "Japan Today",
-    "url": "https://japantoday.com/category/politics/feed",
-    "homepage": "https://japantoday.com",
-    "continent": "asia",
-    "country": "JP",
-    "category": "politics",
-    "language": "en"
-  },
-  {
-    "id": "jp-japantoday-economy",
-    "name": "Japan Today",
-    "url": "https://japantoday.com/category/business/feed",
-    "homepage": "https://japantoday.com",
+    "id": "jp-nikkei-economy",
+    "name": "Nikkei Asia",
+    "url": "https://asia.nikkei.com/rss/feed/nar",
+    "homepage": "https://asia.nikkei.com",
     "continent": "asia",
     "country": "JP",
     "category": "economy",
-    "language": "en"
-  },
-  {
-    "id": "jp-japantoday-tech",
-    "name": "Japan Today",
-    "url": "https://japantoday.com/category/tech/feed",
-    "homepage": "https://japantoday.com",
-    "continent": "asia",
-    "country": "JP",
-    "category": "tech",
-    "language": "en"
+    "language": "en",
+    "note": "발행 시각 없음"
   },
   {
     "id": "cn-scmp-top",

@@ -1,0 +1,6 @@
+.claude
+.git
+scripts/execute.py
+scripts/test_execute.py
+__pycache__
+.pytest_cache

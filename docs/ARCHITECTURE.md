@@ -48,7 +48,7 @@ src/
 │   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
 │   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF/EUC-KR XML
 └── data/
-    └── catalog.json             # 큐레이션 피드 카탈로그 (81개)
+    └── catalog.json             # 큐레이션 피드 카탈로그 (78개)
 scripts/
 ├── execute.py                   # Harness 실행기 (현재 미사용)
 └── check-feeds.ts               # 카탈로그 피드 실동작 점검 (npm run feeds:check, 네트워크 사용)
