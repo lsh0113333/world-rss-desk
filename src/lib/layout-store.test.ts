@@ -94,6 +94,14 @@ describe("validateLayout / migrate", () => {
     expect(validateLayout(raw)).toBeNull();
   });
 
+  it("keeps a valid view and wide flag, drops invalid ones", () => {
+    const ok = validateLayout({ version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, view: "card", wide: true }] });
+    expect(ok?.panels[0]).toMatchObject({ view: "card", wide: true });
+    const bad = validateLayout({ version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, view: "poster", wide: "yes" }] });
+    expect(bad?.panels[0].view).toBeUndefined();
+    expect(bad?.panels[0].wide).toBeUndefined();
+  });
+
   it("clamps limit and drops invalid lastSeenAt", () => {
     const result = validateLayout({ version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 100, lastSeenAt: "nope" }] });
     expect(result?.panels[0].limit).toBe(30);

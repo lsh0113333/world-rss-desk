@@ -1,133 +1,123 @@
-# UI 디자인 가이드
+# UI 디자인 가이드 (v2, 2026-10-17)
+
+> v1(어두운 무채색, 텍스트 위주)에서 v2로 개편. 방향: **Feedly·Inoreader 같은 밝고 정돈된 SaaS형 리더** — 왼쪽 메뉴, 사진 카드, 넉넉하지만 정보량은 유지.
 
 ## 디자인 원칙
-1. **도구처럼 보여야 한다.** 마케팅 페이지가 아니라 매일 아침 여는 상황판이다. 히어로, 일러스트, 소개 문구를 넣지 않는다.
-2. **정보 밀도 최우선.** 데스크톱 1920px 기준 한 화면에 패널 8개, 패널당 헤드라인 8개 이상이 스크롤 없이 보여야 한다.
-3. **훑기 좋게.** 제목 → 매체 → 시간 순으로 시선이 흐르게 한다. 새 기사만 포인트 색으로 튀게 하고, 나머지는 모두 무채색이다.
+1. **한눈에, 빠르게.** 첫 화면에서 "오늘의 톱" 카드 줄과 나라별 패널로 세계 흐름이 5초 안에 들어와야 한다.
+2. **사진은 빠르게 훑는 도구.** 큰 사진은 패널당 1개(톱 기사)까지, 나머지는 작은 썸네일. 사진이 없어도 레이아웃이 무너지지 않는다(매체 이니셜 배지).
+3. **새 소식이 눈에 띈다.** 새로 들어온 기사는 패널 맨 위로 들어오며 잠깐 파란 배경으로 강조된다.
+4. **꾸미기는 그 자리에서.** 매체 칩, 보기 방식, 순서 변경을 모달 없이 패널 위에서 처리한다.
 
 ## AI 슬롭 안티패턴 — 하지 마라
 | 금지 사항 | 이유 |
 |-----------|------|
 | backdrop-filter: blur() | glass morphism은 AI 템플릿의 가장 흔한 징후 |
-| gradient-text (배경 그라데이션 텍스트) | AI가 만든 SaaS 랜딩의 1번 특징 |
-| "Powered by AI" 배지 | 기능이 아니라 장식. 사용자에게 가치 없음 |
+| gradient-text, 배경 gradient orb | AI가 만든 SaaS 랜딩의 클리셰 |
+| "Powered by AI" 배지 | 장식일 뿐 |
 | box-shadow 글로우 애니메이션 | 네온 글로우 = AI 슬롭 |
-| 보라/인디고 브랜드 색상 | "AI = 보라색" 클리셰 |
-| 모든 카드에 동일한 rounded-2xl | 균일한 둥근 모서리는 템플릿 느낌 |
-| 배경 gradient orb (blur-3xl 원형) | 모든 AI 랜딩 페이지에 있는 장식 |
-| 기사 썸네일 이미지 | 밀도를 떨어뜨리고 로딩이 느려진다. MVP는 텍스트만 |
+| 보라/인디고 브랜드 색상 | "AI = 보라색" 클리셰. 강조색은 파랑(#2563EB) |
+| 큰 히어로, 마케팅 문구 | 도구다. 첫 화면부터 기사 |
 
-## 색상
-시스템 설정(`prefers-color-scheme`)을 따른다. `globals.css`에 CSS 변수 토큰으로 정의하고, Tailwind v4 `@theme`으로 노출한다. 클래스 이름은 `bg-page`, `bg-panel`, `bg-panel-header`, `border-line`, `text-headline`, `text-body`, `text-muted`, `text-faint`, `text-accent`, `text-error`.
+## 색상 (토큰: `globals.css`, Tailwind 클래스 `bg-page` `bg-panel` `text-headline` …)
+| 토큰 | 라이트 | 다크 | 용도 |
+|------|--------|------|------|
+| page | #F6F7F9 | #0B1220 | 페이지 배경 |
+| panel | #FFFFFF | #111A2E | 카드·패널·사이드바 |
+| panel-header | #F8FAFC | #16213A | hover, 선택 행 |
+| line | #E5E7EB | #1F2A44 | 테두리·구분선 |
+| headline | #0F172A | #E2E8F0 | 제목 |
+| body | #334155 | #CBD5E1 | 본문 |
+| muted | #64748B | #94A3B8 | 매체명·시간·보조 |
+| faint | #94A3B8 | #64748B | 비활성, 읽은 기사 |
+| accent | #2563EB | #60A5FA | 강조(버튼, 새 기사, 선택, 켜진 칩) |
+| accent-soft | #EFF6FF | #172554 | 강조 배경(새 기사 하이라이트, 켜진 칩) |
+| error | #DC2626 | #F87171 | 실패 |
 
-### 배경
-| 용도 | 라이트 | 다크 |
-|------|------|------|
-| 페이지 | #f5f5f4 | #0c0c0c |
-| 패널 | #ffffff | #161616 |
-| 패널 헤더 / hover 행 | #fafaf9 | #1c1c1c |
-| 테두리 | #e7e5e4 | #262626 |
+- 다크 모드는 시스템 설정을 따른다.
+- 그림자: 카드에 `shadow-sm` 한 단계만. 글로우 금지.
 
-### 텍스트
-| 용도 | 라이트 | 다크 |
-|------|------|------|
-| 헤드라인 | #1c1917 | #f5f5f5 |
-| 요약 / 본문 | #44403c | #d4d4d4 |
-| 보조 (매체명, 시간) | #78716c | #8a8a8a |
-| 비활성 | #a8a29e | #5c5c5c |
+## 타이포그래피
+- 글꼴: **Pretendard**(한글·영문, jsDelivr CDN) → 시스템 산세리프 폴백.
 
-### 데이터/시맨틱 색상
-| 용도 | 값 |
-|------|------|
-| 새 기사 포인트 (유일한 강조색) | #d97706 (amber-600), 다크 #f59e0b |
-| 에러 / 피드 실패 | #dc2626, 다크 #f87171 |
-| 방문한 링크 | 보조 텍스트 색 (`visited:`) |
+| 용도 | 스타일 |
+|------|--------|
+| 앱 이름 | text-[15px] font-bold tracking-tight |
+| 패널 제목 | text-sm font-semibold |
+| 톱 카드 제목 | text-sm font-semibold leading-snug line-clamp-3 |
+| 헤드라인 | text-sm leading-snug line-clamp-2 |
+| 메타 | text-xs text-muted tabular-nums |
+
+## 레이아웃
+```
+┌ 사이드바(w-60) ┬ 상단 바(h-14) ─────────────────────────────┐
+│ 로고           │ 제목 · 갱신시각      [모두 확인][↻][+ 패널][⋯] │
+│ 나라 목록      ├────────────────────────────────────────────┤
+│  🇰🇷 한국  12  │ 오늘의 톱 (가로 스크롤 사진 카드)            │
+│  🇺🇸 미국   8  │ 패널 그리드 1~4열                             │
+└────────────────┴──────────────────────── 원문 슬라이드 패널 ──┘
+```
+- **사이드바**: lg 이상 고정, 그 미만은 ☰로 여는 서랍. 패널에 쓰인 나라 목록 + 나라별 새 기사 수. 누르면 해당 패널로 스크롤.
+- **오늘의 톱**: 패널마다 최신 기사 1개를 사진 카드(폭 240px, 16:9 사진)로 가로 나열.
+- **패널 그리드**: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4`, gap-4. 넓게 보기(`wide`) 패널은 2칸.
+- **원문 패널**: 기사를 누르면 오른쪽에서 **밀려 나오는 서랍**(lg 이상 폭 `min(760px, 50vw)`, 그 미만 전체 화면). 평소에는 숨겨져 그리드가 넓게 보인다. 배경을 가리지 않아 왼쪽 목록을 계속 누를 수 있다.
 
 ## 컴포넌트
 ### 패널
 ```
-rounded-md border border-line bg-panel flex flex-col h-[28rem]
-헤더: flex items-center gap-2 px-3 py-2 border-b border-line bg-panel-header
-본문: flex-1 overflow-y-auto divide-y divide-line
-푸터(에러 있을 때만): px-3 py-1.5 text-xs text-error
+rounded-xl border border-line bg-panel shadow-sm flex flex-col h-[30rem]
+헤더: px-4 pt-3 pb-2 — 국기+제목, 새 기사 배지, 시간, 아이콘(↻ ✎ ←→)
+칩 줄: px-4 pb-2 가로 스크롤
 ```
-- 헤더 구성: `🇰🇷 한국 · 경제` (text-sm font-semibold), 새 기사 수 배지(`+3`, 포인트 색 텍스트, 배경 없음), 오른쪽에 갱신 시각(`10:42`, text-xs 보조), 새로고침/편집 아이콘 버튼.
+- 새 기사 배지: `rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white` "+3" (누르면 확인 처리)
 
-### 기사 행 (ArticleRow)
-```
-<a> block px-3 py-2 hover:bg-panel-header
-제목: text-sm leading-snug line-clamp-2 text-headline
-메타: mt-0.5 text-xs text-muted  "연합뉴스 · 12분 전"
-새 기사: 제목 왼쪽에 2px 포인트 색 세로 막대 (border-l-2 border-accent pl-2.5)
-```
-- `target="_blank" rel="noopener noreferrer"`는 유지하되, 일반 클릭은 `preventDefault` 후 오른쪽 원문 패널에 연다(수정키·가운데 클릭은 새 탭).
-- 선택된 기사 행: `bg-panel-header` + 제목 `font-medium`.
+### 보기 방식 (패널마다)
+| 방식 | 모양 |
+|------|------|
+| 카드 | 첫 기사: 16:9 큰 사진 + 제목, 나머지: 목록 |
+| 목록 (기본) | 왼쪽 64×48 썸네일 + 제목 2줄 + 메타 |
+| 텍스트 | 사진 없이 제목 + 메타 (v1과 같음) |
 
-### 매체 칩 (패널 헤더 아래)
-```
-켜짐:  rounded border border-headline px-1.5 py-0.5 text-xs text-headline
-꺼짐:  rounded border border-line px-1.5 py-0.5 text-xs text-faint hover:text-muted
-```
-- 한 줄로 가로 스크롤(`overflow-x-auto whitespace-nowrap`), 줄바꿈하지 않는다(패널 높이 유지).
-- `aria-pressed`로 상태 표시.
+### 썸네일
+- `article.image` → 없으면 `/api/thumb?url=<기사>`(og:image) → 실패하면 **매체 이니셜 배지**(매체명 해시로 고른 옅은 배경 + 첫 글자).
+- `loading="lazy"`, `referrerPolicy="no-referrer"`, `object-cover`.
 
-### 원문 패널 (ReaderPane)
-- 데스크톱: 화면 오른쪽 절반, 상단 바 아래 전체 높이 sticky. 왼쪽 목록과 독립 스크롤.
-- 상단 줄(44px): 매체명 · 모드 표시(`원문` / `읽기 모드`) · "원문 사이트에서 열기 ↗" · 닫기(×).
-- iframe: 테두리 없음, 패널 전체 채움, `bg-white`(다크 모드에서도 원문 사이트 색 그대로).
-- 읽기 모드 본문: `max-w-2xl px-6 py-6`, 제목 `text-xl font-semibold text-headline`, 문단 `text-[15px] leading-7 text-body`, 이미지 `rounded my-4 w-full`.
-- 빈 상태: 가운데 "왼쪽에서 기사를 선택하세요"(text-sm text-muted).
-- 로딩: skeleton 줄 8개. 실패: 사유 + "새 탭에서 열기" Primary 버튼.
-- 모바일: `fixed inset-0 z-30`, 상단 줄 왼쪽에 "← 목록".
-- 요약은 기본으로 숨기고, `title` 속성(툴팁)으로만 노출한다.
+### 매체 칩
+```
+켜짐: rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-xs text-accent
+꺼짐: rounded-full border border-line px-2 py-0.5 text-xs text-muted hover:text-body
+```
 
 ### 버튼
 ```
-Primary: rounded bg-headline text-panel px-3 py-1.5 text-sm hover:opacity-90
-Ghost:   rounded px-2 py-1 text-sm text-muted hover:text-headline hover:bg-panel-header
-Icon:    p-1 rounded text-muted hover:text-headline  (aria-label 필수)
+Primary: rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90
+Ghost:   rounded-lg px-2.5 py-1.5 text-sm text-muted hover:bg-panel-header hover:text-headline
+Icon:    rounded-md p-1.5 text-muted hover:bg-panel-header hover:text-headline (aria-label 필수)
 ```
 
-### 입력 필드 / 셀렉트
+### 입력
 ```
-rounded border border-line bg-panel px-3 py-2 text-sm focus:outline-2 focus:outline-accent
+rounded-lg border border-line bg-panel px-3 py-2 text-sm focus:outline-2 focus:outline-accent
 ```
 
-### 모달 (PanelEditor)
-- 네이티브 `<dialog>`를 쓴다. 배경 오버레이는 `bg-black/40`이며 blur는 쓰지 않는다.
-- 폭 `max-w-lg`, 데스크톱에서는 화면 중앙, 모바일에서는 하단 시트처럼 전체 폭.
-- 단계: 대륙 셀렉트 → 나라 셀렉트 → 분야 칩 → 매체 체크박스 목록 → 커스텀 URL 입력 → 개수 → 저장.
+## 애니메이션 (허용 목록만)
+| 이름 | 용도 | 사양 |
+|------|------|------|
+| fresh-in | 새로 들어온 기사 | 위에서 4px 내려오며 나타남(0.3s) + accent-soft 배경이 3초에 걸쳐 사라짐 |
+| drawer-in | 원문 서랍 | 오른쪽에서 밀려 나옴(0.2s ease-out) |
+| pulse | 로딩 skeleton | Tailwind animate-pulse |
 
-## 레이아웃
-- 상단 바: 높이 44px, sticky. 좌측에 앱 이름(text-sm font-semibold)과 오프라인일 때만 "오프라인"(text-xs, 에러색). 우측에 `모두 확인`, `↻ 전체 새로고침`, `+ 패널`, 설정(⋯) 메뉴.
-- 새로고침 버튼: 누르면 아이콘 옆에 "갱신 중…"(text-xs 보조)을 표시한다. 완료 후 30초간 `disabled`(비활성 색)로 두고, 툴팁에 "30초 후 다시 가능"을 표시한다. 아이콘 회전 애니메이션은 쓰지 않는다.
-- 토스트(삭제 되돌리기): 화면 하단 중앙, `rounded border bg-panel px-3 py-2 text-sm`, "패널 삭제됨 · 되돌리기". 5초 후 사라지며 애니메이션은 없다.
-- 그리드: `grid gap-3 p-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4`
-- 전체 너비 제한 없음(와이드 모니터 활용). 텍스트는 좌측 정렬이 기본이며, 중앙 정렬은 빈 상태 안내에만 쓴다.
-
-## 타이포그래피
-- 폰트: 시스템 산세리프 스택 (`-apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`). 웹폰트는 로드하지 않는다.
-| 용도 | 스타일 |
-|------|--------|
-| 앱 이름 | text-sm font-semibold tracking-tight |
-| 패널 제목 | text-sm font-semibold |
-| 헤드라인 | text-sm leading-snug |
-| 메타 정보 | text-xs tabular-nums |
-
-## 애니메이션
-- 로딩 skeleton의 `animate-pulse`만 허용한다(회색 막대 6개).
-- 그 외 전환, 슬라이드, 페이드 애니메이션은 모두 금지한다.
+- 그 외 애니메이션 금지. `prefers-reduced-motion`이면 모두 끈다.
 
 ## 아이콘
-- SVG 인라인, `strokeWidth={1.5}`, 16px. 아이콘 라이브러리는 쓰지 않는다(새로고침, 편집, 닫기, 화살표, 더보기 5~6개만 필요).
-- 아이콘을 둥근 배경 박스로 감싸지 않는다.
-- 국기는 이모지를 쓴다(Windows에서는 국가 코드 텍스트로 보일 수 있으니, 국기 옆에 항상 한글 나라명을 함께 쓴다).
+- SVG 인라인, strokeWidth 1.5, 16~18px. 아이콘을 둥근 배경 박스로 감싸지 않는다.
+- 국기는 이모지(Windows는 글자로 보이므로 옆에 나라 이름을 항상 함께 쓴다).
 
 ## 상태 표시
 | 상태 | 표시 |
 |------|------|
-| 로딩 | skeleton 6행 |
-| 전체 실패 | 패널 본문 중앙에 "불러오지 못했습니다" + 다시 시도 버튼 |
-| 부분 실패 | 푸터에 "2개 매체 불러오기 실패" (hover 시 매체명 목록) |
+| 로딩 | skeleton (썸네일 박스 + 줄 2개) × 6 |
+| 전체 실패 | "불러오지 못했습니다" + 다시 시도 |
+| 부분 실패 | 패널 하단 "N개 매체 불러오기 실패" (hover 시 사유) |
 | 기사 없음 | "최근 기사가 없습니다" |
-| 패널 0개 | 화면 중앙에 "패널을 추가하세요" + `+ 패널` 버튼 + "기본 구성 불러오기" |
+| 패널 0개 | 가운데 "패널을 추가하세요" + `+ 패널` + "기본 구성 불러오기" |
+| 원문 | iframe / 읽기 모드 / "새 탭에서 열기" |

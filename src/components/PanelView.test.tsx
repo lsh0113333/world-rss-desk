@@ -176,3 +176,58 @@ describe("PanelView — selection", () => {
     expect(screen.getByText("칩 영역")).toBeInTheDocument();
   });
 });
+
+describe("PanelView — view modes", () => {
+  it("shows small thumbnails in list view (default)", () => {
+    setup();
+    expect(screen.getAllByRole("presentation")).toHaveLength(2);
+  });
+
+  it("shows no images in text view", () => {
+    setup({ view: "text" });
+    expect(screen.queryAllByRole("presentation")).toHaveLength(0);
+  });
+
+  it("shows a big image for the first article in card view", () => {
+    setup({ view: "card" });
+    const imgs = screen.getAllByRole("presentation");
+    expect(imgs[0].className).toContain("aspect-video");
+    expect(imgs[1].className).not.toContain("aspect-video");
+  });
+
+  it("changes view and wide mode from the view menu", async () => {
+    const onViewChange = vi.fn();
+    const onWideChange = vi.fn();
+    setup({ onViewChange, onWideChange });
+    await userEvent.click(screen.getByRole("button", { name: "보기 방식" }));
+    expect(screen.getByRole("menuitemradio", { name: "목록" })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "카드" }));
+    expect(onViewChange).toHaveBeenCalledWith("card");
+    await userEvent.click(screen.getByRole("button", { name: "보기 방식" }));
+    await userEvent.click(screen.getByRole("menuitemcheckbox", { name: "넓게 보기" }));
+    expect(onWideChange).toHaveBeenCalledWith(true);
+  });
+
+  it("highlights articles that arrive after the first load", () => {
+    const props = {
+      title: "T",
+      errors: [],
+      status: "ready" as const,
+      refreshing: false,
+      coolingDown: false,
+      isFirst: false,
+      isLast: false,
+      now,
+      onRefresh: vi.fn(),
+      onRetry: vi.fn(),
+      onMarkSeen: vi.fn(),
+      onEdit: vi.fn(),
+      onMove: vi.fn(),
+    };
+    const { rerender } = render(<PanelView {...props} articles={[art(1, "2026-10-17T11:00:00Z")]} />);
+    expect(screen.getByRole("link", { name: /헤드라인 1/ })).not.toHaveAttribute("data-fresh");
+    rerender(<PanelView {...props} articles={[art(9, "2026-10-17T11:59:00Z"), art(1, "2026-10-17T11:00:00Z")]} />);
+    expect(screen.getByRole("link", { name: /헤드라인 9/ })).toHaveAttribute("data-fresh", "true");
+    expect(screen.getByRole("link", { name: /헤드라인 1/ })).not.toHaveAttribute("data-fresh");
+  });
+});

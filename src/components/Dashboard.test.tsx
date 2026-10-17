@@ -49,6 +49,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** 패널(role=article) 안의 기사 링크 — "오늘의 톱" 카드와 구분 */
+const panelLink = async (name: RegExp) => {
+  await screen.findAllByRole("article");
+  return waitFor(() => {
+    const links = screen.getAllByRole("article").flatMap((a) => within(a).queryAllByRole("link", { name }));
+    if (!links.length) throw new Error(`no panel link ${name}`);
+    return links[0];
+  });
+};
+const panelTitles = () => screen.getAllByRole("article").map((a) => within(a).getByRole("heading").textContent);
+
 const savedLayout = () => JSON.parse(window.localStorage.getItem(LAYOUT_KEY) ?? "null") as Layout | null;
 
 describe("Dashboard", () => {
@@ -63,7 +74,7 @@ describe("Dashboard", () => {
   it("loads the saved layout and renders articles from the API", async () => {
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
-    expect(await screen.findByRole("link", { name: /기사 kr-yonhap-top/ })).toBeInTheDocument();
+    expect(await panelLink(/기사 kr-yonhap-top/)).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(2);
     expect(fetchMock.mock.calls.map(([u]) => u)).toEqual(
       expect.arrayContaining(["/api/feeds?ids=kr-yonhap-top&limit=10", "/api/feeds?ids=us-nyt-top&limit=10"]),
@@ -74,7 +85,7 @@ describe("Dashboard", () => {
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
     const first = (await screen.findAllByRole("article"))[0];
-    await screen.findByRole("link", { name: /기사 kr-yonhap-top/ });
+    await panelLink(/기사 kr-yonhap-top/);
     await userEvent.click(within(first).getByRole("button", { name: "새로고침" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/feeds?ids=kr-yonhap-top&limit=10&fresh=1"));
   });
@@ -82,7 +93,7 @@ describe("Dashboard", () => {
   it("refresh-all refreshes every panel", async () => {
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
-    await screen.findByRole("link", { name: /기사 us-nyt-top/ });
+    await panelLink(/기사 us-nyt-top/);
     await userEvent.click(screen.getByRole("button", { name: "전체 새로고침" }));
     await waitFor(() => {
       const urls = fetchMock.mock.calls.map(([u]) => u as string);
@@ -125,7 +136,7 @@ describe("Dashboard", () => {
     expect(screen.getByRole("status")).toHaveTextContent('"🇰🇷 한국 · 종합" 패널 삭제됨');
     await userEvent.click(screen.getByRole("button", { name: "되돌리기" }));
     expect(screen.getAllByRole("article")).toHaveLength(2);
-    expect(screen.getAllByRole("heading", { level: 2 })[0]).toHaveTextContent("🇰🇷 한국 · 종합");
+    expect(panelTitles()[0]).toBe("🇰🇷 한국 · 종합");
   });
 
   it("moves panels", async () => {
@@ -133,7 +144,7 @@ describe("Dashboard", () => {
     renderDashboard();
     const first = (await screen.findAllByRole("article"))[0];
     await userEvent.click(within(first).getByRole("button", { name: "뒤로 이동" }));
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["🇺🇸 미국 · 종합", "🇰🇷 한국 · 종합"]);
+    expect(panelTitles()).toEqual(["🇺🇸 미국 · 종합", "🇰🇷 한국 · 종합"]);
   });
 
   it("shows the empty state and restores the preset", async () => {
@@ -184,17 +195,17 @@ describe("Dashboard — split view and chips", () => {
     expect(savedLayout()?.panels[0].feedIds).toEqual(["kr-yonhap-top", "kr-hankyung-top"]);
   });
 
-  it("opens the selected article in the right pane on wide screens", async () => {
+  it("opens the selected article in a right-side drawer on wide screens", async () => {
     stubMatchMedia(true);
     fetchMock.mockImplementation(articleViewResponse);
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
-    expect(await screen.findByText("왼쪽에서 기사를 선택하세요")).toBeInTheDocument();
-    await userEvent.click(await screen.findByRole("link", { name: /기사 kr-yonhap-top/ }));
+    expect(screen.queryByRole("region", { name: "기사 원문" })).not.toBeInTheDocument();
+    await userEvent.click(await panelLink(/기사 kr-yonhap-top/));
     expect(await screen.findByTitle("기사 kr-yonhap-top")).toHaveAttribute("src", "https://news.example.com/kr-yonhap-top");
-    expect(screen.getByRole("link", { name: /기사 kr-yonhap-top/ })).toHaveAttribute("aria-current", "true");
+    expect(await panelLink(/기사 kr-yonhap-top/)).toHaveAttribute("aria-current", "true");
     await userEvent.click(screen.getByRole("button", { name: "원문 닫기" }));
-    expect(screen.getByText("왼쪽에서 기사를 선택하세요")).toBeInTheDocument();
+    expect(screen.queryByTitle("기사 kr-yonhap-top")).not.toBeInTheDocument();
   });
 
   it("opens the article full screen on narrow screens and goes back to the list", async () => {
@@ -202,10 +213,42 @@ describe("Dashboard — split view and chips", () => {
     fetchMock.mockImplementation(articleViewResponse);
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
     renderDashboard();
-    expect(screen.queryByText("왼쪽에서 기사를 선택하세요")).not.toBeInTheDocument();
-    await userEvent.click(await screen.findByRole("link", { name: /기사 kr-yonhap-top/ }));
+    await userEvent.click(await panelLink(/기사 kr-yonhap-top/));
     expect(await screen.findByTitle("기사 kr-yonhap-top")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "← 목록" }));
     expect(screen.queryByTitle("기사 kr-yonhap-top")).not.toBeInTheDocument();
+  });
+});
+
+describe("Dashboard — top stories and sidebar", () => {
+  it("shows one top-story card per panel and opens it on click", async () => {
+    stubMatchMedia(true);
+    fetchMock.mockImplementation(articleViewResponse);
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    const strip = await screen.findByRole("region", { name: "오늘의 톱" });
+    await waitFor(() => expect(within(strip).getAllByRole("link")).toHaveLength(2));
+    await userEvent.click(within(strip).getByRole("link", { name: /기사 us-nyt-top/ }));
+    expect(await screen.findByTitle("기사 us-nyt-top")).toBeInTheDocument();
+  });
+
+  it("lists panels in the sidebar and scrolls to a panel", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    renderDashboard();
+    await screen.findAllByRole("article");
+    const nav = screen.getAllByRole("navigation", { name: "내 패널" })[0];
+    await userEvent.click(within(nav).getByRole("button", { name: /🇺🇸 미국 · 종합/ }));
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("changes a panel's view from its view menu and saves it", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    const first = (await screen.findAllByRole("article"))[0];
+    await userEvent.click(within(first).getByRole("button", { name: "보기 방식" }));
+    await userEvent.click(within(first).getByRole("menuitemradio", { name: "텍스트" }));
+    await waitFor(() => expect(savedLayout()?.panels[0].view).toBe("text"));
   });
 });

@@ -58,3 +58,36 @@ export const MoreIcon = () => (
     <circle cx="19" cy="12" r="1" />
   </Icon>
 );
+
+export const LayoutIcon = () => (
+  <Icon>
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <path d="M4 10h16M10 10v10" />
+  </Icon>
+);
+
+export const MenuIcon = () => (
+  <Icon>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Icon>
+);
+
+export const PlusIcon = () => (
+  <Icon>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const SearchIcon = () => (
+  <Icon>
+    <circle cx="11" cy="11" r="6" />
+    <path d="M20 20l-4.5-4.5" />
+  </Icon>
+);
+
+export const GlobeIcon = () => (
+  <Icon>
+    <circle cx="12" cy="12" r="8" />
+    <path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16" />
+  </Icon>
+);

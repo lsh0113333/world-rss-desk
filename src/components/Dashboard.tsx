@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCooldown } from "@/hooks/useCooldown";
 import { useLayout } from "@/hooks/useLayout";
 import { SPLIT_VIEW_QUERY, useMediaQuery } from "@/hooks/useMediaQuery";
@@ -9,43 +9,67 @@ import { useOnline } from "@/hooks/useOnline";
 import { MANUAL_REFRESH_COOLDOWN_MS } from "@/hooks/usePanelFeed";
 import { panelTitle } from "@/lib/constants";
 import { MAX_PANELS } from "@/lib/layout-store";
+import { pickTopStories } from "@/lib/top-stories";
 import type { Article } from "@/types/article";
+import type { PanelView } from "@/types/layout";
 import { Panel } from "./Panel";
 import { PanelEditor, type PanelEditorValue } from "./PanelEditor";
 import { ReaderPane } from "./ReaderPane";
 import { SettingsMenu } from "./SettingsMenu";
+import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { TopStories } from "./TopStories";
 import { UndoToast } from "./UndoToast";
 
 type EditorTarget = { mode: "add" } | { mode: "edit"; panelId: string };
 
 export function Dashboard() {
   const store = useLayout();
-  const { layout } = store;
+  const { layout, update, clearRemoved } = store;
   const online = useOnline();
   const now = useNow();
   const cooldown = useCooldown(MANUAL_REFRESH_COOLDOWN_MS);
+  const wide = useMediaQuery(SPLIT_VIEW_QUERY);
   const [refreshToken, setRefreshToken] = useState(0);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [newCounts, setNewCounts] = useState<Record<string, number>>({});
+  const [topCandidates, setTopCandidates] = useState<Record<string, Article[]>>({});
   const [editor, setEditor] = useState<EditorTarget | null>(null);
   const [selected, setSelected] = useState<Article | null>(null);
-  const split = useMediaQuery(SPLIT_VIEW_QUERY);
-  const closeReader = useCallback(() => setSelected(null), []);
-  const { update } = store;
-  const onFeedsChange = useCallback((id: string, feedIds: string[]) => update(id, { feedIds }), [update]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
+  const closeReader = useCallback(() => setSelected(null), []);
+  const closeEditor = useCallback(() => setEditor(null), []);
+  const onFeedsChange = useCallback((id: string, feedIds: string[]) => update(id, { feedIds }), [update]);
+  const onViewChange = useCallback((id: string, view: PanelView) => update(id, { view }), [update]);
+  const onWideChange = useCallback((id: string, isWide: boolean) => update(id, { wide: isWide }), [update]);
   const onBusyChange = useCallback((id: string, value: boolean) => {
     setBusy((b) => (b[id] === value ? b : { ...b, [id]: value }));
   }, []);
+  const onNewCount = useCallback((id: string, count: number) => {
+    setNewCounts((c) => (c[id] === count ? c : { ...c, [id]: count }));
+  }, []);
+  const onTopArticles = useCallback((id: string, articles: Article[]) => {
+    setTopCandidates((c) => ({ ...c, [id]: articles }));
+  }, []);
   const refreshingAll = Object.values(busy).some(Boolean);
 
+  // Esc로 원문 서랍 닫기 (편집 창이 열려 있으면 편집 창이 먼저)
+  useEffect(() => {
+    if (!selected || editor) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSelected(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected, editor]);
+
   const editingPanel = editor?.mode === "edit" ? layout?.panels.find((p) => p.id === editor.panelId) : undefined;
-  const closeEditor = useCallback(() => setEditor(null), []);
-  const { clearRemoved } = store;
+  const panels = layout?.panels ?? [];
+  const canAdd = !!layout && panels.length < MAX_PANELS;
+  const visibleCounts = Object.fromEntries(panels.map((p) => [p.id, newCounts[p.id] ?? 0]));
 
   function save(value: PanelEditorValue) {
     if (editingPanel) {
-      store.update(editingPanel.id, {
+      update(editingPanel.id, {
         title: value.title,
         country: value.country,
         category: value.category,
@@ -64,68 +88,105 @@ export function Dashboard() {
     cooldown.start();
   }
 
-  const panels = layout?.panels ?? [];
+  function jumpTo(panelId: string) {
+    setMenuOpen(false);
+    document.getElementById(`panel-${panelId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const openAdd = () => {
+    setMenuOpen(false);
+    setEditor({ mode: "add" });
+  };
+
+  const sidebar = (onClose?: () => void) => (
+    <Sidebar panels={panels} newCounts={visibleCounts} canAdd={canAdd} onJump={jumpTo} onAdd={openAdd} onClose={onClose} />
+  );
 
   return (
-    <>
-      <TopBar
-        online={online}
-        canAdd={!!layout && panels.length < MAX_PANELS}
-        refreshing={refreshingAll}
-        coolingDown={cooldown.active}
-        onRefreshAll={refreshAll}
-        onMarkAllSeen={store.markAllSeen}
-        onAdd={() => setEditor({ mode: "add" })}
-        menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} />}
-      />
+    <div className="flex min-h-dvh">
+      <aside className="sticky top-0 hidden h-dvh shrink-0 lg:block">{sidebar()}</aside>
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 flex lg:hidden">
+          <div className="h-full animate-drawer-in">{sidebar(() => setMenuOpen(false))}</div>
+          <button type="button" aria-label="메뉴 닫기" className="flex-1 bg-black/30" onClick={() => setMenuOpen(false)} />
+        </div>
+      )}
 
-      <div className="lg:grid lg:h-[calc(100dvh-2.75rem)] lg:grid-cols-2">
-      <main className="p-3 lg:min-h-0 lg:overflow-y-auto">
-        {layout && panels.length === 0 && (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center text-sm text-muted">
-            <p>패널을 추가하세요</p>
-            <div className="flex gap-2">
-              <button type="button" className="rounded bg-headline px-3 py-1.5 text-sm text-panel hover:opacity-90" onClick={() => setEditor({ mode: "add" })}>
-                + 패널
-              </button>
-              <button type="button" className="rounded px-3 py-1.5 text-sm text-muted hover:bg-panel-header hover:text-headline" onClick={store.resetToPreset}>
-                기본 구성 불러오기
-              </button>
+      <div className="min-w-0 flex-1">
+        <TopBar
+          online={online}
+          canAdd={canAdd}
+          refreshing={refreshingAll}
+          coolingDown={cooldown.active}
+          onRefreshAll={refreshAll}
+          onMarkAllSeen={store.markAllSeen}
+          onAdd={openAdd}
+          onOpenMenu={() => setMenuOpen(true)}
+          menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} />}
+        />
+
+        <main className="mx-auto max-w-[1800px] px-3 py-4 lg:px-6 lg:py-5">
+          {layout && panels.length === 0 && (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center text-sm text-muted">
+              <p>패널을 추가하세요</p>
+              <div className="flex gap-2">
+                <button type="button" className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90" onClick={openAdd}>
+                  + 패널
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg px-3 py-1.5 text-sm text-muted hover:bg-panel-header hover:text-headline"
+                  onClick={store.resetToPreset}
+                >
+                  기본 구성 불러오기
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        {panels.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {panels.map((panel, i) => (
-              <Panel
-                key={panel.id}
-                panel={panel}
-                refreshToken={refreshToken}
+          )}
+
+          {panels.length > 0 && (
+            <>
+              <TopStories
+                panels={panels}
+                stories={pickTopStories(
+                  panels.map((p) => p.id),
+                  topCandidates,
+                )}
                 now={now}
-                isFirst={i === 0}
-                isLast={i === panels.length - 1}
                 selectedId={selected?.id}
                 onSelect={setSelected}
-                onFeedsChange={onFeedsChange}
-                onBusyChange={onBusyChange}
-                onMarkSeen={store.markSeen}
-                onEdit={(id) => setEditor({ mode: "edit", panelId: id })}
-                onMove={store.move}
               />
-            ))}
-          </div>
-        )}
-      </main>
-      {split && (
-        <aside className="min-h-0 border-l border-line">
-          <ReaderPane article={selected} onClose={closeReader} />
-        </aside>
-      )}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {panels.map((panel, i) => (
+                  <Panel
+                    key={panel.id}
+                    panel={panel}
+                    refreshToken={refreshToken}
+                    now={now}
+                    isFirst={i === 0}
+                    isLast={i === panels.length - 1}
+                    selectedId={selected?.id}
+                    onSelect={setSelected}
+                    onFeedsChange={onFeedsChange}
+                    onViewChange={onViewChange}
+                    onWideChange={onWideChange}
+                    onBusyChange={onBusyChange}
+                    onNewCount={onNewCount}
+                    onTopArticles={onTopArticles}
+                    onMarkSeen={store.markSeen}
+                    onEdit={(id) => setEditor({ mode: "edit", panelId: id })}
+                    onMove={store.move}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </main>
       </div>
 
-      {!split && selected && (
-        <div className="fixed inset-0 z-30">
-          <ReaderPane article={selected} onClose={closeReader} mobile />
+      {selected && (
+        <div className="fixed inset-y-0 right-0 z-30 w-full animate-drawer-in border-l border-line shadow-2xl lg:w-[min(760px,50vw)]">
+          <ReaderPane article={selected} onClose={closeReader} mobile={!wide} />
         </div>
       )}
 
@@ -153,6 +214,6 @@ export function Dashboard() {
           onClose={clearRemoved}
         />
       )}
-    </>
+    </div>
   );
 }

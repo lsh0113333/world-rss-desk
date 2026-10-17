@@ -1,5 +1,5 @@
 import type { Category, CountryCode } from "@/types/catalog";
-import type { Layout, Panel } from "@/types/layout";
+import type { Layout, Panel, PanelView } from "@/types/layout";
 import { feedsFor, getFeedById } from "./catalog";
 import { CATEGORIES } from "./constants";
 
@@ -64,6 +64,7 @@ export function defaultLayout(makeId: IdFactory = newId): Layout {
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
 const categoryIds = new Set<string>(CATEGORIES.map((c) => c.id));
+const VIEWS: PanelView[] = ["card", "list", "text"];
 
 function validatePanel(raw: unknown): Panel | null {
   if (!raw || typeof raw !== "object") return null;
@@ -85,6 +86,8 @@ function validatePanel(raw: unknown): Panel | null {
     customUrls: p.customUrls,
     limit: clampLimit(p.limit),
     ...(lastSeenAt ? { lastSeenAt } : {}),
+    ...(VIEWS.includes(p.view as PanelView) ? { view: p.view as PanelView } : {}),
+    ...(p.wide === true ? { wide: true } : {}),
   };
 }
 

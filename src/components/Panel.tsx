@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { getFeedById } from "@/lib/catalog";
 import { panelTitle } from "@/lib/constants";
 import { MAX_FEEDS_PER_PANEL } from "@/lib/layout-store";
-import { panelFeedOptions, sourceNotes, toggleFeed } from "@/lib/panel-feed";
+import { countNew, panelFeedOptions, sourceNotes, toggleFeed } from "@/lib/panel-feed";
 import { usePanelFeed } from "@/hooks/usePanelFeed";
 import type { Article } from "@/types/article";
 import type { Panel as PanelModel } from "@/types/layout";
@@ -24,6 +24,12 @@ interface Props {
   onMarkSeen(id: string): void;
   onEdit(id: string): void;
   onMove(id: string, direction: -1 | 1): void;
+  onViewChange(id: string, view: NonNullable<PanelModel["view"]>): void;
+  onWideChange(id: string, wide: boolean): void;
+  /** 사이드바 나라별 새 기사 수 집계용 */
+  onNewCount?(id: string, count: number): void;
+  /** "오늘의 톱" 후보(최신 몇 개) 보고 */
+  onTopArticles?(id: string, articles: Article[]): void;
 }
 
 export function Panel(props: Props) {
@@ -33,6 +39,18 @@ export function Panel(props: Props) {
   useEffect(() => {
     onBusyChange(panel.id, feed.refreshing);
   }, [panel.id, feed.refreshing, onBusyChange]);
+
+  const newCount = feed.data ? countNew(feed.data.articles, panel.lastSeenAt) : 0;
+  const { onNewCount } = props;
+  useEffect(() => {
+    onNewCount?.(panel.id, newCount);
+  }, [panel.id, newCount, onNewCount]);
+
+  const { onTopArticles } = props;
+  const articles = feed.data?.articles;
+  useEffect(() => {
+    if (articles) onTopArticles?.(panel.id, articles.slice(0, 5));
+  }, [panel.id, articles, onTopArticles]);
 
   const requested = panel.feedIds.filter((id) => getFeedById(id)).length + panel.customUrls.length;
   const allFailed = !!feed.data && feed.data.articles.length === 0 && feed.data.errors.length >= requested;
@@ -59,6 +77,11 @@ export function Panel(props: Props) {
       isLast={isLast}
       now={now}
       selectedId={props.selectedId}
+      view={panel.view}
+      wide={panel.wide}
+      anchorId={`panel-${panel.id}`}
+      onViewChange={(view) => props.onViewChange(panel.id, view)}
+      onWideChange={(wide) => props.onWideChange(panel.id, wide)}
       onSelect={props.onSelect}
       chips={
         <FeedChips

@@ -22,7 +22,7 @@ export function FeedChips({ options, selected, customUrls, max, onToggle }: Prop
   const full = selected.length + customUrls.length >= max;
 
   return (
-    <div className="flex gap-1 overflow-x-auto whitespace-nowrap border-b border-line px-3 py-1.5 [scrollbar-width:none]">
+    <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap px-4 pb-2 [scrollbar-width:none]">
       {options.map((feed) => {
         const on = selected.includes(feed.id);
         return (
@@ -33,8 +33,10 @@ export function FeedChips({ options, selected, customUrls, max, onToggle }: Prop
             disabled={!on && full}
             onClick={() => onToggle(feed.id)}
             title={feed.note ? `${feed.name} · ${feed.note}` : feed.name}
-            className={`shrink-0 rounded border px-1.5 py-0.5 text-xs ${
-              on ? "border-headline text-headline" : "border-line text-faint hover:text-muted disabled:hover:text-faint"
+            className={`shrink-0 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+              on
+                ? "border-accent/30 bg-accent-soft text-accent"
+                : "border-line text-muted hover:text-body disabled:text-faint disabled:hover:text-faint"
             }`}
           >
             {feed.name}
@@ -45,7 +47,7 @@ export function FeedChips({ options, selected, customUrls, max, onToggle }: Prop
         <span
           key={url}
           title={`직접 추가한 RSS: ${url} (편집 창에서 관리)`}
-          className="shrink-0 rounded border border-dashed border-headline px-1.5 py-0.5 text-xs text-headline"
+          className="shrink-0 rounded-full border border-dashed border-accent/40 px-2 py-0.5 text-xs text-accent"
         >
           {hostOf(url)}
         </span>
