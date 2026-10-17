@@ -17,7 +17,7 @@
 
 ## 분류 체계
 - **대륙**: `asia`, `europe`, `north-america`, `south-america`, `middle-east`, `africa`, `oceania`, `global`(국제 매체)
-- **나라**: ISO 3166-1 alpha-2 코드 (`KR`, `US`, `JP` …). 국제 매체는 `WORLD`
+- **나라**: ISO 3166-1 alpha-2 코드 (`KR`, `US`, `JP` …). 지역 단위는 `EU`(유럽)·`ME`(중동), 국제 매체는 `WORLD`
 - **분야**: `top`(종합), `world`(국제), `politics`, `economy`, `tech`, `science`
   - 이후 `culture`, `sports` 확장 가능. MVP는 6개 고정.
 

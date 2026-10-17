@@ -47,7 +47,7 @@ scripts/
 type Continent = 'asia' | 'europe' | 'north-america' | 'south-america'
                | 'middle-east' | 'africa' | 'oceania' | 'global';
 type Category  = 'top' | 'world' | 'politics' | 'economy' | 'tech' | 'science';
-type CountryCode = string;            // ISO 3166-1 alpha-2, 국제 매체는 'WORLD'
+type CountryCode = string;            // ISO 3166-1 alpha-2. 지역 단위 'EU'(유럽)·'ME'(중동), 국제 매체 'WORLD'
 
 interface CatalogFeed {
   id: string;                         // 'kr-yonhap-top' 형식, 전역 유일, 불변
