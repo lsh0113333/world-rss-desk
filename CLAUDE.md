@@ -8,6 +8,7 @@
 - Tailwind CSS v4
 - SWR (클라이언트 데이터 fetch / 주기 갱신)
 - fast-xml-parser (RSS 2.0 / Atom / RDF 파싱)
+- @mozilla/readability + linkedom (읽기 모드 본문 추출, 서버 전용)
 - Vitest + Testing Library (jsdom)
 
 ## 아키텍처 규칙
@@ -15,7 +16,8 @@
 - CRITICAL: 화면 데이터는 `/api/*` JSON으로만 주고받는다. Server Action을 쓰지 말 것. (향후 네이티브 앱이 같은 API를 재사용)
 - CRITICAL: 사용자 설정 저장은 `LayoutRepository` 인터페이스만 통해 접근한다. 컴포넌트나 훅에서 localStorage를 직접 호출하지 말 것. (향후 DB 동기화로 교체)
 - CRITICAL: 사용자가 입력한 RSS URL은 fetch 전에 반드시 `src/lib/url-guard.ts`의 `assertSafeUrl`을 통과시킬 것(카탈로그 URL도 같은 fetch 경로를 쓴다). http/https만 허용, 사설·루프백·링크로컬 IP 차단, 리다이렉트 대상도 재검증, 타임아웃 8초, 응답 2MB 제한. (공개 배포 → SSRF·오픈 프록시 방지)
-- CRITICAL: RSS 콘텐츠의 HTML을 렌더링하지 말 것. 제목·요약은 서버에서 태그 제거·엔티티 디코딩한 순수 텍스트로만 내려보내고, `dangerouslySetInnerHTML` 사용 금지. (XSS 방지)
+- CRITICAL: 외부 콘텐츠(RSS, 기사 페이지)의 HTML을 그대로 렌더링하지 말 것. 제목·요약은 순수 텍스트로, 읽기 모드 본문은 서버에서 `ReaderBlock[]`(문단/제목/인용/목록/이미지 데이터)로 변환해 React 요소로만 그린다. `dangerouslySetInnerHTML` 사용 금지. (XSS 방지)
+- CRITICAL: 원문 iframe은 서버(`/api/article`)가 해당 페이지의 X-Frame-Options/CSP frame-ancestors를 확인해 허용된 경우에만 띄운다. iframe에는 `sandbox`와 `referrerPolicy="no-referrer"`를 붙인다.
 - 피드 하나가 실패해도 패널 전체가 실패하면 안 된다. `Promise.allSettled`로 부분 결과 + 에러 목록을 반환한다.
 - 테스트는 네트워크에 의존하지 않는다. fixture XML(`src/**/__fixtures__/`)과 fetch mock을 사용한다.
 - MVP에서 사용자 설정은 서버에 저장하지 않는다. 구현체는 `LocalStorageLayoutRepository`(`src/lib/layout-repository.ts`) 하나다.

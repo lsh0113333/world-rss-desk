@@ -60,7 +60,25 @@ rounded-md border border-line bg-panel flex flex-col h-[28rem]
 메타: mt-0.5 text-xs text-muted  "연합뉴스 · 12분 전"
 새 기사: 제목 왼쪽에 2px 포인트 색 세로 막대 (border-l-2 border-accent pl-2.5)
 ```
-- `target="_blank" rel="noopener noreferrer"`
+- `target="_blank" rel="noopener noreferrer"`는 유지하되, 일반 클릭은 `preventDefault` 후 오른쪽 원문 패널에 연다(수정키·가운데 클릭은 새 탭).
+- 선택된 기사 행: `bg-panel-header` + 제목 `font-medium`.
+
+### 매체 칩 (패널 헤더 아래)
+```
+켜짐:  rounded border border-headline px-1.5 py-0.5 text-xs text-headline
+꺼짐:  rounded border border-line px-1.5 py-0.5 text-xs text-faint hover:text-muted
+```
+- 한 줄로 가로 스크롤(`overflow-x-auto whitespace-nowrap`), 줄바꿈하지 않는다(패널 높이 유지).
+- `aria-pressed`로 상태 표시.
+
+### 원문 패널 (ReaderPane)
+- 데스크톱: 화면 오른쪽 절반, 상단 바 아래 전체 높이 sticky. 왼쪽 목록과 독립 스크롤.
+- 상단 줄(44px): 매체명 · 모드 표시(`원문` / `읽기 모드`) · "원문 사이트에서 열기 ↗" · 닫기(×).
+- iframe: 테두리 없음, 패널 전체 채움, `bg-white`(다크 모드에서도 원문 사이트 색 그대로).
+- 읽기 모드 본문: `max-w-2xl px-6 py-6`, 제목 `text-xl font-semibold text-headline`, 문단 `text-[15px] leading-7 text-body`, 이미지 `rounded my-4 w-full`.
+- 빈 상태: 가운데 "왼쪽에서 기사를 선택하세요"(text-sm text-muted).
+- 로딩: skeleton 줄 8개. 실패: 사유 + "새 탭에서 열기" Primary 버튼.
+- 모바일: `fixed inset-0 z-30`, 상단 줄 왼쪽에 "← 목록".
 - 요약은 기본으로 숨기고, `title` 속성(툴팁)으로만 노출한다.
 
 ### 버튼

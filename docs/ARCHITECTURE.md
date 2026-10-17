@@ -11,7 +11,8 @@ src/
 │   ├── icon.tsx, apple-icon.tsx # 파비콘 / iOS 홈 화면 아이콘 (빌드 시 PNG 생성)
 │   ├── icons/[size]/route.tsx   # 매니페스트용 192/512 PNG (정적 생성)
 │   └── api/
-│       └── feeds/route.ts       # GET 병합 기사 API
+│       ├── feeds/route.ts       # GET 병합 기사 API
+│       └── article/route.ts     # GET 원문 보기 모드 판정 + 읽기 모드 본문
 ├── components/                  # UI 컴포넌트
 │   ├── Dashboard.tsx            # 화면 조립: 상단 바 + 그리드 + 편집창 + 토스트 ('use client')
 │   ├── TopBar.tsx               # 앱 이름, 오프라인, 모두 확인, 전체 새로고침, + 패널, 설정
@@ -21,6 +22,8 @@ src/
 │   ├── PanelEditor.tsx          # 추가/편집 창 (대륙→나라→분야, 매체, 커스텀 URL)
 │   ├── SettingsMenu.tsx         # 내보내기/가져오기/초기화
 │   ├── UndoToast.tsx            # 삭제 되돌리기 (5초)
+│   ├── ReaderPane.tsx           # 오른쪽 원문 패널 (iframe / 읽기 모드 / 새 탭 안내)
+│   ├── FeedChips.tsx            # 패널 안 매체 켜고 끄기 칩
 │   └── Icons.tsx                # 인라인 SVG 아이콘
 ├── hooks/
 │   ├── useLayout.ts             # LayoutRepository 기반 레이아웃 상태 + 조작
@@ -43,9 +46,12 @@ src/
 │   ├── layout-store.ts          # 프리셋/검증/마이그레이션/가져오기·내보내기/패널 조작
 │   ├── layout-repository.ts     # LayoutRepository 인터페이스 + LocalStorageLayoutRepository
 │   ├── time.ts                  # 상대시간 포맷 ("12분 전")
+│   ├── frame-policy.ts          # X-Frame-Options / CSP frame-ancestors → iframe 허용 여부
 │   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
 ├── services/
 │   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
+│   ├── http.ts                  # 공용 안전 fetch (리다이렉트 hop별 검사, 타임아웃, 크기 제한, charset)
+│   ├── article.ts               # 기사 페이지 → 원문 보기 모드 판정 + Readability 추출 → ReaderBlock[]
 │   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF/EUC-KR XML
 └── data/
     └── catalog.json             # 큐레이션 피드 카탈로그 (78개)
@@ -110,6 +116,24 @@ interface Layout { version: 1; panels: Panel[] }
 - 응답 200: `FeedsResponse`. 피드 일부가 실패해도 200이며 실패는 `errors`에 담긴다.
 - 헤더(기본): `Cache-Control: public, s-maxage=600, stale-while-revalidate=1800`
 - 런타임: Node.js (DNS 조회가 필요하므로 Edge 사용 안 함)
+
+## 원문 보기 API
+`GET /api/article?url=<encodeURIComponent(기사 URL)>`
+- `url`은 `assertSafeUrl` 통과 필수. 리다이렉트 최대 3회 hop별 검사, 타임아웃 10초, 응답 3MB 제한.
+- 응답 200 (항상 셋 중 하나):
+  ```ts
+  type ArticleView =
+    | { mode: "frame"; url: string }                       // 최종 URL을 iframe으로
+    | { mode: "reader"; url: string; title: string; siteName?: string; byline?: string;
+        publishedAt?: string; blocks: ReaderBlock[] }
+    | { mode: "link"; url: string; reason: string };      // 새 탭 안내
+  type ReaderBlock =
+    | { type: "p" | "h2" | "h3" | "blockquote" | "li"; text: string }
+    | { type: "img"; src: string; alt?: string };          // src는 http(s)만
+  ```
+- 판정 순서: 페이지 fetch → `canEmbed(headers)`이면 `frame` → 아니면 Readability 추출, 본문 200자 이상이면 `reader` → 아니면 `link`. fetch 자체 실패(403·타임아웃 등)도 `link`.
+- 헤더: `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`. 잘못된 url은 400.
+- `frame` 판정: `X-Frame-Options`가 있으면(DENY/SAMEORIGIN/ALLOW-FROM) 불가. CSP `frame-ancestors`가 있으면 `*`가 포함된 경우만 허용(우리 도메인이 명시될 일은 없으므로).
 
 ## 패턴
 - Server Component는 셸(`page.tsx`, `layout.tsx`)만 맡는다. 레이아웃이 localStorage에 있으므로 그리드 이하는 Client Component다.
