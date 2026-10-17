@@ -47,7 +47,7 @@
 | 분야 | top(종합), world(국제), politics(정치), economy(경제), tech(IT), science(과학). 6개 |
 | 해외 매체 언어 | 영어판 우선 |
 | 한국 매체 | 연합뉴스, 한국경제, 매일경제, 전자신문 |
-| 관영 매체 | CGTN, Global Times 포함. 카탈로그 `note` 필드에 "중국 정부 시각"을 적고 매체명 옆에 표시 |
+| 관영 매체 | CGTN 포함 (Global Times는 피드가 갱신되지 않아 제외). 카탈로그 `note` 필드에 "중국 정부 시각"을 적고 매체명 옆에 표시 |
 | 기본 패널 8개 | 🇰🇷종합, 🇰🇷경제, 🇺🇸종합, 🇺🇸IT, 🇯🇵종합, 🇨🇳종합, 🇪🇺유럽, 🌍국제 |
 
 ### 화면과 동작
@@ -103,7 +103,7 @@
 |------|------|------|
 | asia | KR | 연합뉴스, 한국경제, 매일경제, 전자신문 |
 | asia | JP | NHK World (EN), Japan Times |
-| asia | CN | SCMP, CGTN / Global Times (관점 비교용) |
+| asia | CN | SCMP, CGTN (관점 비교용) |
 | asia | IN | Times of India, The Hindu |
 | north-america | US | NYT 섹션 RSS, NPR, CNBC, TechCrunch, The Verge |
 | europe | GB | BBC 섹션 RSS, The Guardian |

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Sample News</title>
+    <link>https://news.example.com</link>
+    <item>
+      <title><![CDATA[Markets <b>rally</b> &amp; bonds fall]]></title>
+      <link>https://news.example.com/a?utm_source=rss&amp;id=1</link>
+      <guid>https://news.example.com/a</guid>
+      <pubDate>Sat, 17 Oct 2026 18:25:43 +09:00</pubDate>
+      <description><![CDATA[<p>Stocks rose&nbsp;sharply.</p><script>alert(1)</script><img src="x.jpg"/>]]></description>
+    </item>
+    <item>
+      <title>Second &#8216;quoted&#8217; story</title>
+      <link>https://news.example.com/b</link>
+      <dc:date>2026-10-17T08:00:00Z</dc:date>
+      <description>&lt;p&gt;Encoded &amp;amp; html&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>No date story</title>
+      <link>https://news.example.com/c</link>
+    </item>
+    <item>
+      <title>Guid permalink story</title>
+      <guid isPermaLink="true">https://news.example.com/d</guid>
+      <pubDate>not a date</pubDate>
+    </item>
+    <item>
+      <title>Dangerous link</title>
+      <link>javascript:alert(1)</link>
+    </item>
+    <item>
+      <title></title>
+      <link>https://news.example.com/untitled</link>
+    </item>
+    <item>
+      <title>Future dated</title>
+      <link>https://news.example.com/future</link>
+      <pubDate>Sun, 18 Oct 2026 08:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>2026</title>
+      <link>https://news.example.com/numeric</link>
+      <pubDate>2026-10-17 06:00:00</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -253,17 +253,6 @@
     "note": "중국 정부 시각"
   },
   {
-    "id": "cn-globaltimes-top",
-    "name": "Global Times",
-    "url": "https://www.globaltimes.cn/rss/outbrain.xml",
-    "homepage": "https://www.globaltimes.cn",
-    "continent": "asia",
-    "country": "CN",
-    "category": "top",
-    "language": "en",
-    "note": "중국 정부 시각"
-  },
-  {
     "id": "in-toi-top",
     "name": "The Times of India",
     "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",

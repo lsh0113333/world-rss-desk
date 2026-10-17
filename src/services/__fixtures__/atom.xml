@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title type="text">Atom Tech</title>
+  <link href="https://atom.example.com/"/>
+  <entry>
+    <title type="html">AI &lt;em&gt;chips&lt;/em&gt; ship</title>
+    <link rel="replies" href="https://atom.example.com/1#comments"/>
+    <link rel="alternate" type="text/html" href="https://atom.example.com/1"/>
+    <id>tag:atom.example.com,2026:1</id>
+    <published>2026-10-16T19:36:26-04:00</published>
+    <updated>2026-10-17T01:00:00Z</updated>
+    <summary type="html">&lt;p&gt;Summary text&lt;/p&gt;</summary>
+  </entry>
+  <entry>
+    <title>Only updated</title>
+    <link href="https://atom.example.com/2"/>
+    <updated>2026-10-17T02:00:00Z</updated>
+    <content type="html">&lt;div&gt;Content body&lt;/div&gt;</content>
+  </entry>
+</feed>
