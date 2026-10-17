@@ -18,7 +18,7 @@
 | 기사 썸네일 이미지 | 밀도를 떨어뜨리고 로딩이 느려진다. MVP는 텍스트만 |
 
 ## 색상
-시스템 설정(`prefers-color-scheme`)을 따른다. `globals.css`에 CSS 변수 토큰으로 정의하고, Tailwind v4 `@theme`으로 노출한다.
+시스템 설정(`prefers-color-scheme`)을 따른다. `globals.css`에 CSS 변수 토큰으로 정의하고, Tailwind v4 `@theme`으로 노출한다. 클래스 이름은 `bg-page`, `bg-panel`, `bg-panel-header`, `border-line`, `text-headline`, `text-body`, `text-muted`, `text-faint`, `text-accent`, `text-error`.
 
 ### 배경
 | 용도 | 라이트 | 다크 |
@@ -46,33 +46,33 @@
 ## 컴포넌트
 ### 패널
 ```
-rounded-md border border-[--border] bg-[--panel] flex flex-col h-[28rem]
-헤더: flex items-center gap-2 px-3 py-2 border-b border-[--border] bg-[--panel-header]
-본문: flex-1 overflow-y-auto divide-y divide-[--border]
-푸터(에러 있을 때만): px-3 py-1.5 text-xs text-[--error]
+rounded-md border border-border bg-panel flex flex-col h-[28rem]
+헤더: flex items-center gap-2 px-3 py-2 border-b border-border bg-panel-header
+본문: flex-1 overflow-y-auto divide-y divide-border
+푸터(에러 있을 때만): px-3 py-1.5 text-xs text-error
 ```
 - 헤더 구성: `🇰🇷 한국 · 경제` (text-sm font-semibold), 새 기사 수 배지(`+3`, 포인트 색 텍스트, 배경 없음), 오른쪽에 갱신 시각(`10:42`, text-xs 보조), 새로고침/편집 아이콘 버튼.
 
 ### 기사 행 (ArticleRow)
 ```
-<a> block px-3 py-2 hover:bg-[--panel-header]
-제목: text-sm leading-snug line-clamp-2 text-[--headline]
-메타: mt-0.5 text-xs text-[--muted]  "연합뉴스 · 12분 전"
-새 기사: 제목 왼쪽에 2px 포인트 색 세로 막대 (border-l-2 border-amber-600 pl-2.5)
+<a> block px-3 py-2 hover:bg-panel-header
+제목: text-sm leading-snug line-clamp-2 text-headline
+메타: mt-0.5 text-xs text-muted  "연합뉴스 · 12분 전"
+새 기사: 제목 왼쪽에 2px 포인트 색 세로 막대 (border-l-2 border-accent pl-2.5)
 ```
 - `target="_blank" rel="noopener noreferrer"`
 - 요약은 기본으로 숨기고, `title` 속성(툴팁)으로만 노출한다.
 
 ### 버튼
 ```
-Primary: rounded bg-[--headline] text-[--panel] px-3 py-1.5 text-sm hover:opacity-90
-Ghost:   rounded px-2 py-1 text-sm text-[--muted] hover:text-[--headline] hover:bg-[--panel-header]
-Icon:    p-1 rounded text-[--muted] hover:text-[--headline]  (aria-label 필수)
+Primary: rounded bg-headline text-panel px-3 py-1.5 text-sm hover:opacity-90
+Ghost:   rounded px-2 py-1 text-sm text-muted hover:text-headline hover:bg-panel-header
+Icon:    p-1 rounded text-muted hover:text-headline  (aria-label 필수)
 ```
 
 ### 입력 필드 / 셀렉트
 ```
-rounded border border-[--border] bg-[--panel] px-3 py-2 text-sm focus:outline-2 focus:outline-amber-600
+rounded border border-border bg-panel px-3 py-2 text-sm focus:outline-2 focus:outline-accent
 ```
 
 ### 모달 (PanelEditor)
@@ -83,7 +83,7 @@ rounded border border-[--border] bg-[--panel] px-3 py-2 text-sm focus:outline-2 
 ## 레이아웃
 - 상단 바: 높이 44px, sticky. 좌측에 앱 이름(text-sm font-semibold)과 오프라인일 때만 "오프라인"(text-xs, 에러색). 우측에 `모두 확인`, `↻ 전체 새로고침`, `+ 패널`, 설정(⋯) 메뉴.
 - 새로고침 버튼: 누르면 아이콘 옆에 "갱신 중…"(text-xs 보조)을 표시한다. 완료 후 30초간 `disabled`(비활성 색)로 두고, 툴팁에 "30초 후 다시 가능"을 표시한다. 아이콘 회전 애니메이션은 쓰지 않는다.
-- 토스트(삭제 되돌리기): 화면 하단 중앙, `rounded border bg-[--panel] px-3 py-2 text-sm`, "패널 삭제됨 · 되돌리기". 5초 후 사라지며 애니메이션은 없다.
+- 토스트(삭제 되돌리기): 화면 하단 중앙, `rounded border bg-panel px-3 py-2 text-sm`, "패널 삭제됨 · 되돌리기". 5초 후 사라지며 애니메이션은 없다.
 - 그리드: `grid gap-3 p-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4`
 - 전체 너비 제한 없음(와이드 모니터 활용). 텍스트는 좌측 정렬이 기본이며, 중앙 정렬은 빈 상태 안내에만 쓴다.
 
