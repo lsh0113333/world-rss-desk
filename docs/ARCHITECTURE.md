@@ -12,9 +12,13 @@ src/
 │   ├── icons/[size]/route.tsx   # 매니페스트용 192/512 PNG (정적 생성)
 │   └── api/
 │       ├── feeds/route.ts       # GET 병합 기사 API
-│       └── article/route.ts     # GET 원문 보기 모드 판정 + 읽기 모드 본문
+│       ├── article/route.ts     # GET 원문 보기 모드 판정 + 읽기 모드 본문
+│       └── thumb/route.ts       # GET 기사 og:image로 302 리다이렉트 (RSS에 이미지 없을 때)
 ├── components/                  # UI 컴포넌트
-│   ├── Dashboard.tsx            # 화면 조립: 상단 바 + 그리드 + 편집창 + 토스트 ('use client')
+│   ├── Dashboard.tsx            # 화면 조립: 사이드바 + 상단 바 + 오늘의 톱 + 그리드 + 원문 서랍 + 편집창 ('use client')
+│   ├── Sidebar.tsx              # 왼쪽 메뉴: 내 패널 목록, 새 기사 수, 패널 추가
+│   ├── TopStories.tsx           # 오늘의 톱 사진 카드 줄
+│   ├── Thumb.tsx                # 썸네일: RSS 이미지 → /api/thumb → 매체 이니셜
 │   ├── TopBar.tsx               # 앱 이름, 오프라인, 모두 확인, 전체 새로고침, + 패널, 설정
 │   ├── Panel.tsx                # usePanelFeed 연결 컨테이너
 │   ├── PanelView.tsx            # 패널 표시 전용 (상태별 화면, +N, 새로고침 버튼)
@@ -48,6 +52,8 @@ src/
 │   ├── layout-repository.ts     # LayoutRepository 인터페이스 + LocalStorageLayoutRepository
 │   ├── time.ts                  # 상대시간 포맷 ("12분 전")
 │   ├── frame-policy.ts          # X-Frame-Options / CSP frame-ancestors → iframe 허용 여부
+│   ├── og-image.ts              # HTML에서 og:image / twitter:image 추출
+│   ├── top-stories.ts           # 오늘의 톱 선정 (패널 순서, 링크 중복 제외)
 │   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
 ├── services/
 │   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
@@ -115,7 +121,7 @@ interface Layout { version: 1; panels: Panel[] }
 - `maxAgeHours`(선택, 기본 72): 이보다 오래된 기사는 제외한다. `publishedAt`이 null이면 제외하지 않는다.
 - 제한: ids + urls 합계 최대 12개, `limit` 1~50(기본 10). 넘으면 400.
 - 응답 200: `FeedsResponse`. 피드 일부가 실패해도 200이며 실패는 `errors`에 담긴다.
-- 헤더(기본): `Cache-Control: public, s-maxage=600, stale-while-revalidate=1800`
+- 헤더(기본): `Cache-Control: public, s-maxage=120, stale-while-revalidate=600` (2분 준실시간. 피드 fetch도 `revalidate: 120`)
 - 런타임: Node.js (DNS 조회가 필요하므로 Edge 사용 안 함)
 
 ## 원문 보기 API
@@ -161,7 +167,7 @@ interface Layout { version: 1; panels: Panel[] }
 [localStorage Layout]
       │ useLayout
       ▼
-PanelGrid ──▶ Panel ──usePanelFeed (SWR, refreshInterval 10분)──▶ GET /api/feeds
+PanelGrid ──▶ Panel ──usePanelFeed (SWR, refreshInterval 2분)──▶ GET /api/feeds
                                                                  │
                                     ┌────────────────────────────┤
                                     ▼                            ▼
@@ -174,11 +180,11 @@ PanelGrid ──▶ Panel ──usePanelFeed (SWR, refreshInterval 10분)──�
                                                ▼
                          lib/merge.mergeArticles (중복 제거, 정렬, limit)
                                                ▼
-                         FeedsResponse (CDN 캐시 10분) ──▶ Panel 렌더링
+                         FeedsResponse (CDN 캐시 2분) ──▶ Panel 렌더링
 ```
 
 ## 상태 관리
-- **서버 상태**: SWR. 키는 `/api/feeds?…` URL이며, 같은 패널 구성은 자동으로 dedupe된다. `refreshInterval: 600_000`, `revalidateOnFocus: true`, `keepPreviousData: true`(오프라인·실패 시 마지막 데이터 유지).
+- **서버 상태**: SWR. 키는 `/api/feeds?…` URL이며, 같은 패널 구성은 자동으로 dedupe된다. `refreshInterval: 120_000`, `revalidateOnFocus: true`, `keepPreviousData: true`(오프라인·실패 시 마지막 데이터 유지).
   - 수동 새로고침: `usePanelFeed`가 `refresh()`를 노출한다. `fresh=1`을 붙인 URL로 fetch한 결과를 `mutate(data, { revalidate: false })`로 기본 키 캐시에 덮어쓴다.
   - 전체 새로고침: 상단 바가 이벤트(예: `refreshAll` 카운터 context)를 올리고 각 패널이 자기 `refresh()`를 호출한다.
 - **사용자 설정**: `useLayout` 훅 하나만 쓴다. 변경 시 `LayoutRepository.save`로 즉시 저장한다(MVP: localStorage 키 `world-rss-desk:layout`).
