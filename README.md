@@ -8,7 +8,7 @@
 - 설정은 브라우저에 저장, JSON 내보내기/가져오기로 기기 간 이동
 - 폰 홈 화면에 앱처럼 설치(PWA)
 
-설계 문서: [PRD](docs/PRD.md) · [아키텍처](docs/ARCHITECTURE.md) · [ADR](docs/ADR.md) · [UI 가이드](docs/UI_GUIDE.md) · [운영·비용](docs/OPERATIONS.md)
+설계 문서: [PRD](docs/PRD.md) · [아키텍처](docs/ARCHITECTURE.md) · [ADR](docs/ADR.md) · [UI 가이드](docs/UI_GUIDE.md) · [운영·비용](docs/OPERATIONS.md) · [RSS 수집 기준](docs/FEEDS.md)
 
 운영 주소: https://world-rss-desk.vercel.app
 
