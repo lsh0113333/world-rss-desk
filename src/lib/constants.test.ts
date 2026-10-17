@@ -26,14 +26,19 @@ describe("CONTINENTS", () => {
 });
 
 describe("CATEGORIES", () => {
-  it("has the six fixed categories in display order", () => {
+  it("has the fixed categories in display order", () => {
     expect(CATEGORIES.map((c) => c.id)).toEqual([
       "top",
       "world",
       "politics",
       "economy",
+      "society",
       "tech",
       "science",
+      "health",
+      "environment",
+      "culture",
+      "sports",
     ]);
   });
 
@@ -46,7 +51,16 @@ describe("CATEGORIES", () => {
 describe("COUNTRIES", () => {
   it("covers the confirmed target countries", () => {
     const codes = COUNTRIES.map((c) => c.code);
-    for (const code of ["KR", "JP", "CN", "IN", "US", "GB", "DE", "FR", "EU", "ME", "BR", "AU", "WORLD"]) {
+    for (const code of [
+      "KR", "JP", "CN", "IN", "VN", "SG", "TW", "PH", "TH", "ASIA",
+      "US", "CA",
+      "GB", "DE", "FR", "ES", "IT", "UA", "RU", "TR", "EU",
+      "ME", "IL", "IR",
+      "BR", "MX", "AR", "LATAM",
+      "ZA", "NG", "KE", "EG", "AFRICA",
+      "AU", "NZ",
+      "WORLD",
+    ]) {
       expect(codes).toContain(code);
     }
   });

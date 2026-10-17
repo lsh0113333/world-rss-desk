@@ -782,5 +782,997 @@
     "country": "WORLD",
     "category": "world",
     "language": "en"
+  },
+  {
+    "id": "kr-yonhap-society",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/society.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "society",
+    "language": "ko"
+  },
+  {
+    "id": "kr-yonhap-culture",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/culture.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "culture",
+    "language": "ko"
+  },
+  {
+    "id": "kr-yonhap-sports",
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/sports.xml",
+    "homepage": "https://www.yna.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "sports",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-society",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/society",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "society",
+    "language": "ko"
+  },
+  {
+    "id": "kr-hankyung-sports",
+    "name": "한국경제",
+    "url": "https://www.hankyung.com/feed/sports",
+    "homepage": "https://www.hankyung.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "sports",
+    "language": "ko"
+  },
+  {
+    "id": "kr-chosun-top",
+    "name": "조선일보",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.chosun.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-chosun-politics",
+    "name": "조선일보",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/politics/?outputType=xml",
+    "homepage": "https://www.chosun.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-chosun-economy",
+    "name": "조선일보",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+    "homepage": "https://www.chosun.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-chosun-society",
+    "name": "조선일보",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/national/?outputType=xml",
+    "homepage": "https://www.chosun.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "society",
+    "language": "ko"
+  },
+  {
+    "id": "kr-chosun-world",
+    "name": "조선일보",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/international/?outputType=xml",
+    "homepage": "https://www.chosun.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-top",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/total.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-politics",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/politics.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-economy",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/economy.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-world",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/international.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-culture",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/culture.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "culture",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-sports",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/sports.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "sports",
+    "language": "ko"
+  },
+  {
+    "id": "kr-donga-science",
+    "name": "동아일보",
+    "url": "https://rss.donga.com/science.xml",
+    "homepage": "https://www.donga.com",
+    "continent": "asia",
+    "country": "KR",
+    "category": "science",
+    "language": "ko"
+  },
+  {
+    "id": "kr-khan-top",
+    "name": "경향신문",
+    "url": "https://www.khan.co.kr/rss/rssdata/total_news.xml",
+    "homepage": "https://www.khan.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "top",
+    "language": "ko"
+  },
+  {
+    "id": "kr-khan-politics",
+    "name": "경향신문",
+    "url": "https://www.khan.co.kr/rss/rssdata/politic_news.xml",
+    "homepage": "https://www.khan.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-khan-economy",
+    "name": "경향신문",
+    "url": "https://www.khan.co.kr/rss/rssdata/economy_news.xml",
+    "homepage": "https://www.khan.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-khan-society",
+    "name": "경향신문",
+    "url": "https://www.khan.co.kr/rss/rssdata/society_news.xml",
+    "homepage": "https://www.khan.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "society",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-politics",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "politics",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-economy",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=02",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "economy",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-society",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=03",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "society",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-world",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=07",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "world",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-culture",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "culture",
+    "language": "ko"
+  },
+  {
+    "id": "kr-sbs-sports",
+    "name": "SBS 뉴스",
+    "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=14",
+    "homepage": "https://news.sbs.co.kr",
+    "continent": "asia",
+    "country": "KR",
+    "category": "sports",
+    "language": "ko"
+  },
+  {
+    "id": "us-nyt-health",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-culture",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "us-nyt-environment",
+    "name": "The New York Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Climate.xml",
+    "homepage": "https://www.nytimes.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "environment",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-culture",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1008/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "us-npr-health",
+    "name": "NPR",
+    "url": "https://feeds.npr.org/1128/rss.xml",
+    "homepage": "https://www.npr.org",
+    "continent": "north-america",
+    "country": "US",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "us-espn-sports",
+    "name": "ESPN",
+    "url": "https://www.espn.com/espn/rss/news",
+    "homepage": "https://www.espn.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-health",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/health/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-culture",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "europe",
+    "country": "GB",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "gb-bbc-sports",
+    "name": "BBC Sport",
+    "url": "https://feeds.bbci.co.uk/sport/rss.xml",
+    "homepage": "https://www.bbc.com/sport",
+    "continent": "europe",
+    "country": "GB",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-society",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/society/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "society",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-health",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/society/health/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-environment",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/environment/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "environment",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-culture",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/culture/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "gb-guardian-sports",
+    "name": "The Guardian",
+    "url": "https://www.theguardian.com/uk/sport/rss",
+    "homepage": "https://www.theguardian.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-top",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-topstories",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-politics",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-politics",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-economy",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-business",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-tech",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-technology",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-health",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-health",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-culture",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-arts",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "ca-cbc-sports",
+    "name": "CBC News",
+    "url": "https://www.cbc.ca/webfeed/rss/rss-sports",
+    "homepage": "https://www.cbc.ca/news",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ca-globalnews-top",
+    "name": "Global News",
+    "url": "https://globalnews.ca/feed/",
+    "homepage": "https://globalnews.ca",
+    "continent": "north-america",
+    "country": "CA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "mx-mnd-top",
+    "name": "Mexico News Daily",
+    "url": "https://mexiconewsdaily.com/feed/",
+    "homepage": "https://mexiconewsdaily.com",
+    "continent": "south-america",
+    "country": "MX",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ar-batimes-top",
+    "name": "Buenos Aires Times",
+    "url": "https://www.batimes.com.ar/feed",
+    "homepage": "https://www.batimes.com.ar",
+    "continent": "south-america",
+    "country": "AR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "latam-mercopress-top",
+    "name": "MercoPress",
+    "url": "https://en.mercopress.com/rss/",
+    "homepage": "https://en.mercopress.com",
+    "continent": "south-america",
+    "country": "LATAM",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "latam-bbc-top",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "south-america",
+    "country": "LATAM",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "vn-vnexpress-top",
+    "name": "VnExpress International",
+    "url": "https://e.vnexpress.net/rss/news.rss",
+    "homepage": "https://e.vnexpress.net",
+    "continent": "asia",
+    "country": "VN",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "vn-vnexpress-economy",
+    "name": "VnExpress International",
+    "url": "https://e.vnexpress.net/rss/business.rss",
+    "homepage": "https://e.vnexpress.net",
+    "continent": "asia",
+    "country": "VN",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "sg-cna-top",
+    "name": "CNA",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml",
+    "homepage": "https://www.channelnewsasia.com",
+    "continent": "asia",
+    "country": "SG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "sg-cna-economy",
+    "name": "CNA",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936",
+    "homepage": "https://www.channelnewsasia.com",
+    "continent": "asia",
+    "country": "SG",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "sg-straitstimes-top",
+    "name": "The Straits Times",
+    "url": "https://www.straitstimes.com/news/singapore/rss.xml",
+    "homepage": "https://www.straitstimes.com",
+    "continent": "asia",
+    "country": "SG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "sg-straitstimes-economy",
+    "name": "The Straits Times",
+    "url": "https://www.straitstimes.com/news/business/rss.xml",
+    "homepage": "https://www.straitstimes.com",
+    "continent": "asia",
+    "country": "SG",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "tw-taipeitimes-top",
+    "name": "Taipei Times",
+    "url": "https://www.taipeitimes.com/xml/index.rss",
+    "homepage": "https://www.taipeitimes.com",
+    "continent": "asia",
+    "country": "TW",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ph-inquirer-top",
+    "name": "Inquirer",
+    "url": "https://www.inquirer.net/fullfeed/",
+    "homepage": "https://www.inquirer.net",
+    "continent": "asia",
+    "country": "PH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ph-rappler-top",
+    "name": "Rappler",
+    "url": "https://www.rappler.com/feed/",
+    "homepage": "https://www.rappler.com",
+    "continent": "asia",
+    "country": "PH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "th-bangkokpost-top",
+    "name": "Bangkok Post",
+    "url": "https://www.bangkokpost.com/rss/data/topstories.xml",
+    "homepage": "https://www.bangkokpost.com",
+    "continent": "asia",
+    "country": "TH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "asia-cna-top",
+    "name": "CNA",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",
+    "homepage": "https://www.channelnewsasia.com",
+    "continent": "asia",
+    "country": "ASIA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "asia-straitstimes-top",
+    "name": "The Straits Times",
+    "url": "https://www.straitstimes.com/news/asia/rss.xml",
+    "homepage": "https://www.straitstimes.com",
+    "continent": "asia",
+    "country": "ASIA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "asia-bbc-top",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "asia",
+    "country": "ASIA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ua-kyivindependent-top",
+    "name": "The Kyiv Independent",
+    "url": "https://kyivindependent.com/news-archive/rss/",
+    "homepage": "https://kyivindependent.com",
+    "continent": "europe",
+    "country": "UA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ua-pravda-top",
+    "name": "Ukrainska Pravda",
+    "url": "https://www.pravda.com.ua/eng/rss/",
+    "homepage": "https://www.pravda.com.ua/eng/",
+    "continent": "europe",
+    "country": "UA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ru-moscowtimes-top",
+    "name": "The Moscow Times",
+    "url": "https://www.themoscowtimes.com/rss/news",
+    "homepage": "https://www.themoscowtimes.com",
+    "continent": "europe",
+    "country": "RU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ru-meduza-top",
+    "name": "Meduza",
+    "url": "https://meduza.io/rss/en/all",
+    "homepage": "https://meduza.io/en",
+    "continent": "europe",
+    "country": "RU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ru-tass-top",
+    "name": "TASS",
+    "url": "https://tass.com/rss/v2.xml",
+    "homepage": "https://tass.com",
+    "continent": "europe",
+    "country": "RU",
+    "category": "top",
+    "language": "en",
+    "note": "러시아 정부 시각"
+  },
+  {
+    "id": "tr-turkishminute-top",
+    "name": "Turkish Minute",
+    "url": "https://www.turkishminute.com/feed/",
+    "homepage": "https://www.turkishminute.com",
+    "continent": "europe",
+    "country": "TR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "de-spiegel-top",
+    "name": "DER SPIEGEL International",
+    "url": "https://www.spiegel.de/international/index.rss",
+    "homepage": "https://www.spiegel.de/international/",
+    "continent": "europe",
+    "country": "DE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "fr-rfi-top",
+    "name": "RFI",
+    "url": "https://www.rfi.fr/en/rss",
+    "homepage": "https://www.rfi.fr/en/",
+    "continent": "europe",
+    "country": "FR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "es-elpais-top",
+    "name": "EL PAÍS English",
+    "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada",
+    "homepage": "https://english.elpais.com",
+    "continent": "europe",
+    "country": "ES",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "es-thelocal-top",
+    "name": "The Local Spain",
+    "url": "https://feeds.thelocal.com/rss/es",
+    "homepage": "https://www.thelocal.es",
+    "continent": "europe",
+    "country": "ES",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "it-ansa-top",
+    "name": "ANSA English",
+    "url": "https://www.ansa.it/english/news/english_nr_rss.xml",
+    "homepage": "https://www.ansa.it/english/",
+    "continent": "europe",
+    "country": "IT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "il-jpost-top",
+    "name": "The Jerusalem Post",
+    "url": "https://www.jpost.com/rss/rssfeedsfrontpage.aspx",
+    "homepage": "https://www.jpost.com",
+    "continent": "middle-east",
+    "country": "IL",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "il-haaretz-top",
+    "name": "Haaretz",
+    "url": "https://www.haaretz.com/srv/haaretz-latest-headlines",
+    "homepage": "https://www.haaretz.com",
+    "continent": "middle-east",
+    "country": "IL",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ir-iranintl-top",
+    "name": "Iran International",
+    "url": "https://www.iranintl.com/en/feed",
+    "homepage": "https://www.iranintl.com/en",
+    "continent": "middle-east",
+    "country": "IR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ir-tehrantimes-top",
+    "name": "Tehran Times",
+    "url": "https://www.tehrantimes.com/rss",
+    "homepage": "https://www.tehrantimes.com",
+    "continent": "middle-east",
+    "country": "IR",
+    "category": "top",
+    "language": "en",
+    "note": "이란 정부 시각"
+  },
+  {
+    "id": "za-dailymaverick-top",
+    "name": "Daily Maverick",
+    "url": "https://www.dailymaverick.co.za/dmrss/",
+    "homepage": "https://www.dailymaverick.co.za",
+    "continent": "africa",
+    "country": "ZA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ng-premiumtimes-top",
+    "name": "Premium Times",
+    "url": "https://www.premiumtimesng.com/feed",
+    "homepage": "https://www.premiumtimesng.com",
+    "continent": "africa",
+    "country": "NG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ng-punch-top",
+    "name": "Punch",
+    "url": "https://rss.punchng.com/v1/category/latest_news",
+    "homepage": "https://punchng.com",
+    "continent": "africa",
+    "country": "NG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ng-vanguard-top",
+    "name": "Vanguard",
+    "url": "https://www.vanguardngr.com/feed/",
+    "homepage": "https://www.vanguardngr.com",
+    "continent": "africa",
+    "country": "NG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ke-nation-top",
+    "name": "Nation",
+    "url": "https://nation.africa/kenya/rss.xml",
+    "homepage": "https://nation.africa/kenya",
+    "continent": "africa",
+    "country": "KE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ke-standard-top",
+    "name": "The Standard",
+    "url": "https://www.standardmedia.co.ke/rss/headlines.php",
+    "homepage": "https://www.standardmedia.co.ke",
+    "continent": "africa",
+    "country": "KE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eg-egyptindependent-top",
+    "name": "Egypt Independent",
+    "url": "https://www.egyptindependent.com/feed/",
+    "homepage": "https://www.egyptindependent.com",
+    "continent": "africa",
+    "country": "EG",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "africa-bbc-top",
+    "name": "BBC News",
+    "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
+    "homepage": "https://www.bbc.com/news",
+    "continent": "africa",
+    "country": "AFRICA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "africa-allafrica-top",
+    "name": "AllAfrica",
+    "url": "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf",
+    "homepage": "https://allafrica.com",
+    "continent": "africa",
+    "country": "AFRICA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "nz-rnz-top",
+    "name": "RNZ",
+    "url": "https://www.rnz.co.nz/rss/national.xml",
+    "homepage": "https://www.rnz.co.nz",
+    "continent": "oceania",
+    "country": "NZ",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "nz-nzherald-top",
+    "name": "NZ Herald",
+    "url": "https://www.nzherald.co.nz/arc/outboundfeeds/rss/curated/78/?outputType=xml",
+    "homepage": "https://www.nzherald.co.nz",
+    "continent": "oceania",
+    "country": "NZ",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "world-dw-world",
+    "name": "DW",
+    "url": "https://rss.dw.com/rdf/rss-en-world",
+    "homepage": "https://www.dw.com/en",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "world-wired-tech",
+    "name": "WIRED",
+    "url": "https://www.wired.com/feed/rss",
+    "homepage": "https://www.wired.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-arstechnica-tech",
+    "name": "Ars Technica",
+    "url": "https://feeds.arstechnica.com/arstechnica/index",
+    "homepage": "https://arstechnica.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-mittr-tech",
+    "name": "MIT Technology Review",
+    "url": "https://www.technologyreview.com/feed/",
+    "homepage": "https://www.technologyreview.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-physorg-science",
+    "name": "Phys.org",
+    "url": "https://phys.org/rss-feed/",
+    "homepage": "https://phys.org",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "world-sciencenews-science",
+    "name": "Science News",
+    "url": "https://www.sciencenews.org/feed",
+    "homepage": "https://www.sciencenews.org",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "science",
+    "language": "en"
+  },
+  {
+    "id": "world-sciencedaily-science",
+    "name": "ScienceDaily",
+    "url": "https://www.sciencedaily.com/rss/top/science.xml",
+    "homepage": "https://www.sciencedaily.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "science",
+    "language": "en"
   }
 ]

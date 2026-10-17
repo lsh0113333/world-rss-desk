@@ -87,7 +87,7 @@ describe("validateLayout / migrate", () => {
     ["panels not an array", { version: 1, panels: {} }],
     ["panel without id", { version: 1, panels: [{ feedIds: [], customUrls: [], limit: 10 }] }],
     ["feedIds with non-strings", { version: 1, panels: [{ id: "a", feedIds: [1], customUrls: [], limit: 10 }] }],
-    ["unknown category", { version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, category: "sports" }] }],
+    ["unknown category", { version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, category: "poster" }] }],
     ["too many panels", { version: 1, panels: Array.from({ length: MAX_PANELS * 10 + 1 }, (_, i) => ({ id: `a${i}`, feedIds: [], customUrls: [], limit: 10 })) }],
     ["duplicate panel ids", { version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10 }, { id: "a", feedIds: [], customUrls: [], limit: 10 }] }],
   ])("rejects %s", (_label, raw) => {

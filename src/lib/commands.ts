@@ -33,15 +33,21 @@ export function searchCommands(query: string, layout: Layout): Command[] {
   // 1) 나라·분야 조합 (가장 구체적인 의도)
   const countries = COUNTRIES.filter((c) => tokens.some((t) => includes(c.name, t) || norm(c.code) === t));
   const categories = CATEGORIES.filter((c) => tokens.some((t) => includes(c.label, t) || norm(c.id) === t));
-  const countryList = countries.length ? countries : categories.length ? COUNTRIES : [];
-  for (const country of countryList) {
-    if (feedsByCountry(country.code).length === 0) continue;
-    const available = categoriesForCountry(country.code);
-    const wanted = categories.length ? categories.map((c) => c.id).filter((id) => available.includes(id)) : available;
-    for (const category of wanted) {
-      results.push({ kind: "add", label: `패널 추가: ${panelTitle(country.code, category)}`, country: country.code, category });
+  const pushAdds = (countryList: typeof COUNTRIES, wantedCategories: Category[] | null) => {
+    for (const country of countryList) {
+      if (feedsByCountry(country.code).length === 0) continue;
+      const available = categoriesForCountry(country.code);
+      const wanted = wantedCategories ? wantedCategories.filter((id) => available.includes(id)) : available;
+      for (const category of wanted) {
+        if (results.some((r) => r.kind === "add" && r.country === country.code && r.category === category)) continue;
+        results.push({ kind: "add", label: `패널 추가: ${panelTitle(country.code, category)}`, country: country.code, category });
+      }
     }
-  }
+  };
+  const categoryIds = categories.map((c) => c.id);
+  // "미국 경제"처럼 둘 다 있으면 그 조합이 먼저, "IT"처럼 나라 코드(이탈리아)와 분야가 겹치면 두 해석 모두
+  if (countries.length) pushAdds(countries, categoryIds.length ? categoryIds : null);
+  if (categoryIds.length) pushAdds(COUNTRIES, categoryIds);
 
   // 2) 이미 있는 패널로 이동
   for (const p of layout.panels) {

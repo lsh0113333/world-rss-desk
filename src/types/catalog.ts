@@ -8,9 +8,20 @@ export type Continent =
   | "oceania"
   | "global";
 
-export type Category = "top" | "world" | "politics" | "economy" | "tech" | "science";
+export type Category =
+  | "top"
+  | "world"
+  | "politics"
+  | "economy"
+  | "society"
+  | "tech"
+  | "science"
+  | "health"
+  | "environment"
+  | "culture"
+  | "sports";
 
-/** ISO 3166-1 alpha-2. 지역 단위는 'EU'(유럽), 'ME'(중동), 국제 매체는 'WORLD' */
+/** ISO 3166-1 alpha-2. 지역 단위는 'EU'·'ME'·'ASIA'·'LATAM'·'AFRICA', 국제 매체는 'WORLD' */
 export type CountryCode = string;
 
 export interface CatalogFeed {
