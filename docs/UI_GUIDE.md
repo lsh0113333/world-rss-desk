@@ -46,9 +46,9 @@
 ## 컴포넌트
 ### 패널
 ```
-rounded-md border border-border bg-panel flex flex-col h-[28rem]
-헤더: flex items-center gap-2 px-3 py-2 border-b border-border bg-panel-header
-본문: flex-1 overflow-y-auto divide-y divide-border
+rounded-md border border-line bg-panel flex flex-col h-[28rem]
+헤더: flex items-center gap-2 px-3 py-2 border-b border-line bg-panel-header
+본문: flex-1 overflow-y-auto divide-y divide-line
 푸터(에러 있을 때만): px-3 py-1.5 text-xs text-error
 ```
 - 헤더 구성: `🇰🇷 한국 · 경제` (text-sm font-semibold), 새 기사 수 배지(`+3`, 포인트 색 텍스트, 배경 없음), 오른쪽에 갱신 시각(`10:42`, text-xs 보조), 새로고침/편집 아이콘 버튼.
@@ -72,7 +72,7 @@ Icon:    p-1 rounded text-muted hover:text-headline  (aria-label 필수)
 
 ### 입력 필드 / 셀렉트
 ```
-rounded border border-border bg-panel px-3 py-2 text-sm focus:outline-2 focus:outline-accent
+rounded border border-line bg-panel px-3 py-2 text-sm focus:outline-2 focus:outline-accent
 ```
 
 ### 모달 (PanelEditor)
