@@ -1,43 +1,39 @@
 # 진행 상황 (이어서 작업하기용)
 
-마지막 갱신: 2026-10-17 (오늘 작업 종료). 새 세션은 이 파일 → `CLAUDE.md` → `docs/*.md` 순서로 읽고 "남은 작업"부터 이어서 한다.
+마지막 갱신: 2026-10-18. 새 세션은 이 파일 → `CLAUDE.md` → `intent/` → `docs/*.md` 순서로 읽고 "남은 작업"부터 이어서 한다.
 같은 대화를 이어가려면 프로젝트 폴더에서 `claude --continue`.
+
+## 일하는 방식 (2026-10-18부터)
+- 새 기능은 **`intent/YYYY-MM-DD-이름.md`부터** (문제·원하는 결과·영향·제약·열린 질문, 사용자의 말 인용) → 사용자 확인 → 설계·TDD → 배포 후 상태 `done`. (`intent/README.md`, CLAUDE.md 규칙)
+- **돈이 안 나가는 기준**. AI(2차)는 나중에 무료 수준으로 — 지금 만드는 것은 그 확장을 고려해 둔다.
 
 ## 완료 (배포됨: https://world-rss-desk.vercel.app)
 1. 준실시간(2분) 갱신 + 썸네일(RSS 이미지 → `/api/thumb` og:image → 매체 이니셜)
-2. 디자인 v2: 밝은 SaaS형, 사이드바, 오늘의 톱(중복 제외), 카드/목록/텍스트 보기, 넓게 보기, 원문 서랍
-3. 쉬운 꾸미기: 온보딩, 2클릭 추가(QuickAdd), Ctrl+K 명령창, 보드(탭), 드래그 앤 드롭, 읽은 기사 흐리게
+2. 디자인 v2: 밝은 SaaS형, 사이드바, 오늘의 톱, 카드/목록/텍스트 보기, 넓게 보기, 원문 서랍
+3. 쉬운 꾸미기: 온보딩, 2클릭 추가, Ctrl+K 명령창, 보드, 드래그 앤 드롭, 읽은 기사 흐리게
+4. RSS 더 가져오기 4가지 — 카탈로그 확대(**270개, 55개 나라·지역, 해외는 영어판만**), 사이트 주소로 RSS 찾기(편집 창), 키워드 패널(구글 뉴스: 빠른 추가·명령창·편집 창), 자동 점검(매일 06:00 KST cron + 설정 "피드 상태"). 배포 서버 점검: 270개 중 269 정상(Nikkei Asia만 날짜 없음, 알려진 예외)
+5. 원문 보기 개선 — 읽기 모드 우선 + "원본 페이지" 전환, 못 여는 기사는 RSS 요약 카드, "같은 소식, 다른 매체", 페이지 한도 5MB (ADR-014)
+6. 세계 흐름 1차(무료, 브라우저 안 계산) — 같은 소식 묶기("+N개 매체"), 오늘의 이슈(나라별 비교), 헤드라인 벽(보드별 전환), 키워드 워치, 내 관심사 추천 + 패널 제안. 엔진은 `InsightEngine` 타입으로 분리(ADR-013)
 
-## 진행 중: 4단계 "RSS 더 가져오기 4가지"
-| # | 방법 | 상태 |
-|---|------|------|
-| ① | 분야·나라·매체 확대 | **완료·배포** — 분야 6→11개(사회·건강·환경·문화·스포츠 추가), 나라·지역 13→36개, 피드 78→177개. 배포 서버에서 177/177 정상 확인 |
-| ② | 사이트 주소로 RSS 찾기 | **백엔드 완료·배포(화면 연결 전)** — `src/lib/feed-discovery.ts`, `src/services/discover.ts`, `GET /api/discover?url=`. 카탈로그 매체는 카탈로그 피드로 제안, 중복 제거 |
-| ③ | 키워드 패널(구글 뉴스) | 남음 |
-| ④ | 자동 점검 | 남음 |
-
-## 남은 작업 (순서대로)
-1. **② UI**: `PanelEditor`의 "RSS 주소 직접 추가"를 "RSS 또는 사이트 주소"로 바꾸고 `/api/discover` 결과 목록에서 골라 추가. `catalogId`가 있으면 `feedIds`에, 없으면 `customUrls`에 넣는다. 기존 `validateFeedUrl` prop/테스트를 `discover` 기반으로 교체.
-2. **③ 키워드 패널**
-   - `Panel.query?: string` (layout-store 검증 포함), 제목 기본값 `🔎 {query}`
-   - `/api/feeds`에 `q` 파라미터(반복 가능, 피드 수 제한에 포함) → `https://news.google.com/rss/search?q={q}+when:2d&hl=ko&gl=KR&ceid=KR:ko` (한글이 없으면 `hl=en-US&gl=US&ceid=US:en`)
-   - 파서: RSS item의 `<source>`가 있으면 그 텍스트를 `source`로, 제목 끝 " - {source}" 제거
-   - `Thumb`: 링크 호스트가 `news.google.com`이면 `/api/thumb` 건너뛰고 바로 이니셜(구글 로고가 나오는 것 방지)
-   - 진입점: QuickAdd에 "키워드" 탭, 명령창에 "키워드 패널 추가: '{입력}'", PanelEditor에 키워드 입력
-   - 원문 보기는 구글 경유 링크라 대부분 "새 탭에서 열기"가 됨(정상)
-3. **④ 자동 점검**
-   - `GET /api/feed-health`: 카탈로그 전체를 동시 20개·피드당 6초로 점검, `unstable_cache`로 24시간 캐시, `export const maxDuration = 300`
-   - `vercel.json`에 `crons: [{ "path": "/api/feed-health", "schedule": "0 21 * * *" }]` (매일 06:00 KST, Hobby는 하루 1회까지)
-   - 설정(⋯) 메뉴에 "피드 상태" → 실패·오래된 피드 목록 대화상자
-4. **문서**: `docs/FEEDS.md`(177개 현황표, 제외 목록 추가: 한겨레(날짜 없음·재배포 금지 명시), Nature(쿠키 로그인 리다이렉트), JTBC(갱신 중단), Washington Post(502), 동아 사회(0건), Tuoi Tre·Jakarta Post·Focus Taiwan·Mail&Guardian(404), Tempo·Ahram(403), Taiwan News·Hurriyet·Daily Sabah(0건), News24(연결 실패), New Scientist(406), Antara(시간 초과)), `PRD.md` 분야 목록, `ARCHITECTURE.md` 트리(discover)
-5. `npm run lint && npm run build && npm run test` → `npm run feeds:check` → `npx vercel deploy --prod --yes` → 배포 주소에서 `/api/feeds?fresh=1&ids=…`로 신규 피드 점검(서버 IP 차단 확인)
+## 남은 작업 (사용자 확인 필요한 것 포함)
+1. **사용자 피드백 반영**: 이번에 바뀐 화면(이슈 줄·추천·헤드라인 벽·키워드)을 실제로 써 본 의견 받기. 이슈 키워드 품질(흔한 단어가 잡히면 `src/lib/keywords.ts` 불용어 추가)
+2. **2차 (AI, 무료 수준) — 사용자가 "추후에" 하기로 함. 시작 전 intent 작성**
+   - 후보: 다국어 이슈 묶기(한국어·영어 기사를 같은 이슈로), 제목 한국어 번역, 이슈·기사 3줄 요약, "오늘의 세계 요약 5줄"
+   - 구조: `/api/insights`가 `Insights`(src/types/insights.ts)를 돌려주게 하고 `ruleEngine` 대신 사용. 서버에서만 키 사용, 결과 캐시로 호출 수 최소화
+   - 무료 수준 조건부터 조사: 무료 티어가 있는 API/모델, 하루 호출 한도, 캐시 전략
+3. **3차 (무료 DB)**: 세계 지도(나라별 기사 수·이슈 열기), 하루 동안의 이슈 추세(급상승) — Upstash 등 무료 DB 필요
+4. **GitHub 연결**: 사용자가 1차 버전 완료 후 하기로 함 (ADR-011). 지금은 로컬 git + `vercel deploy`
+5. 작은 개선 후보: 헤드라인 벽 키보드 이동(j/k), 이슈 대화상자에서 "이 키워드로 패널 만들기"·"키워드 워치에 추가" 버튼, 추천 "관심 없음" 피드백
 
 ## 작업 기록
 | 날짜 | 한 일 | 마지막 커밋 |
 |------|------|------------|
-| 2026-10-17 | 설계 문서 → MVP(1~11단계) → 분할 원문 보기 → 디자인 v2 → 쉬운 꾸미기 → RSS 확대(177개)·사이트 주소 탐색 백엔드. 테스트 366개 통과 | `70d429d` 이후 문서 갱신 |
+| 2026-10-17 | 설계 문서 → MVP(1~11단계) → 분할 원문 보기 → 디자인 v2 → 쉬운 꾸미기 → RSS 확대(177개)·사이트 주소 탐색 백엔드. 테스트 366개 | `8414c6e` |
+| 2026-10-18 | intent.md 도입 → 원문 보기 읽기 모드 우선·요약 카드 → RSS 2차 확대(270개, 유럽·북유럽·아일랜드·IT·중동, 영어판) → 세계 흐름 1차(묶기·이슈·헤드라인 벽·키워드 워치·추천) → 사이트 주소 찾기 화면·키워드 패널·자동 점검(cron). 테스트 465개, 배포·실서버 확인 | 이 파일 커밋 |
 
 ## 참고
 - 배포: 이 PC는 Vercel CLI 로그인 + 프로젝트 연결 완료(`world-rss-desk`). `npx vercel deploy --prod --yes`
-- Node.js: `C:\nodejs`
+- Vercel 환경 변수: `CRON_SECRET`(Production) — cron 재점검용. 값은 Vercel에만 있음(필요하면 `vercel env rm` 후 새로 추가)
+- Node.js: `C:\nodejs` (사용자 PATH에 등록됨. Bash에서는 `export PATH="/c/nodejs:$PATH"`)
 - 카탈로그 피드 id는 사용자 설정이 참조하므로 바꾸지 않는다
+- 새 피드 추가 절차: 후보 probe → `catalog.json` 추가 → `npm run feeds:check` → 배포 → 배포 서버에서 `/api/feeds?fresh=1&ids=…` (서버 IP 차단 확인) → `docs/FEEDS.md`

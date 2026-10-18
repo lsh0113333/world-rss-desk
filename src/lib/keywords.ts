@@ -19,7 +19,8 @@ them then there these they this those through to too under until up very was we 
 would you your new news says said say live update updates latest video watch photos photo first last next year years week weeks day days
 today tonight yesterday tomorrow report reports know far amid get gets got make makes made back still may might must one two three
 four five six seven eight nine ten man woman people time times us via vs top look inside here's what's it's dont don't won't can't
-year's more than less many much former new world's`.split(/\s+/),
+year's more than less many much former new world's want wants call calls set sets take takes give gives go goes come comes
+keep keeps put puts see sees seen tell tells told show shows use used help helps begin begins start starts end ends`.split(/\s+/),
 );
 
 // 한국어 헤드라인 상투어
