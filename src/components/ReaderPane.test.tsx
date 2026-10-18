@@ -67,6 +67,7 @@ describe("ReaderPane", () => {
     respondWith({
       mode: "reader",
       url: article.link,
+      embeddable: false,
       title: "Markets rally as rates fall",
       siteName: "Example News",
       byline: "By Jane Doe",
@@ -86,6 +87,44 @@ describe("ReaderPane", () => {
     expect(screen.getByRole("listitem")).toHaveTextContent("Tech up 4%");
     expect(screen.getByRole("img", { name: "chart" })).toHaveAttribute("src", "https://news.example.com/chart.png");
     expect(screen.getByText(/Example News · By Jane Doe/)).toBeInTheDocument();
+  });
+
+  it("switches between reader mode and the original page when embedding is allowed", async () => {
+    respondWith({ mode: "reader", url: "https://news.example.com/final", embeddable: true, title: "Markets rally", blocks: [{ type: "p", text: "Body text" }] });
+    renderPane();
+    expect(await screen.findByText("Body text")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "원본 페이지" }));
+    const frame = screen.getByTitle("Markets rally");
+    expect(frame.tagName).toBe("IFRAME");
+    expect(frame).toHaveAttribute("src", "https://news.example.com/final");
+    expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
+    await userEvent.click(screen.getByRole("button", { name: "읽기 모드" }));
+    expect(screen.getByText("Body text")).toBeInTheDocument();
+    expect(screen.queryByTitle("Markets rally")).not.toBeInTheDocument();
+  });
+
+  it("does not offer the original page toggle when embedding is blocked", async () => {
+    respondWith({ mode: "reader", url: article.link, embeddable: false, title: "T", blocks: [{ type: "p", text: "Body text" }] });
+    renderPane();
+    expect(await screen.findByText("Body text")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "원본 페이지" })).not.toBeInTheDocument();
+  });
+
+  it("shows the RSS summary card instead of a blank pane in link mode", async () => {
+    respondWith({ mode: "link", url: article.link, reason: "사이트가 접근을 막았습니다 (HTTP 403)" });
+    renderPane({ article: { ...article, summary: "Stocks climbed after the central bank cut rates.", image: "https://news.example.com/hero.jpg" } });
+    expect(await screen.findByText("Stocks climbed after the central bank cut rates.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Markets rally" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "기사 대표 이미지" })).toHaveAttribute("src", "https://news.example.com/hero.jpg");
+  });
+
+  it("lists other outlets covering the same story and opens one on click", async () => {
+    respondWith({ mode: "link", url: article.link, reason: "사이트가 접근을 막았습니다 (HTTP 403)" });
+    const other: Article = { ...article, id: "b1", title: "Rally on rate cut", link: "https://other.example.com/b", source: "Other Daily" };
+    const onSelect = vi.fn();
+    renderPane({ related: [other], onSelect });
+    await userEvent.click(await screen.findByRole("button", { name: /Other Daily/ }));
+    expect(onSelect).toHaveBeenCalledWith(other);
   });
 
   it("explains why and offers a new tab in link mode", async () => {

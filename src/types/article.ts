@@ -40,8 +40,9 @@ export interface ReaderDoc {
   blocks: ReaderBlock[];
 }
 
-/** /api/article 응답: 실제 페이지(iframe) / 읽기 모드 / 새 탭 안내 */
+/** /api/article 응답: 읽기 모드(우선) / 실제 페이지(iframe) / 새 탭 안내 */
 export type ArticleView =
   | { mode: "frame"; url: string }
-  | ({ mode: "reader"; url: string } & ReaderDoc)
+  /** embeddable: 원본 페이지를 iframe으로 띄워도 되는지 ("원본 페이지" 전환 버튼) */
+  | ({ mode: "reader"; url: string; embeddable: boolean } & ReaderDoc)
   | { mode: "link"; url: string; reason: string };

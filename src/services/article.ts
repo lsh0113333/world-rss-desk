@@ -6,7 +6,8 @@ import type { ArticleView, ReaderBlock, ReaderDoc } from "@/types/article";
 import { fetchText } from "./http";
 
 export const ARTICLE_TIMEOUT_MS = 10_000;
-export const MAX_ARTICLE_BYTES = 3 * 1024 * 1024;
+// 이미지·스크립트가 인라인된 큰 기사 페이지(예: Tehran Times)가 있어 RSS(2MB)보다 넉넉하게
+export const MAX_ARTICLE_BYTES = 5 * 1024 * 1024;
 const MIN_TEXT_LENGTH = 200;
 const MAX_BLOCKS = 300;
 
@@ -106,7 +107,9 @@ function failureReason(message: string): string {
 }
 
 /**
- * 원문 보기 모드 판정: iframe 허용 → frame, 아니면 본문 추출 → reader, 실패 → link.
+ * 원문 보기 모드 판정 (읽기 모드 우선): 본문 추출 성공 → reader(iframe 허용 여부를 embeddable로 함께),
+ * 추출 실패 + iframe 허용 → frame, 둘 다 안 되면 → link.
+ * iframe 안의 해외 매체는 쿠키 동의 창·유료벽·스크립트 차단으로 빈 화면이 되기 쉬워 본문 추출을 먼저 보여준다.
  * 페이지를 못 받아도 예외 대신 link를 돌려준다. 최초 URL의 안전성 검사 실패만 예외.
  */
 export async function viewArticle(url: string, opts: ViewOptions = {}): Promise<ArticleView> {
@@ -129,9 +132,9 @@ export async function viewArticle(url: string, opts: ViewOptions = {}): Promise<
 
   const contentType = page.headers.get("content-type");
   if (contentType && !/html/i.test(contentType)) return { mode: "link", url: page.url, reason: "웹 페이지가 아닙니다" };
-  if (canEmbed(page.headers)) return { mode: "frame", url: page.url };
-
+  const embeddable = canEmbed(page.headers);
   const doc = extractReader(page.text, page.url);
-  if (!doc) return { mode: "link", url: page.url, reason: "본문을 찾지 못했습니다 (유료 기사이거나 구조가 특이한 페이지)" };
-  return { mode: "reader", url: page.url, ...doc };
+  if (doc) return { mode: "reader", url: page.url, embeddable, ...doc };
+  if (embeddable) return { mode: "frame", url: page.url };
+  return { mode: "link", url: page.url, reason: "본문을 찾지 못했습니다 (유료 기사이거나 구조가 특이한 페이지)" };
 }

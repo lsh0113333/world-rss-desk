@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { formatRelative } from "@/lib/time";
 import type { Article, ArticleView, ReaderBlock } from "@/types/article";
@@ -10,6 +11,9 @@ interface Props {
   onClose(): void;
   /** 모바일 전체 화면 모드: 상단에 "← 목록" */
   mobile?: boolean;
+  /** 같은 소식을 다룬 다른 매체 기사 (막힌 기사도 다른 곳에서 읽을 수 있게) */
+  related?: Article[];
+  onSelect?(article: Article): void;
 }
 
 async function fetchView(url: string): Promise<ArticleView> {
@@ -21,9 +25,11 @@ async function fetchView(url: string): Promise<ArticleView> {
 
 const primary = "inline-block rounded bg-headline px-3 py-1.5 text-sm text-panel hover:opacity-90";
 
-export function ReaderPane({ article, onClose, mobile = false }: Props) {
+export function ReaderPane({ article, onClose, mobile = false, related = [], onSelect }: Props) {
   const key = article ? `/api/article?url=${encodeURIComponent(article.link)}` : null;
   const { data, error, isLoading } = useSWR<ArticleView>(key, fetchView, { revalidateOnFocus: false, shouldRetryOnError: false });
+  // 읽기 모드에서 "원본 페이지"로 전환한 기사 링크 (다른 기사를 고르면 자동으로 읽기 모드로 돌아감)
+  const [framedLink, setFramedLink] = useState<string | null>(null);
 
   if (!article) {
     return (
@@ -31,7 +37,9 @@ export function ReaderPane({ article, onClose, mobile = false }: Props) {
     );
   }
 
-  const modeLabel = data?.mode === "frame" ? "원문" : data?.mode === "reader" ? "읽기 모드" : null;
+  const showFrame = data?.mode === "frame" || (data?.mode === "reader" && data.embeddable && framedLink === article.link);
+  const modeLabel = showFrame ? "원문" : data?.mode === "reader" ? "읽기 모드" : null;
+  const canToggle = data?.mode === "reader" && data.embeddable;
 
   return (
     <section aria-label="기사 원문" className="flex h-full flex-col bg-panel">
@@ -42,7 +50,27 @@ export function ReaderPane({ article, onClose, mobile = false }: Props) {
           </button>
         )}
         <span className="min-w-0 truncate text-sm font-semibold text-headline">{article.source}</span>
-        {modeLabel && <span className="shrink-0 text-xs text-muted">{modeLabel}</span>}
+        {modeLabel && !canToggle && <span className="shrink-0 text-xs text-muted">{modeLabel}</span>}
+        {canToggle && (
+          <div role="group" aria-label="보기 전환" className="flex shrink-0 rounded border border-line text-xs">
+            <button
+              type="button"
+              aria-pressed={!showFrame}
+              onClick={() => setFramedLink(null)}
+              className={`px-2 py-0.5 ${!showFrame ? "bg-panel-header font-semibold text-headline" : "text-muted hover:text-headline"}`}
+            >
+              읽기 모드
+            </button>
+            <button
+              type="button"
+              aria-pressed={showFrame}
+              onClick={() => setFramedLink(article.link)}
+              className={`border-l border-line px-2 py-0.5 ${showFrame ? "bg-panel-header font-semibold text-headline" : "text-muted hover:text-headline"}`}
+            >
+              원본 페이지
+            </button>
+          </div>
+        )}
         <a
           href={article.link}
           target="_blank"
@@ -60,8 +88,10 @@ export function ReaderPane({ article, onClose, mobile = false }: Props) {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading && <ReaderSkeleton />}
-        {error && !data && <Fallback reason={error instanceof Error ? error.message : "원문을 불러오지 못했습니다"} href={article.link} />}
-        {data?.mode === "frame" && (
+        {error && !data && (
+          <Fallback article={article} reason={error instanceof Error ? error.message : "원문을 불러오지 못했습니다"} href={article.link} />
+        )}
+        {data && showFrame && (
           <iframe
             key={data.url}
             title={article.title}
@@ -71,7 +101,7 @@ export function ReaderPane({ article, onClose, mobile = false }: Props) {
             className="h-full w-full border-0 bg-white"
           />
         )}
-        {data?.mode === "reader" && (
+        {data?.mode === "reader" && !showFrame && (
           <article className="mx-auto max-w-2xl px-6 py-6">
             <h1 className="text-xl font-semibold leading-snug text-headline">{data.title}</h1>
             <p className="mt-2 text-xs text-muted">
@@ -90,7 +120,8 @@ export function ReaderPane({ article, onClose, mobile = false }: Props) {
             </p>
           </article>
         )}
-        {data?.mode === "link" && <Fallback reason={data.reason} href={data.url} />}
+        {data?.mode === "link" && <Fallback article={article} reason={data.reason} href={data.url} />}
+        {related.length > 0 && !showFrame && (data || error) && <Related articles={related} onSelect={onSelect} />}
       </div>
     </section>
   );
@@ -118,15 +149,49 @@ function Block({ block }: { block: ReaderBlock }) {
   }
 }
 
-function Fallback({ reason, href }: { reason: string; href: string }) {
+/** 원문을 열 수 없을 때: 빈 화면 대신 RSS에 있던 제목·사진·요약을 보여준다 */
+function Fallback({ article, reason, href }: { article: Article; reason: string; href: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-      <p className="text-sm text-muted">이 기사는 여기서 열 수 없습니다</p>
-      <p className="text-xs text-faint">{reason}</p>
-      <a href={href} target="_blank" rel="noopener noreferrer" className={primary}>
-        새 탭에서 열기
-      </a>
-    </div>
+    <article className="mx-auto max-w-2xl px-6 py-6">
+      <h1 className="text-xl font-semibold leading-snug text-headline">{article.title}</h1>
+      <p className="mt-2 text-xs text-muted">
+        {[article.source, article.publishedAt ? formatRelative(article.publishedAt) : null].filter(Boolean).join(" · ")}
+      </p>
+      {article.image && (
+        // eslint-disable-next-line @next/next/no-img-element -- 외부 매체 이미지라 next/image 최적화 대상이 아님
+        <img src={article.image} alt="기사 대표 이미지" referrerPolicy="no-referrer" className="mt-5 w-full rounded" />
+      )}
+      {article.summary && <p className="mt-5 text-[15px] leading-7 text-body">{article.summary}</p>}
+      <div className="mt-6 rounded border border-line bg-panel-header px-4 py-3">
+        <p className="text-sm text-muted">이 기사는 여기서 본문을 열 수 없습니다</p>
+        <p className="mt-1 text-xs text-faint">{reason}</p>
+        <a href={href} target="_blank" rel="noopener noreferrer" className={`${primary} mt-3`}>
+          새 탭에서 열기
+        </a>
+      </div>
+    </article>
+  );
+}
+
+function Related({ articles, onSelect }: { articles: Article[]; onSelect?(article: Article): void }) {
+  return (
+    <section aria-label="같은 소식, 다른 매체" className="mx-auto max-w-2xl px-6 pb-8">
+      <h2 className="border-t border-line pt-4 text-xs font-semibold text-muted">같은 소식, 다른 매체</h2>
+      <ul className="mt-2 space-y-1">
+        {articles.map((a) => (
+          <li key={a.id}>
+            <button
+              type="button"
+              onClick={() => onSelect?.(a)}
+              className="w-full rounded px-2 py-1.5 text-left hover:bg-panel-header"
+            >
+              <span className="block text-xs font-semibold text-muted">{a.source}</span>
+              <span className="block text-sm text-headline">{a.title}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -1774,5 +1774,955 @@
     "country": "WORLD",
     "category": "science",
     "language": "en"
+  },
+  {
+    "id": "no-thelocal-top",
+    "name": "The Local Norway",
+    "url": "https://feeds.thelocal.com/rss/no",
+    "homepage": "https://www.thelocal.no",
+    "continent": "europe",
+    "country": "NO",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "no-newsinenglish-top",
+    "name": "News in English",
+    "url": "https://www.newsinenglish.no/feed/",
+    "homepage": "https://www.newsinenglish.no",
+    "continent": "europe",
+    "country": "NO",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "no-newsinenglish-economy",
+    "name": "News in English",
+    "url": "https://www.newsinenglish.no/category/business/feed/",
+    "homepage": "https://www.newsinenglish.no",
+    "continent": "europe",
+    "country": "NO",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "no-lifeinnorway-culture",
+    "name": "Life in Norway",
+    "url": "https://www.lifeinnorway.net/feed/",
+    "homepage": "https://www.lifeinnorway.net",
+    "continent": "europe",
+    "country": "NO",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "se-thelocal-top",
+    "name": "The Local Sweden",
+    "url": "https://feeds.thelocal.com/rss/se",
+    "homepage": "https://www.thelocal.se",
+    "continent": "europe",
+    "country": "SE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "se-radiosweden-top",
+    "name": "Radio Sweden",
+    "url": "https://api.sr.se/api/rss/program/2054",
+    "homepage": "https://www.sverigesradio.se/radiosweden",
+    "continent": "europe",
+    "country": "SE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "dk-thelocal-top",
+    "name": "The Local Denmark",
+    "url": "https://feeds.thelocal.com/rss/dk",
+    "homepage": "https://www.thelocal.dk",
+    "continent": "europe",
+    "country": "DK",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "dk-cphpost-top",
+    "name": "The Copenhagen Post",
+    "url": "https://cphpost.dk/feed/",
+    "homepage": "https://cphpost.dk",
+    "continent": "europe",
+    "country": "DK",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "fi-yle-top",
+    "name": "Yle News",
+    "url": "https://yle.fi/rss/news",
+    "homepage": "https://yle.fi/news",
+    "continent": "europe",
+    "country": "FI",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "fi-helsinkitimes-top",
+    "name": "Helsinki Times",
+    "url": "https://www.helsinkitimes.fi/?format=feed&type=rss",
+    "homepage": "https://www.helsinkitimes.fi",
+    "continent": "europe",
+    "country": "FI",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "is-ruv-top",
+    "name": "RÚV English",
+    "url": "https://www.ruv.is/rss/english",
+    "homepage": "https://www.ruv.is/english",
+    "continent": "europe",
+    "country": "IS",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "is-grapevine-culture",
+    "name": "Reykjavik Grapevine",
+    "url": "https://grapevine.is/feed/",
+    "homepage": "https://grapevine.is",
+    "continent": "europe",
+    "country": "IS",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-top",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-politics",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/politics/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-economy",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/business/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-world",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/world/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-tech",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/technology/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-health",
+    "name": "RTÉ News",
+    "url": "https://www.rte.ie/feeds/rss/?index=/news/health/",
+    "homepage": "https://www.rte.ie/news",
+    "continent": "europe",
+    "country": "IE",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-culture",
+    "name": "RTÉ",
+    "url": "https://www.rte.ie/feeds/rss/?index=/entertainment/",
+    "homepage": "https://www.rte.ie/entertainment",
+    "continent": "europe",
+    "country": "IE",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "ie-rte-sports",
+    "name": "RTÉ Sport",
+    "url": "https://www.rte.ie/feeds/rss/?index=/sport/",
+    "homepage": "https://www.rte.ie/sport",
+    "continent": "europe",
+    "country": "IE",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-top",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-society",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-irish-news/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "society",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-politics",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-politics/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-economy",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-business/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-world",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-world/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-tech",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-technology/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-health",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-health/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "health",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-culture",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-culture/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishtimes-sports",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/arc/outboundfeeds/feed-sport/?from=0&size=20",
+    "homepage": "https://www.irishtimes.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ie-independent-top",
+    "name": "Irish Independent",
+    "url": "https://www.independent.ie/rss/",
+    "homepage": "https://www.independent.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ie-independent-society",
+    "name": "Irish Independent",
+    "url": "https://www.independent.ie/irish-news/rss/",
+    "homepage": "https://www.independent.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "society",
+    "language": "en"
+  },
+  {
+    "id": "ie-independent-economy",
+    "name": "Irish Independent",
+    "url": "https://www.independent.ie/business/rss/",
+    "homepage": "https://www.independent.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ie-independent-tech",
+    "name": "Irish Independent",
+    "url": "https://www.independent.ie/business/technology/rss/",
+    "homepage": "https://www.independent.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ie-independent-sports",
+    "name": "Irish Independent",
+    "url": "https://www.independent.ie/sport/rss/",
+    "homepage": "https://www.independent.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ie-thejournal-top",
+    "name": "TheJournal.ie",
+    "url": "https://www.thejournal.ie/feed/",
+    "homepage": "https://www.thejournal.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ie-irishexaminer-top",
+    "name": "Irish Examiner",
+    "url": "https://www.irishexaminer.com/feed/35-top_news.xml",
+    "homepage": "https://www.irishexaminer.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ie-siliconrepublic-tech",
+    "name": "Silicon Republic",
+    "url": "https://www.siliconrepublic.com/feed/",
+    "homepage": "https://www.siliconrepublic.com",
+    "continent": "europe",
+    "country": "IE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ie-techcentral-tech",
+    "name": "TechCentral.ie",
+    "url": "https://www.techcentral.ie/feed/",
+    "homepage": "https://www.techcentral.ie",
+    "continent": "europe",
+    "country": "IE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "nl-dutchnews-top",
+    "name": "DutchNews.nl",
+    "url": "https://www.dutchnews.nl/feed/",
+    "homepage": "https://www.dutchnews.nl",
+    "continent": "europe",
+    "country": "NL",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "nl-dutchnews-economy",
+    "name": "DutchNews.nl",
+    "url": "https://www.dutchnews.nl/category/business/feed/",
+    "homepage": "https://www.dutchnews.nl",
+    "continent": "europe",
+    "country": "NL",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ch-thelocal-top",
+    "name": "The Local Switzerland",
+    "url": "https://feeds.thelocal.com/rss/ch",
+    "homepage": "https://www.thelocal.ch",
+    "continent": "europe",
+    "country": "CH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "at-thelocal-top",
+    "name": "The Local Austria",
+    "url": "https://feeds.thelocal.com/rss/at",
+    "homepage": "https://www.thelocal.at",
+    "continent": "europe",
+    "country": "AT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "it-thelocal-top",
+    "name": "The Local Italy",
+    "url": "https://feeds.thelocal.com/rss/it",
+    "homepage": "https://www.thelocal.it",
+    "continent": "europe",
+    "country": "IT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "fr-thelocal-top",
+    "name": "The Local France",
+    "url": "https://feeds.thelocal.com/rss/fr",
+    "homepage": "https://www.thelocal.fr",
+    "continent": "europe",
+    "country": "FR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "de-thelocal-top",
+    "name": "The Local Germany",
+    "url": "https://feeds.thelocal.com/rss/de",
+    "homepage": "https://www.thelocal.de",
+    "continent": "europe",
+    "country": "DE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "pl-notesfrompoland-top",
+    "name": "Notes from Poland",
+    "url": "https://notesfrompoland.com/feed/",
+    "homepage": "https://notesfrompoland.com",
+    "continent": "europe",
+    "country": "PL",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "gr-kathimerini-top",
+    "name": "Kathimerini English",
+    "url": "https://www.ekathimerini.com/infeeds/rss/nx-rss-feed.xml",
+    "homepage": "https://www.ekathimerini.com",
+    "continent": "europe",
+    "country": "GR",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "pt-portugalnews-top",
+    "name": "The Portugal News",
+    "url": "https://www.theportugalnews.com/rss",
+    "homepage": "https://www.theportugalnews.com",
+    "continent": "europe",
+    "country": "PT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "pt-portugalresident-top",
+    "name": "Portugal Resident",
+    "url": "https://www.portugalresident.com/feed/",
+    "homepage": "https://www.portugalresident.com",
+    "continent": "europe",
+    "country": "PT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ee-err-top",
+    "name": "ERR News",
+    "url": "https://news.err.ee/rss",
+    "homepage": "https://news.err.ee",
+    "continent": "europe",
+    "country": "EE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ee-err-economy",
+    "name": "ERR News",
+    "url": "https://news.err.ee/rss/business",
+    "homepage": "https://news.err.ee",
+    "continent": "europe",
+    "country": "EE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "lt-lrt-top",
+    "name": "LRT English",
+    "url": "https://www.lrt.lt/en/news-in-english?rss",
+    "homepage": "https://www.lrt.lt/en/news-in-english",
+    "continent": "europe",
+    "country": "LT",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "cz-praguemorning-top",
+    "name": "Prague Morning",
+    "url": "https://praguemorning.cz/feed/",
+    "homepage": "https://praguemorning.cz",
+    "continent": "europe",
+    "country": "CZ",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "hu-hungarytoday-top",
+    "name": "Hungary Today",
+    "url": "https://hungarytoday.hu/feed/",
+    "homepage": "https://hungarytoday.hu",
+    "continent": "europe",
+    "country": "HU",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "eu-politico-tech",
+    "name": "POLITICO Europe",
+    "url": "https://www.politico.eu/section/technology/feed/",
+    "homepage": "https://www.politico.eu",
+    "continent": "europe",
+    "country": "EU",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "eu-politico-environment",
+    "name": "POLITICO Europe",
+    "url": "https://www.politico.eu/section/energy/feed/",
+    "homepage": "https://www.politico.eu",
+    "continent": "europe",
+    "country": "EU",
+    "category": "environment",
+    "language": "en"
+  },
+  {
+    "id": "eu-euobserver-politics",
+    "name": "EUobserver",
+    "url": "https://euobserver.com/feed/",
+    "homepage": "https://euobserver.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "politics",
+    "language": "en"
+  },
+  {
+    "id": "eu-balkaninsight-world",
+    "name": "Balkan Insight",
+    "url": "https://balkaninsight.com/feed/",
+    "homepage": "https://balkaninsight.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "eu-sifted-tech",
+    "name": "Sifted",
+    "url": "https://sifted.eu/feed",
+    "homepage": "https://sifted.eu",
+    "continent": "europe",
+    "country": "EU",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "eu-techeu-tech",
+    "name": "Tech.eu",
+    "url": "https://tech.eu/feed/",
+    "homepage": "https://tech.eu",
+    "continent": "europe",
+    "country": "EU",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "eu-eustartups-tech",
+    "name": "EU-Startups",
+    "url": "https://www.eu-startups.com/feed/",
+    "homepage": "https://www.eu-startups.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "eu-thenextweb-tech",
+    "name": "The Next Web",
+    "url": "https://thenextweb.com/feed",
+    "homepage": "https://thenextweb.com",
+    "continent": "europe",
+    "country": "EU",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-theregister-tech",
+    "name": "The Register",
+    "url": "https://www.theregister.com/headlines.atom",
+    "homepage": "https://www.theregister.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-computerweekly-tech",
+    "name": "Computer Weekly",
+    "url": "https://www.computerweekly.com/rss/All-Computer-Weekly-content.xml",
+    "homepage": "https://www.computerweekly.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "gb-techradar-tech",
+    "name": "TechRadar",
+    "url": "https://www.techradar.com/feeds.xml",
+    "homepage": "https://www.techradar.com",
+    "continent": "europe",
+    "country": "GB",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-engadget-tech",
+    "name": "Engadget",
+    "url": "https://www.engadget.com/rss.xml",
+    "homepage": "https://www.engadget.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-zdnet-tech",
+    "name": "ZDNET",
+    "url": "https://www.zdnet.com/news/rss.xml",
+    "homepage": "https://www.zdnet.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-bleepingcomputer-tech",
+    "name": "BleepingComputer",
+    "url": "https://www.bleepingcomputer.com/feed/",
+    "homepage": "https://www.bleepingcomputer.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-techspot-tech",
+    "name": "TechSpot",
+    "url": "https://www.techspot.com/backend.xml",
+    "homepage": "https://www.techspot.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-9to5mac-tech",
+    "name": "9to5Mac",
+    "url": "https://9to5mac.com/feed/",
+    "homepage": "https://9to5mac.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "us-androidauthority-tech",
+    "name": "Android Authority",
+    "url": "https://www.androidauthority.com/feed/",
+    "homepage": "https://www.androidauthority.com",
+    "continent": "north-america",
+    "country": "US",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-hackernews-tech",
+    "name": "Hacker News",
+    "url": "https://hnrss.org/frontpage",
+    "homepage": "https://news.ycombinator.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-thehackernews-tech",
+    "name": "The Hacker News",
+    "url": "https://feeds.feedburner.com/TheHackersNews",
+    "homepage": "https://thehackernews.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-infoq-tech",
+    "name": "InfoQ",
+    "url": "https://feed.infoq.com/",
+    "homepage": "https://www.infoq.com",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-restofworld-tech",
+    "name": "Rest of World",
+    "url": "https://restofworld.org/feed/latest/",
+    "homepage": "https://restofworld.org",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "world-ieeespectrum-tech",
+    "name": "IEEE Spectrum",
+    "url": "https://spectrum.ieee.org/feeds/feed.rss",
+    "homepage": "https://spectrum.ieee.org",
+    "continent": "global",
+    "country": "WORLD",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-top",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-society",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/news/uae/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "society",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-world",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/news/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-economy",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/business/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-tech",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/future/technology/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "tech",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-culture",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/arts-culture/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "culture",
+    "language": "en"
+  },
+  {
+    "id": "ae-thenational-sports",
+    "name": "The National",
+    "url": "https://www.thenationalnews.com/arc/outboundfeeds/rss/category/sport/?outputType=xml",
+    "homepage": "https://www.thenationalnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ae-khaleejtimes-top",
+    "name": "Khaleej Times",
+    "url": "https://www.khaleejtimes.com/api/v1/collections/top-section.rss",
+    "homepage": "https://www.khaleejtimes.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "ae-khaleejtimes-society",
+    "name": "Khaleej Times",
+    "url": "https://www.khaleejtimes.com/api/v1/collections/uae.rss",
+    "homepage": "https://www.khaleejtimes.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "society",
+    "language": "en"
+  },
+  {
+    "id": "ae-khaleejtimes-economy",
+    "name": "Khaleej Times",
+    "url": "https://www.khaleejtimes.com/api/v1/collections/business.rss",
+    "homepage": "https://www.khaleejtimes.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "economy",
+    "language": "en"
+  },
+  {
+    "id": "ae-khaleejtimes-world",
+    "name": "Khaleej Times",
+    "url": "https://www.khaleejtimes.com/api/v1/collections/world.rss",
+    "homepage": "https://www.khaleejtimes.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "world",
+    "language": "en"
+  },
+  {
+    "id": "ae-khaleejtimes-sports",
+    "name": "Khaleej Times",
+    "url": "https://www.khaleejtimes.com/api/v1/collections/sports.rss",
+    "homepage": "https://www.khaleejtimes.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "sports",
+    "language": "en"
+  },
+  {
+    "id": "ae-gulfnews-top",
+    "name": "Gulf News",
+    "url": "https://gulfnews.com/stories.rss",
+    "homepage": "https://gulfnews.com",
+    "continent": "middle-east",
+    "country": "AE",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "sa-saudigazette-top",
+    "name": "Saudi Gazette",
+    "url": "https://saudigazette.com.sa/rssFeed/74",
+    "homepage": "https://saudigazette.com.sa",
+    "continent": "middle-east",
+    "country": "SA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "sa-aawsat-top",
+    "name": "Asharq Al-Awsat",
+    "url": "https://english.aawsat.com/feed",
+    "homepage": "https://english.aawsat.com",
+    "continent": "middle-east",
+    "country": "SA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "qa-dohanews-top",
+    "name": "Doha News",
+    "url": "https://dohanews.co/feed/",
+    "homepage": "https://dohanews.co",
+    "continent": "middle-east",
+    "country": "QA",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "bh-newsofbahrain-top",
+    "name": "News of Bahrain",
+    "url": "https://www.newsofbahrain.com/rss/en.xml",
+    "homepage": "https://www.newsofbahrain.com",
+    "continent": "middle-east",
+    "country": "BH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "me-newarab-top",
+    "name": "The New Arab",
+    "url": "https://www.newarab.com/rss",
+    "homepage": "https://www.newarab.com",
+    "continent": "middle-east",
+    "country": "ME",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "me-almonitor-top",
+    "name": "Al-Monitor",
+    "url": "https://www.al-monitor.com/rss",
+    "homepage": "https://www.al-monitor.com",
+    "continent": "middle-east",
+    "country": "ME",
+    "category": "top",
+    "language": "en"
   }
 ]

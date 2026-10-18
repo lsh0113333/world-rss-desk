@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { FeedFetchError } from "@/lib/errors";
-import { extractReader, viewArticle } from "./article";
+import { MAX_ARTICLE_BYTES, extractReader, viewArticle } from "./article";
 
 const html = readFileSync(join(__dirname, "__fixtures__", "article.html"), "utf8");
 const pageUrl = "https://news.example.com/2026/10/markets";
@@ -46,8 +46,14 @@ describe("viewArticle", () => {
   const page = (body: string, headers: Record<string, string> = {}) =>
     new Response(body, { status: 200, headers: { "content-type": "text/html; charset=utf-8", ...headers } });
 
-  it("returns frame mode when the page allows embedding", async () => {
+  it("prefers reader mode and marks it embeddable when the page allows framing", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(page(html));
+    const view = await viewArticle(pageUrl, { fetchImpl });
+    expect(view).toMatchObject({ mode: "reader", url: pageUrl, title: "Markets rally as rates fall", embeddable: true });
+  });
+
+  it("falls back to frame mode when framing is allowed but no article text is found", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(page("<html><body>Subscribe to read</body></html>"));
     expect(await viewArticle(pageUrl, { fetchImpl })).toEqual({ mode: "frame", url: pageUrl });
   });
 
@@ -56,14 +62,17 @@ describe("viewArticle", () => {
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 301, headers: { location: "https://www.example.com/a" } }))
       .mockResolvedValueOnce(page(html));
-    expect(await viewArticle(pageUrl, { fetchImpl })).toEqual({ mode: "frame", url: "https://www.example.com/a" });
+    expect(await viewArticle(pageUrl, { fetchImpl })).toMatchObject({ mode: "reader", url: "https://www.example.com/a" });
   });
 
-  it("returns reader mode when framing is blocked", async () => {
+  it("returns non-embeddable reader mode when framing is blocked", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(page(html, { "x-frame-options": "DENY" }));
     const view = await viewArticle(pageUrl, { fetchImpl });
-    expect(view.mode).toBe("reader");
-    expect(view).toMatchObject({ url: pageUrl, title: "Markets rally as rates fall" });
+    expect(view).toMatchObject({ mode: "reader", url: pageUrl, title: "Markets rally as rates fall", embeddable: false });
+  });
+
+  it("accepts large pages up to 5MB", () => {
+    expect(MAX_ARTICLE_BYTES).toBe(5 * 1024 * 1024);
   });
 
   it("returns link mode when framing is blocked and no article text is found", async () => {
