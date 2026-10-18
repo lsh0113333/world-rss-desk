@@ -86,7 +86,6 @@ export const COUNTRIES: readonly CountryMeta[] = [
   { code: "AE", name: "아랍에미리트", flag: "🇦🇪", continent: "middle-east" },
   { code: "SA", name: "사우디아라비아", flag: "🇸🇦", continent: "middle-east" },
   { code: "QA", name: "카타르", flag: "🇶🇦", continent: "middle-east" },
-  { code: "BH", name: "바레인", flag: "🇧🇭", continent: "middle-east" },
   { code: "BR", name: "브라질", flag: "🇧🇷", continent: "south-america" },
   { code: "MX", name: "멕시코", flag: "🇲🇽", continent: "south-america" },
   { code: "AR", name: "아르헨티나", flag: "🇦🇷", continent: "south-america" },

@@ -2696,26 +2696,6 @@
     "language": "en"
   },
   {
-    "id": "bh-newsofbahrain-top",
-    "name": "News of Bahrain",
-    "url": "https://www.newsofbahrain.com/rss/en.xml",
-    "homepage": "https://www.newsofbahrain.com",
-    "continent": "middle-east",
-    "country": "BH",
-    "category": "top",
-    "language": "en"
-  },
-  {
-    "id": "me-newarab-top",
-    "name": "The New Arab",
-    "url": "https://www.newarab.com/rss",
-    "homepage": "https://www.newarab.com",
-    "continent": "middle-east",
-    "country": "ME",
-    "category": "top",
-    "language": "en"
-  },
-  {
     "id": "me-almonitor-top",
     "name": "Al-Monitor",
     "url": "https://www.al-monitor.com/rss",

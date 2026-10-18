@@ -87,6 +87,16 @@ rounded-xl border border-line bg-panel shadow-sm flex flex-col h-[30rem]
 꺼짐: rounded-full border border-line px-2 py-0.5 text-xs text-muted hover:text-body
 ```
 
+### 세계 흐름 (2026-10-18)
+- 화면 위에서부터: 보드 보기 전환(오른쪽, "패널 | 헤드라인 벽") → **오늘의 이슈** 줄 → **내 관심사 추천** 줄 → 오늘의 톱(패널 보기) → 그리드 또는 벽.
+- 이슈 칩: `rounded-lg border border-line bg-panel px-3 py-2 shadow-sm` — 순위(accent 숫자) · 이슈명(굵게, 최대 14rem) · 국기 최대 5개(+n) · "기사 N" · "1시간 +N"(accent-soft 배지). 가로 스크롤.
+- 이슈 비교 대화상자: 나라별 열(기사 많은 나라부터), 1/2/3열 반응형.
+- 추천 카드: 폭 16rem, 이유 한 줄(accent, 11px) + 제목 2줄 + 매체·시간. 패널 제안은 둥근 칩 버튼 "+ 🇸🇦 사우디아라비아 패널".
+- **"+N개 매체"**: 메타 옆 `rounded bg-panel-header px-1 text-[11px] text-muted`.
+- **키워드 강조**: `<mark>` `bg-amber-100 dark:bg-amber-900/60 rounded-sm px-0.5` (앰버는 강조 전용, 포인트 색 파랑과 구분). 키워드 칩도 같은 앰버.
+- **헤드라인 벽**: 사진 없음. `columns-1 sm:2 xl:3 2xl:4`, 한 줄 = 국기(20px 칸) + 제목 13px + 매체·시간·"+N개 매체" 11px. 같은 소식은 한 줄.
+- 원문 서랍: "읽기 모드 | 원본 페이지" 세그먼트(iframe 허용 매체만). 못 여는 기사는 RSS 요약 카드 + 회색 상자 안 "새 탭에서 열기". 아래에 "같은 소식, 다른 매체" 목록.
+
 ### 버튼
 ```
 Primary: rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90

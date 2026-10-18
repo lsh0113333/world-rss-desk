@@ -95,6 +95,12 @@ npx vercel deploy --prod                         # Vercel 서버에서 빌드 �
 | 브라우저 데이터 삭제 시 패널 설정 소실 | 서버 백업 없음 | 가끔 ⋯ → 설정 내보내기로 JSON 백업 |
 | Vercel 런타임 로그 보관 1시간 (Hobby) | 오류 원인 추적이 어려울 수 있음 | 문제 생기면 바로 대시보드 → Logs 확인 |
 
+## 6-1. 자동 점검 (cron)
+- `vercel.json`의 `crons`: 매일 21:00 UTC(06:00 KST)에 `/api/feed-health` 호출. Hobby 플랜은 cron 하루 1회까지 무료.
+- Vercel 환경 변수 `CRON_SECRET`(Production)이 있으면 cron 요청에 `Authorization: Bearer …`가 붙고, 그때만 결과 캐시를 지우고 다시 점검한다. 그 밖의 호출은 24시간 캐시된 결과만 돌려준다(남용 방지).
+- 한 번 점검 = 카탈로그 270개 요청(동시 20개, 피드당 6초 제한, 함수 최대 300초). 하루 1회라 무료 한도에 영향이 거의 없다.
+- 결과는 앱의 설정(⋯) → **피드 상태**.
+
 ## 7. 자주 쓰는 명령
 
 ```bash

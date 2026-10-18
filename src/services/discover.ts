@@ -67,13 +67,16 @@ export async function discoverFeeds(input: string, opts: DiscoverOptions = {}): 
   try {
     page = await fetchText(url, {
       timeoutMs: 8_000,
-      maxBytes: 3 * 1024 * 1024,
+      maxBytes: 5 * 1024 * 1024,
       fresh: true,
       accept: "text/html,application/rss+xml,application/atom+xml,application/xml;q=0.9,*/*;q=0.5",
       checkUrl: opts.checkUrl,
       fetchImpl: opts.fetchImpl,
     });
   } catch (err) {
+    // 홈페이지가 너무 크거나 막혀 있어도 카탈로그에 있는 매체면 그 피드를 제안한다
+    const catalog = catalogMatches(url);
+    if (catalog.length > 0) return { feeds: catalog };
     const message = err instanceof FeedFetchError ? err.message : "연결 실패";
     return { feeds: [], error: `사이트를 열 수 없습니다 (${message})` };
   }

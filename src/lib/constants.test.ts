@@ -56,7 +56,7 @@ describe("COUNTRIES", () => {
       "US", "CA",
       "GB", "DE", "FR", "ES", "IT", "UA", "RU", "TR", "EU",
       "NO", "SE", "DK", "FI", "IS", "IE", "NL", "CH", "AT", "PL", "GR", "PT", "EE", "LT", "CZ", "HU",
-      "ME", "IL", "IR", "AE", "SA", "QA", "BH",
+      "ME", "IL", "IR", "AE", "SA", "QA",
       "BR", "MX", "AR", "LATAM",
       "ZA", "NG", "KE", "EG", "AFRICA",
       "AU", "NZ",

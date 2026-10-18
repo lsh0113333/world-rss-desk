@@ -13,7 +13,9 @@ src/
 │   └── api/
 │       ├── feeds/route.ts       # GET 병합 기사 API
 │       ├── article/route.ts     # GET 원문 보기 모드 판정 + 읽기 모드 본문
-│       └── thumb/route.ts       # GET 기사 og:image로 302 리다이렉트 (RSS에 이미지 없을 때)
+│       ├── thumb/route.ts       # GET 기사 og:image로 302 리다이렉트 (RSS에 이미지 없을 때)
+│       ├── discover/route.ts    # GET 사이트 주소 → RSS 후보 (카탈로그 매체 우선)
+│       └── feed-health/route.ts # GET 카탈로그 전체 점검 (24시간 캐시, 매일 cron)
 ├── components/                  # UI 컴포넌트
 │   ├── Dashboard.tsx            # 화면 조립: 사이드바 + 상단 바 + 오늘의 톱 + 그리드 + 원문 서랍 + 편집창 ('use client')
 │   ├── Sidebar.tsx              # 왼쪽 메뉴: 내 패널 목록, 새 기사 수, 패널 추가
@@ -31,6 +33,11 @@ src/
 │   ├── UndoToast.tsx            # 삭제 되돌리기 (5초)
 │   ├── ReaderPane.tsx           # 오른쪽 원문 패널 (iframe / 읽기 모드 / 새 탭 안내)
 │   ├── FeedChips.tsx            # 패널 안 매체 켜고 끄기 칩
+│   ├── IssueBar.tsx             # 오늘의 이슈 줄 + 나라별 비교 대화상자
+│   ├── ForYou.tsx               # 내 관심사 추천 + 패널 추가 제안
+│   ├── WatchMenu.tsx            # 키워드 워치 (상단 바 버튼, 키워드 편집, 언급 목록)
+│   ├── HeadlineWall.tsx         # 헤드라인 벽 보기
+│   ├── FeedHealthDialog.tsx     # 설정 메뉴 "피드 상태"
 │   └── Icons.tsx                # 인라인 SVG 아이콘
 ├── hooks/
 │   ├── useLayout.ts             # LayoutRepository 기반 레이아웃 상태 + 조작
@@ -42,8 +49,9 @@ src/
 │   └── useReadHistory.ts        # 읽은 기사 기록
 ├── types/
 │   ├── catalog.ts               # Continent, Category, CountryCode, CatalogFeed
-│   ├── article.ts               # Article, FeedError, FeedsResponse
-│   └── layout.ts                # Panel, Layout
+│   ├── article.ts               # Article, FeedError, FeedsResponse, ArticleView, ReaderBlock
+│   ├── insights.ts              # StoryItem, StoryCluster, Issue, Insights, InsightEngine
+│   └── layout.ts                # Panel, Board, Layout
 ├── lib/                         # 순수 로직 (I/O 없음. url-guard의 DNS 조회만 예외 — 서버 전용)
 │   ├── constants.ts             # 대륙/나라(한글명, 국기)/분야 메타데이터, panelTitle
 │   ├── catalog.ts               # 카탈로그 조회 함수
@@ -59,16 +67,26 @@ src/
 │   ├── og-image.ts              # HTML에서 og:image / twitter:image 추출
 │   ├── top-stories.ts           # 오늘의 톱 선정 (패널 순서, 링크 중복 제외)
 │   ├── commands.ts              # 명령창 검색 (나라·분야·매체·패널·보드·동작)
-│   ├── read-history.ts          # ReadHistoryRepository + localStorage 구현
+│   ├── read-history.ts          # ReadHistoryRepository(읽은 id + 추천용 ReadEvent) + localStorage 구현
+│   ├── keywords.ts              # 제목 → 키워드 (불용어, 한국어 조사 제거)
+│   ├── story-cluster.ts         # 같은 소식 묶기, 패널 안 중복 합치기("+N개 매체")
+│   ├── trending.ts              # 오늘의 이슈
+│   ├── insights.ts              # 패널 기사 → StoryItem, ruleEngine (InsightEngine 1차 구현)
+│   ├── recommend.ts             # 읽기 기록 → 선호 프로필 → 추천·패널 제안
+│   ├── watch.ts                 # 키워드 워치 (일치, 강조 조각, 언급 목록)
+│   ├── google-news.ts           # 키워드 패널용 구글 뉴스 검색 RSS 주소
+│   ├── feed-discovery.ts        # HTML에서 피드 링크·흔한 경로 후보
 │   ├── layout-download.ts       # 설정 JSON 내려받기
 │   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
 ├── services/
 │   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
 │   ├── http.ts                  # 공용 안전 fetch (리다이렉트 hop별 검사, 타임아웃, 크기 제한, charset)
-│   ├── article.ts               # 기사 페이지 → 원문 보기 모드 판정 + Readability 추출 → ReaderBlock[]
+│   ├── article.ts               # 기사 페이지 → 원문 보기 모드 판정(읽기 모드 우선) + Readability 추출 → ReaderBlock[]
+│   ├── discover.ts              # 사이트 주소 → 실제로 읽히는 피드 목록
+│   ├── feed-health.ts           # 카탈로그 피드 점검 (정상/오래됨/실패)
 │   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF/EUC-KR XML
 └── data/
-    └── catalog.json             # 큐레이션 피드 카탈로그 (78개)
+    └── catalog.json             # 큐레이션 피드 카탈로그 (270개, docs/FEEDS.md)
 scripts/
 ├── execute.py                   # Harness 실행기 (현재 미사용)
 └── check-feeds.ts               # 카탈로그 피드 실동작 점검 (npm run feeds:check, 네트워크 사용)
@@ -113,12 +131,13 @@ interface Panel {
   category?: Category;
   feedIds: string[];                  // 카탈로그 id
   customUrls: string[];
+  query?: string;                     // 키워드 패널: 구글 뉴스 검색어 (피드 1개로 계산)
   limit: number;                      // 5~30, 기본 10
   lastSeenAt?: string;                // ISO
 }
 
-interface Board { id: string; name: string }
-interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?: string }
+interface Board { id: string; name: string; view?: "panels" | "wall" }   // wall = 헤드라인 벽
+interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?: string; watchKeywords?: string[] }
 // Panel에 추가 필드: view?("card"|"list"|"text"), wide?, boardId?(없으면 첫 보드)
 ```
 
@@ -128,26 +147,43 @@ interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?
 - `urls`: 커스텀 피드 URL. **피드마다 파라미터를 반복**한다(URL 안에 쉼표가 있을 수 있어 쉼표로 합치지 않음). 각각 encodeURIComponent 처리, `assertSafeUrl`을 통과해야 한다.
 - `fresh=1`(선택): 수동 새로고침용. 서버 fetch를 `cache: 'no-store'`로 하고 응답도 `Cache-Control: no-store`로 보낸다.
 - `maxAgeHours`(선택, 기본 72): 이보다 오래된 기사는 제외한다. `publishedAt`이 null이면 제외하지 않는다.
-- 제한: ids + urls 합계 최대 12개, `limit` 1~50(기본 10). 넘으면 400.
+- `q`(선택, 반복 가능): 키워드 패널 검색어(최대 80자). `https://news.google.com/rss/search?q={q} when:2d` (한글이 있으면 `hl=ko&gl=KR`, 없으면 `hl=en-US&gl=US`). 기사 매체명은 item `<source>`, 제목 끝 " - 매체명"은 뗀다. 오류의 `feed`는 `q:{검색어}`.
+- 제한: ids + urls + q 합계 최대 12개, `limit` 1~50(기본 10). 넘으면 400.
 - 응답 200: `FeedsResponse`. 피드 일부가 실패해도 200이며 실패는 `errors`에 담긴다.
 - 헤더(기본): `Cache-Control: public, s-maxage=120, stale-while-revalidate=600` (2분 준실시간. 피드 fetch도 `revalidate: 120`)
 - 런타임: Node.js (DNS 조회가 필요하므로 Edge 사용 안 함)
 
 ## 원문 보기 API
 `GET /api/article?url=<encodeURIComponent(기사 URL)>`
-- `url`은 `assertSafeUrl` 통과 필수. 리다이렉트 최대 3회 hop별 검사, 타임아웃 10초, 응답 3MB 제한.
+- `url`은 `assertSafeUrl` 통과 필수. 리다이렉트 최대 3회 hop별 검사, 타임아웃 10초, 응답 5MB 제한.
 - 응답 200 (항상 셋 중 하나):
   ```ts
   type ArticleView =
     | { mode: "frame"; url: string }                       // 최종 URL을 iframe으로
-    | { mode: "reader"; url: string; title: string; siteName?: string; byline?: string;
-        publishedAt?: string; blocks: ReaderBlock[] }
+    | { mode: "reader"; url: string; embeddable: boolean; title: string; siteName?: string; byline?: string;
+        publishedAt?: string; blocks: ReaderBlock[] }                // embeddable이면 "원본 페이지" 전환
     | { mode: "link"; url: string; reason: string };      // 새 탭 안내
   type ReaderBlock =
     | { type: "p" | "h2" | "h3" | "blockquote" | "li"; text: string }
     | { type: "img"; src: string; alt?: string };          // src는 http(s)만
   ```
-- 판정 순서: 페이지 fetch → `canEmbed(headers)`이면 `frame` → 아니면 Readability 추출, 본문 200자 이상이면 `reader` → 아니면 `link`. fetch 자체 실패(403·타임아웃 등)도 `link`.
+- 판정 순서(읽기 모드 우선, ADR-014): 페이지 fetch → Readability 추출, 본문 200자 이상이면 `reader`(+`embeddable = canEmbed(headers)`) → 추출 실패 + `canEmbed`면 `frame` → 아니면 `link`. fetch 자체 실패(403·타임아웃 등)도 `link`. 화면은 `link`·오류일 때 RSS의 제목·사진·요약 카드를 보여 준다.
+
+## 그 밖의 API
+- `GET /api/discover?url=<사이트 또는 RSS 주소>` → `{ feeds: { url, title, articleCount?, catalogId? }[], error? }`. 홈페이지가 너무 크거나 막혀도 카탈로그 매체면 카탈로그 피드를 돌려준다. `s-maxage=3600`.
+- `GET /api/feed-health` → `{ checkedAt, total, ok, stale[], failed[] }` (각 `{ id, name, detail }`). `unstable_cache` 24시간, `maxDuration` 300. `Authorization: Bearer $CRON_SECRET`이면 캐시를 지우고 재점검(Vercel cron 매일 21:00 UTC). 응답 `no-store`.
+
+## 세계 흐름 분석 (브라우저 안, ADR-013)
+```
+패널별 /api/feeds 결과 ─ Panel.onArticles ─▶ Dashboard.panelArticles
+  → toStoryItems(현재 보드 패널)  : StoryItem { article, panelId, country(매체의 카탈로그 나라 → 패널 나라), category }
+  → ruleEngine(items, now)        : { clusters: StoryCluster[], issues: Issue[] }   ← 2차에서 /api/insights(AI)로 교체 가능
+      ├ clusterIndex → Panel(dedupeByCluster: 패널 안 같은 소식 합치기, "+N개 매체"), 오늘의 톱 중복 제외, 원문 서랍 "같은 소식, 다른 매체"
+      ├ issues → IssueBar / IssueDialog(나라별 비교)
+      └ clusters → HeadlineWall (보드 view = "wall"일 때, PanelFeedReporter가 데이터만 받음)
+  → findMentions(items, watchKeywords) → WatchMenu, ArticleRow 강조
+읽기 기록 ReadEvent(ReadHistoryRepository, 최근 500개) → buildProfile(7일 반감) → recommend / suggestPanels → ForYou
+```
 - 헤더: `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`. 잘못된 url은 400.
 - `frame` 판정: `X-Frame-Options`가 있으면(DENY/SAMEORIGIN/ALLOW-FROM) 불가. CSP `frame-ancestors`가 있으면 `*`가 포함된 경우만 허용(우리 도메인이 명시될 일은 없으므로).
 

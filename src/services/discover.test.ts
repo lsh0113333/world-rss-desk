@@ -66,6 +66,14 @@ describe("discoverFeeds", () => {
     expect(feeds[0]).toMatchObject({ catalogId: expect.stringContaining("bbc"), title: expect.stringContaining("BBC") });
   });
 
+  it("still suggests catalog feeds when the homepage cannot be read (too large, blocked)", async () => {
+    const fetchImpl = fakeFetch({ "https://www.irishtimes.com/": () => new Response("blocked", { status: 403 }) });
+    const { feeds, error } = await discoverFeeds("irishtimes.com", { fetchImpl });
+    expect(error).toBeUndefined();
+    expect(feeds.length).toBeGreaterThan(3);
+    expect(feeds.every((f) => f.catalogId?.startsWith("ie-irishtimes-"))).toBe(true);
+  });
+
   it("reports an error for invalid input or an unreachable page", async () => {
     expect(await discoverFeeds("not a url", { fetchImpl: vi.fn() })).toEqual({ feeds: [], error: "올바른 주소가 아닙니다" });
     const fetchImpl = fakeFetch({});
