@@ -12,8 +12,10 @@ const MAX_FLAGS = 5;
 function Flags({ countries }: { countries: string[] }) {
   const shown = countries.slice(0, MAX_FLAGS);
   return (
-    <span className="shrink-0 tracking-tight" aria-label={`${countries.length}개 나라`}>
-      {shown.map((c) => getCountry(c)?.flag ?? "🏳️").join("")}
+    <span className="flex shrink-0 items-center gap-0.5" aria-label={`${countries.length}개 나라`}>
+      {shown.map((c) => (
+        <span key={c}>{getCountry(c)?.flag ?? "🏳️"}</span>
+      ))}
       {countries.length > MAX_FLAGS && <span className="ml-0.5 text-[11px] text-muted">+{countries.length - MAX_FLAGS}</span>}
     </span>
   );

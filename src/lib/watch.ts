@@ -17,11 +17,20 @@ export function normalizeKeywords(list: string[]): string[] {
   return out;
 }
 
-/** 제목에 들어 있는 키워드 (대소문자 무시, 부분 일치 — 한국어는 조사가 붙어도 찾도록) */
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * 키워드 하나의 정규식 조각. 영어 등 ASCII 키워드는 단어 단위("AI"가 "waives"에 걸리지 않게),
+ * 한국어는 부분 일치(조사가 붙어도 찾도록: "반도체가")
+ */
+function keywordSource(keyword: string): string {
+  const escaped = escapeRegex(keyword);
+  return /^[\x20-\x7e]+$/.test(keyword) ? `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])` : escaped;
+}
+
+/** 제목에 들어 있는 키워드 (대소문자 무시) */
 export function matchKeywords(title: string, keywords: string[]): string[] {
-  if (keywords.length === 0) return [];
-  const lower = title.toLowerCase();
-  return keywords.filter((k) => lower.includes(k.toLowerCase()));
+  return keywords.filter((k) => k && new RegExp(keywordSource(k), "iu").test(title));
 }
 
 export interface Mentions {
@@ -48,13 +57,13 @@ export interface TextPart {
   hit: boolean;
 }
 
-const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 /** 제목을 키워드 일치 부분과 나머지로 나눈다 (React에서 <mark>로 감싸 그리기용, HTML 문자열을 만들지 않는다) */
 export function highlightParts(text: string, keywords: string[]): TextPart[] {
   const list = keywords.filter(Boolean);
   if (list.length === 0) return [{ text, hit: false }];
-  const pattern = new RegExp(`(${list.sort((a, b) => b.length - a.length).map(escapeRegex).join("|")})`, "gi");
+  // 긴 키워드부터 (겹칠 때 더 구체적인 쪽). 원본 배열(레이아웃 상태)은 건드리지 않는다
+  const sorted = [...list].sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(sorted.map(keywordSource).join("|"), "giu");
   const parts: TextPart[] = [];
   let last = 0;
   for (const m of text.matchAll(pattern)) {
