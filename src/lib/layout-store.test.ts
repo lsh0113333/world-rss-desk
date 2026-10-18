@@ -290,3 +290,44 @@ describe("buildStarterLayout", () => {
     expect(many.panels.length).toBeLessThanOrEqual(MAX_PANELS);
   });
 });
+
+describe("board view (panels / headline wall)", () => {
+  it("sets the view of a board, materializing the default board", async () => {
+    const { setBoardView, boardsOf, DEFAULT_BOARD } = await import("./layout-store");
+    const l = setBoardView(layoutOf(panel()), DEFAULT_BOARD.id, "wall");
+    expect(boardsOf(l)).toEqual([{ ...DEFAULT_BOARD, view: "wall" }]);
+    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "panels"))[0].view).toBeUndefined();
+  });
+
+  it("keeps a valid board view on load and drops an invalid one", () => {
+    const l = validateLayout({ version: 1, panels: [], boards: [{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y", view: "poster" }] });
+    expect(l?.boards).toEqual([{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y" }]);
+  });
+});
+
+describe("watch keywords", () => {
+  it("normalizes and stores keywords", async () => {
+    const { setWatchKeywords } = await import("./layout-store");
+    expect(setWatchKeywords(layoutOf(), [" 반도체 ", "Iran", "iran", ""]).watchKeywords).toEqual(["반도체", "Iran"]);
+    expect(setWatchKeywords(layoutOf(), []).watchKeywords).toBeUndefined();
+  });
+
+  it("keeps only string keywords on load", () => {
+    expect(validateLayout({ version: 1, panels: [], watchKeywords: ["환율", 3, " "] })?.watchKeywords).toEqual(["환율"]);
+    expect(validateLayout({ version: 1, panels: [], watchKeywords: "x" })?.watchKeywords).toBeUndefined();
+  });
+});
+
+describe("keyword panels", () => {
+  it("creates a keyword panel without catalog feeds", () => {
+    const p = createPanel({ query: "  반도체 수출 " }, ids);
+    expect(p).toMatchObject({ query: "반도체 수출", feedIds: [], customUrls: [] });
+  });
+
+  it("keeps a string query on load and drops an empty one", () => {
+    const ok = validateLayout({ version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, query: "Hormuz" }] });
+    expect(ok?.panels[0].query).toBe("Hormuz");
+    const bad = validateLayout({ version: 1, panels: [{ id: "a", feedIds: [], customUrls: [], limit: 10, query: "  " }] });
+    expect(bad?.panels[0].query).toBeUndefined();
+  });
+});

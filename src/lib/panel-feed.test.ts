@@ -16,6 +16,12 @@ describe("buildFeedsUrl", () => {
     expect(parsed.searchParams.has("fresh")).toBe(false);
   });
 
+  it("adds the keyword query as q", () => {
+    const url = buildFeedsUrl(panel({ query: "반도체 수출" }));
+    expect(new URL(url!, "http://localhost").searchParams.get("q")).toBe("반도체 수출");
+    expect(new URL(url!, "http://localhost").searchParams.has("ids")).toBe(false);
+  });
+
   it("adds fresh=1 for manual refresh", () => {
     expect(buildFeedsUrl(panel({ feedIds: ["kr-yonhap-top"] }), { fresh: true })).toContain("fresh=1");
   });
@@ -58,6 +64,7 @@ describe("feedLabel / sourceNotes", () => {
   it("labels catalog ids by outlet name and leaves urls as is", () => {
     expect(feedLabel("kr-yonhap-top")).toBe("연합뉴스");
     expect(feedLabel("https://a.com/rss")).toBe("https://a.com/rss");
+    expect(feedLabel("q:반도체")).toBe("구글 뉴스 '반도체'");
   });
 
   it("maps outlet names to their note", () => {

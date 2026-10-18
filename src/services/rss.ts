@@ -130,10 +130,23 @@ function pickImage(node: Node, ...htmlValues: unknown[]): string | null {
   return inlineImage(...htmlValues);
 }
 
-type EntryFields = { title: unknown; link: string | null; date: unknown; summary: unknown; guid: unknown; image: string | null };
+type EntryFields = {
+  title: unknown;
+  link: string | null;
+  date: unknown;
+  summary: unknown;
+  guid: unknown;
+  image: string | null;
+  /** RSS item의 <source> (구글 뉴스 등 모음 피드의 원래 매체) */
+  itemSource?: unknown;
+};
 
-function toArticle(fields: EntryFields, source: string, now: Date): Article | null {
-  const title = cleanText(fields.title);
+/** 기사 매체명: 지정한 이름 → item <source> → 채널 제목. item <source>를 쓰면 제목 끝 " - 매체명"을 뗀다 */
+function toArticle(fields: EntryFields, fallbackSource: string, explicit: boolean, now: Date): Article | null {
+  let title = cleanText(fields.title);
+  const itemSource = explicit ? "" : cleanText(fields.itemSource);
+  const source = itemSource || fallbackSource;
+  if (itemSource && title.endsWith(` - ${itemSource}`)) title = title.slice(0, -(itemSource.length + 3)).trim();
   if (!title || !fields.link) return null;
   const summary = truncate(cleanText(fields.summary), SUMMARY_MAX);
   return {
@@ -174,6 +187,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       summary: item.description ?? item["content:encoded"],
       guid: item.guid,
       image: pickImage(item, item["content:encoded"], item.description),
+      itemSource: item.source,
     }));
   } else if (doc.feed !== undefined) {
     title = cleanText(atom.title);
@@ -200,7 +214,7 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
   }
 
   const source = opts.source ?? (title || "알 수 없는 매체");
-  const articles = entries.map((e) => toArticle(e, source, now)).filter((a): a is Article => a !== null);
+  const articles = entries.map((e) => toArticle(e, source, opts.source !== undefined, now)).filter((a): a is Article => a !== null);
   return { title: title || null, articles };
 }
 

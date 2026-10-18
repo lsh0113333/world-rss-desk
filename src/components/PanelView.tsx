@@ -34,6 +34,10 @@ export interface PanelViewProps {
   anchorId?: string;
   /** 읽은 기사 id */
   readIds?: Set<string>;
+  /** 기사 id → 같은 소식을 다룬 다른 매체 수 */
+  alsoIn?: Record<string, number>;
+  /** 키워드 워치: 제목에서 강조할 키워드 */
+  keywords?: string[];
   onSelect?(article: Article): void;
   onOpen?(article: Article): void;
   /** 드래그 앤 드롭으로 순서 바꾸기 (헤더를 잡고 끌기) */
@@ -200,6 +204,8 @@ export function PanelView(props: PanelViewProps) {
                 selected={a.id === props.selectedId}
                 read={props.readIds?.has(a.id)}
                 note={notes[a.source]}
+                alsoIn={props.alsoIn?.[a.id]}
+                keywords={props.keywords}
                 now={now}
                 onSelect={props.onSelect}
                 onOpen={props.onOpen}

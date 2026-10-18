@@ -11,6 +11,8 @@ export interface Panel {
   category?: Category;
   feedIds: string[];
   customUrls: string[];
+  /** 키워드 패널: 구글 뉴스 검색어 (피드 수 제한에 1개로 계산) */
+  query?: string;
   /** 5~30, 기본 10 */
   limit: number;
   /** ISO. 이 시각 이후 발행된 기사를 '새 기사'로 강조 */
@@ -23,10 +25,15 @@ export interface Panel {
   boardId?: string;
 }
 
+/** 보드 보기: 패널 그리드(기본) / 헤드라인 벽(국기+제목만 여러 열) */
+export type BoardView = "panels" | "wall";
+
 /** 보드(탭): 패널 묶음. 예: 아침 브리핑, 경제, 테크 */
 export interface Board {
   id: string;
   name: string;
+  /** 없으면 "panels" */
+  view?: BoardView;
 }
 
 export interface Layout {
@@ -35,4 +42,6 @@ export interface Layout {
   /** 없으면 보드 하나("내 화면")만 있는 것으로 본다 */
   boards?: Board[];
   activeBoardId?: string;
+  /** 키워드 워치: 모든 패널에서 강조할 관심 키워드 */
+  watchKeywords?: string[];
 }

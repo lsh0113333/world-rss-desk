@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { panelTitle } from "@/lib/constants";
+import { defaultPanelTitle } from "@/lib/panel-feed";
 import { formatRelative } from "@/lib/time";
 import type { TopStory } from "@/lib/top-stories";
 import type { Article } from "@/types/article";
@@ -43,7 +43,7 @@ function TopCard({
   selectedId,
   onSelect,
 }: { panel: Panel; article: Article | null } & Pick<Props, "now" | "selectedId" | "onSelect">) {
-  const label = panel.title || panelTitle(panel.country, panel.category);
+  const label = panel.title || defaultPanelTitle(panel);
 
   if (!article) {
     return (

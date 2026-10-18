@@ -41,6 +41,19 @@ function setup(props: Partial<PanelViewProps> = {}) {
 }
 
 describe("PanelView", () => {
+  it("shows how many other outlets cover the same story", () => {
+    setup({ alsoIn: { a1: 3 } });
+    expect(screen.getByRole("link", { name: /헤드라인 1/ })).toHaveTextContent("+3개 매체");
+    expect(screen.getByRole("link", { name: /헤드라인 2/ })).not.toHaveTextContent("매체");
+  });
+
+  it("highlights watched keywords in titles", () => {
+    setup({ keywords: ["라인 2"] });
+    const mark = screen.getByText("라인 2");
+    expect(mark.tagName).toBe("MARK");
+    expect(screen.getByRole("link", { name: /헤드라인 2/ })).toHaveAttribute("data-watched", "true");
+  });
+
   it("renders the title and article links that open in a new tab", () => {
     setup();
     expect(screen.getByRole("heading", { name: "🇰🇷 한국 · 종합" })).toBeInTheDocument();

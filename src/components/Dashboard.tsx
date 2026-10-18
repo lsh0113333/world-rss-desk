@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCooldown } from "@/hooks/useCooldown";
 import { useLayout } from "@/hooks/useLayout";
 import { SPLIT_VIEW_QUERY, useMediaQuery } from "@/hooks/useMediaQuery";
@@ -9,16 +9,25 @@ import { useOnline } from "@/hooks/useOnline";
 import { MANUAL_REFRESH_COOLDOWN_MS } from "@/hooks/usePanelFeed";
 import { useReadHistory } from "@/hooks/useReadHistory";
 import type { Command } from "@/lib/commands";
-import { panelTitle } from "@/lib/constants";
+import { defaultPanelTitle } from "@/lib/panel-feed";
 import { downloadLayout } from "@/lib/layout-download";
 import { activeBoardId, boardsOf, buildStarterLayout, MAX_BOARDS, MAX_PANELS, panelsOnBoard } from "@/lib/layout-store";
+import { ruleEngine, toStoryItems } from "@/lib/insights";
+import { normalizeLink } from "@/lib/merge";
+import { buildProfile, readEventOf, recommend, suggestPanels } from "@/lib/recommend";
+import { clusterIndex } from "@/lib/story-cluster";
 import { pickTopStories } from "@/lib/top-stories";
+import { findMentions } from "@/lib/watch";
 import type { Article } from "@/types/article";
+import type { Issue } from "@/types/insights";
 import type { Category, CountryCode } from "@/types/catalog";
 import type { PanelView } from "@/types/layout";
 import { CommandPalette } from "./CommandPalette";
+import { ForYou } from "./ForYou";
+import { HeadlineWall } from "./HeadlineWall";
+import { IssueBar, IssueDialog } from "./IssueBar";
 import { Onboarding } from "./Onboarding";
-import { Panel } from "./Panel";
+import { Panel, PanelFeedReporter } from "./Panel";
 import { PanelEditor, type PanelEditorValue } from "./PanelEditor";
 import { QuickAdd } from "./QuickAdd";
 import { ReaderPane } from "./ReaderPane";
@@ -27,13 +36,14 @@ import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { TopStories } from "./TopStories";
 import { UndoToast } from "./UndoToast";
+import { WatchMenu } from "./WatchMenu";
 
 type EditorTarget = { mode: "add" } | { mode: "edit"; panelId: string };
 
 export function Dashboard() {
   const store = useLayout();
   const { layout, update, clearRemoved } = store;
-  const { readSet, markRead } = useReadHistory();
+  const { readSet, events, markRead } = useReadHistory();
   const online = useOnline();
   const now = useNow();
   const cooldown = useCooldown(MANUAL_REFRESH_COOLDOWN_MS);
@@ -41,7 +51,8 @@ export function Dashboard() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [newCounts, setNewCounts] = useState<Record<string, number>>({});
-  const [topCandidates, setTopCandidates] = useState<Record<string, Article[]>>({});
+  const [panelArticles, setPanelArticles] = useState<Record<string, Article[]>>({});
+  const [openIssue, setOpenIssue] = useState<Issue | null>(null);
   const [editor, setEditor] = useState<EditorTarget | null>(null);
   const [quickAdd, setQuickAdd] = useState(false);
   const [palette, setPalette] = useState(false);
@@ -63,18 +74,41 @@ export function Dashboard() {
   const onNewCount = useCallback((id: string, count: number) => {
     setNewCounts((c) => (c[id] === count ? c : { ...c, [id]: count }));
   }, []);
-  const onTopArticles = useCallback((id: string, articles: Article[]) => {
-    setTopCandidates((c) => ({ ...c, [id]: articles }));
+  const onArticles = useCallback((id: string, articles: Article[]) => {
+    setPanelArticles((c) => (c[id] === articles ? c : { ...c, [id]: articles }));
   }, []);
+  const refreshingAll = Object.values(busy).some(Boolean);
+
+  const boards = layout ? boardsOf(layout) : [];
+  const boardId = layout ? activeBoardId(layout) : "";
+  const panels = layout ? panelsOnBoard(layout, boardId) : [];
+  const boardView = boards.find((b) => b.id === boardId)?.view ?? "panels";
+  const keywords = useMemo(() => layout?.watchKeywords ?? [], [layout?.watchKeywords]);
+
+  // 세계 흐름 분석 (브라우저 안, 무료): 같은 소식 묶기 · 오늘의 이슈 · 추천 · 키워드 워치
+  const storyItems = useMemo(() => (layout ? toStoryItems(panelsOnBoard(layout, boardId), panelArticles) : []), [layout, boardId, panelArticles]);
+  const insights = useMemo(() => ruleEngine(storyItems, now), [storyItems, now]);
+  const clusters = useMemo(() => clusterIndex(insights.clusters), [insights]);
+  const itemById = useMemo(() => new Map(storyItems.map((i) => [i.article.id, i])), [storyItems]);
+  const profile = useMemo(() => buildProfile(events, now), [events, now]);
+  const recommendations = useMemo(() => recommend(profile, storyItems, readSet, now), [profile, storyItems, readSet, now]);
+  const suggestions = useMemo(() => (layout ? suggestPanels(profile, layout.panels) : []), [profile, layout]);
+  const mentions = useMemo(() => findMentions(storyItems, keywords, readSet), [storyItems, keywords, readSet]);
+
+  const onOpen = useCallback(
+    (article: Article) => {
+      const item = itemById.get(article.id);
+      markRead(article.id, item ? readEventOf(item, new Date()) : undefined);
+    },
+    [markRead, itemById],
+  );
   const openArticle = useCallback(
     (article: Article) => {
-      markRead(article.id);
+      onOpen(article);
       setSelected(article);
     },
-    [markRead],
+    [onOpen],
   );
-  const onOpen = useCallback((article: Article) => markRead(article.id), [markRead]);
-  const refreshingAll = Object.values(busy).some(Boolean);
 
   // 단축키: Ctrl/⌘+K 명령창, Esc 원문 닫기
   useEffect(() => {
@@ -82,17 +116,13 @@ export function Dashboard() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPalette((p) => !p);
-      } else if (e.key === "Escape" && selected && !editor && !quickAdd && !palette) {
+      } else if (e.key === "Escape" && selected && !editor && !quickAdd && !palette && !openIssue) {
         setSelected(null);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, editor, quickAdd, palette]);
-
-  const boards = layout ? boardsOf(layout) : [];
-  const boardId = layout ? activeBoardId(layout) : "";
-  const panels = layout ? panelsOnBoard(layout, boardId) : [];
+  }, [selected, editor, quickAdd, palette, openIssue]);
   const editingPanel = editor?.mode === "edit" ? layout?.panels.find((p) => p.id === editor.panelId) : undefined;
   const canAdd = !!layout && panels.length < MAX_PANELS;
 
@@ -199,6 +229,7 @@ export function Dashboard() {
           onAdd={openAdd}
           onOpenMenu={() => setMenuOpen(true)}
           onOpenPalette={() => setPalette(true)}
+          watch={<WatchMenu keywords={keywords} mentions={mentions} readIds={readSet} now={now} onChange={store.setWatchKeywords} onSelect={openArticle} />}
           menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} />}
         />
 
@@ -223,11 +254,64 @@ export function Dashboard() {
 
           {panels.length > 0 && (
             <>
+              <div className="mb-3 flex items-center justify-end">
+                <div role="group" aria-label="보드 보기" className="flex rounded-lg border border-line bg-panel p-0.5 text-xs">
+                  {(
+                    [
+                      ["panels", "패널"],
+                      ["wall", "헤드라인 벽"],
+                    ] as const
+                  ).map(([view, label]) => (
+                    <button
+                      key={view}
+                      type="button"
+                      aria-pressed={boardView === view}
+                      onClick={() => store.setBoardView(boardId, view)}
+                      className={`rounded-md px-2.5 py-1 ${boardView === view ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-headline"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <IssueBar issues={insights.issues} onOpen={setOpenIssue} />
+              <ForYou
+                recommendations={recommendations}
+                suggestions={suggestions}
+                readCount={events.length}
+                now={now}
+                onSelect={openArticle}
+                onAddPanel={(s) => store.add({ country: s.country, category: s.category })}
+              />
+            </>
+          )}
+
+          {panels.length > 0 && boardView === "wall" && (
+            <>
+              {panels.map((panel) => (
+                <PanelFeedReporter key={panel.id} panel={panel} refreshToken={refreshToken} onArticles={onArticles} onBusyChange={onBusyChange} />
+              ))}
+              <HeadlineWall
+                clusters={insights.clusters}
+                now={now}
+                readIds={readSet}
+                keywords={keywords}
+                selectedId={selected?.id}
+                loading={storyItems.length === 0}
+                onSelect={openArticle}
+                onOpen={onOpen}
+              />
+            </>
+          )}
+
+          {panels.length > 0 && boardView === "panels" && (
+            <>
               <TopStories
                 panels={panels}
                 stories={pickTopStories(
                   panels.map((p) => p.id),
-                  topCandidates,
+                  panelArticles,
+                  (a) => clusters.get(a.id)?.id ?? normalizeLink(a.link),
                 )}
                 now={now}
                 selectedId={selected?.id}
@@ -251,7 +335,9 @@ export function Dashboard() {
                     onWideChange={onWideChange}
                     onBusyChange={onBusyChange}
                     onNewCount={onNewCount}
-                    onTopArticles={onTopArticles}
+                    onArticles={onArticles}
+                    clusters={clusters}
+                    keywords={keywords}
                     onMarkSeen={store.markSeen}
                     onEdit={(id) => setEditor({ mode: "edit", panelId: id })}
                     onMove={store.move}
@@ -273,7 +359,13 @@ export function Dashboard() {
 
       {selected && (
         <div className="fixed inset-y-0 right-0 z-30 w-full animate-drawer-in border-l border-line shadow-2xl lg:w-[min(760px,50vw)]">
-          <ReaderPane article={selected} onClose={closeReader} mobile={!wide} />
+          <ReaderPane
+            article={selected}
+            onClose={closeReader}
+            mobile={!wide}
+            related={(clusters.get(selected.id)?.items ?? []).filter((i) => i.article.id !== selected.id).map((i) => i.article)}
+            onSelect={openArticle}
+          />
         </div>
       )}
 
@@ -287,6 +379,18 @@ export function Dashboard() {
           onAdvanced={() => {
             setQuickAdd(false);
             setEditor({ mode: "add" });
+          }}
+        />
+      )}
+
+      {openIssue && (
+        <IssueDialog
+          issue={openIssue}
+          now={now}
+          onClose={() => setOpenIssue(null)}
+          onSelect={(article) => {
+            setOpenIssue(null);
+            openArticle(article);
           }}
         />
       )}
@@ -314,7 +418,7 @@ export function Dashboard() {
       {store.lastRemoved && (
         <UndoToast
           key={store.lastRemoved.panel.id}
-          message={`"${store.lastRemoved.panel.title || panelTitle(store.lastRemoved.panel.country, store.lastRemoved.panel.category)}" 패널 삭제됨`}
+          message={`"${store.lastRemoved.panel.title || defaultPanelTitle(store.lastRemoved.panel)}" 패널 삭제됨`}
           onUndo={store.undoRemove}
           onClose={clearRemoved}
         />

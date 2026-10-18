@@ -20,6 +20,12 @@ describe("pickTopStories", () => {
     ]);
   });
 
+  it("skips articles about a story already shown when a story key is given", () => {
+    const storyOf: Record<string, string> = { a: "hormuz", c: "hormuz" };
+    const key = (x: Article) => storyOf[x.id] ?? x.id;
+    expect(pickTopStories(["p1", "p2"], { p1: [a("a")], p2: [a("c"), a("d")] }, key).map((t) => t.article?.id)).toEqual(["a", "d"]);
+  });
+
   it("keeps a placeholder for panels without data yet", () => {
     expect(pickTopStories(["p1"], {})).toEqual([{ panelId: "p1", article: null }]);
   });

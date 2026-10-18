@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { panelTitle } from "@/lib/constants";
+import { defaultPanelTitle } from "@/lib/panel-feed";
 import type { Board, Panel } from "@/types/layout";
 import { CloseIcon, EditIcon, GlobeIcon, PlusIcon } from "./Icons";
 
@@ -148,7 +148,7 @@ export function Sidebar(props: Props) {
           return (
             <li key={panel.id}>
               <button type="button" onClick={() => props.onJump(panel.id)} className={`${row} text-body hover:bg-panel-header hover:text-headline`}>
-                <span className="min-w-0 flex-1 truncate">{panel.title || panelTitle(panel.country, panel.category)}</span>
+                <span className="min-w-0 flex-1 truncate">{panel.title || defaultPanelTitle(panel)}</span>
                 {count > 0 && (
                   <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-semibold leading-5 tabular-nums text-accent">{count}</span>
                 )}

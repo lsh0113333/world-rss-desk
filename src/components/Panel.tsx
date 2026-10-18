@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { getFeedById } from "@/lib/catalog";
-import { panelTitle } from "@/lib/constants";
 import { MAX_FEEDS_PER_PANEL } from "@/lib/layout-store";
-import { countNew, panelFeedOptions, sourceNotes, toggleFeed } from "@/lib/panel-feed";
+import { countNew, defaultPanelTitle, panelFeedOptions, sourceNotes, toggleFeed } from "@/lib/panel-feed";
 import { usePanelFeed } from "@/hooks/usePanelFeed";
+import { dedupeByCluster } from "@/lib/story-cluster";
 import type { Article } from "@/types/article";
+import type { StoryCluster } from "@/types/insights";
 import type { Panel as PanelModel } from "@/types/layout";
 import { FeedChips } from "./FeedChips";
 import { PanelView, type PanelStatus } from "./PanelView";
@@ -30,8 +31,12 @@ interface Props {
   onWideChange(id: string, wide: boolean): void;
   /** 사이드바 나라별 새 기사 수 집계용 */
   onNewCount?(id: string, count: number): void;
-  /** "오늘의 톱" 후보(최신 몇 개) 보고 */
-  onTopArticles?(id: string, articles: Article[]): void;
+  /** 받은 기사 전체 보고 (오늘의 톱·이슈·추천·키워드 워치 계산용) */
+  onArticles?(id: string, articles: Article[]): void;
+  /** 같은 소식 묶음 (기사 id → 묶음). 있으면 패널 안 중복을 합치고 "+N개 매체" 표시 */
+  clusters?: Map<string, StoryCluster>;
+  /** 키워드 워치 */
+  keywords?: string[];
   /** 드래그 앤 드롭 */
   isDropTarget?: boolean;
   onDragStart?(id: string): void;
@@ -54,13 +59,14 @@ export function Panel(props: Props) {
     onNewCount?.(panel.id, newCount);
   }, [panel.id, newCount, onNewCount]);
 
-  const { onTopArticles } = props;
+  const { onArticles, clusters } = props;
   const articles = feed.data?.articles;
   useEffect(() => {
-    if (articles) onTopArticles?.(panel.id, articles.slice(0, 5));
-  }, [panel.id, articles, onTopArticles]);
+    if (articles) onArticles?.(panel.id, articles);
+  }, [panel.id, articles, onArticles]);
+  const visible = useMemo(() => (articles ? dedupeByCluster(articles, clusters) : null), [articles, clusters]);
 
-  const requested = panel.feedIds.filter((id) => getFeedById(id)).length + panel.customUrls.length;
+  const requested = panel.feedIds.filter((id) => getFeedById(id)).length + panel.customUrls.length + (panel.query ? 1 : 0);
   const allFailed = !!feed.data && feed.data.articles.length === 0 && feed.data.errors.length >= requested;
 
   let status: PanelStatus;
@@ -71,8 +77,10 @@ export function Panel(props: Props) {
 
   return (
     <PanelView
-      title={panel.title || panelTitle(panel.country, panel.category)}
-      articles={feed.data?.articles}
+      title={panel.title || defaultPanelTitle(panel)}
+      articles={visible?.articles}
+      alsoIn={visible?.alsoIn}
+      keywords={props.keywords}
       errors={status === "ready" ? (feed.data?.errors ?? []) : []}
       status={status}
       fetchedAt={feed.data?.fetchedAt}
@@ -114,4 +122,24 @@ export function Panel(props: Props) {
       onMove={(d) => onMove(panel.id, d)}
     />
   );
+}
+
+interface ReporterProps {
+  panel: PanelModel;
+  refreshToken: number;
+  onArticles(id: string, articles: Article[]): void;
+  onBusyChange(id: string, busy: boolean): void;
+}
+
+/** 헤드라인 벽 보기에서 패널을 그리지 않고 데이터만 받아 보고한다 (SWR 키가 같아 패널과 캐시 공유) */
+export function PanelFeedReporter({ panel, refreshToken, onArticles, onBusyChange }: ReporterProps) {
+  const feed = usePanelFeed(panel, refreshToken);
+  const articles = feed.data?.articles;
+  useEffect(() => {
+    if (articles) onArticles(panel.id, articles);
+  }, [panel.id, articles, onArticles]);
+  useEffect(() => {
+    onBusyChange(panel.id, feed.refreshing);
+  }, [panel.id, feed.refreshing, onBusyChange]);
+  return null;
 }

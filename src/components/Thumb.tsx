@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isGoogleNewsLink } from "@/lib/google-news";
 import { hashId } from "@/lib/text";
 import type { Article } from "@/types/article";
 
@@ -21,12 +22,13 @@ interface Props {
   className: string;
 }
 
-/** 기사 썸네일: RSS 이미지 → /api/thumb(og:image) → 매체 이니셜 배지 */
+/** 기사 썸네일: RSS 이미지 → /api/thumb(og:image) → 매체 이니셜 배지. 구글 뉴스 링크는 og:image가 구글 로고라 바로 배지 */
 export function Thumb({ article, className }: Props) {
   const [failed, setFailed] = useState(false);
+  const skipLookup = !article.image && isGoogleNewsLink(article.link);
   const src = article.image ?? `/api/thumb?url=${encodeURIComponent(article.link)}`;
 
-  if (failed) {
+  if (failed || skipLookup) {
     const color = BADGE_COLORS[parseInt(hashId(article.source), 36) % BADGE_COLORS.length];
     return (
       <span aria-hidden="true" className={`flex shrink-0 items-center justify-center text-sm font-semibold ${color} ${className}`}>

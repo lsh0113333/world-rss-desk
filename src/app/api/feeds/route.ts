@@ -1,4 +1,5 @@
 import { getFeedById } from "@/lib/catalog";
+import { googleNewsUrl } from "@/lib/google-news";
 import { FeedFetchError } from "@/lib/errors";
 import { DEFAULT_LIMIT, DEFAULT_MAX_AGE_HOURS, mergeArticles } from "@/lib/merge";
 import { assertSafeUrl } from "@/lib/url-guard";
@@ -9,6 +10,7 @@ import type { Article, FeedError, FeedsResponse } from "@/types/article";
 export const runtime = "nodejs";
 
 const MAX_FEEDS = 12;
+const MAX_QUERY_LENGTH = 80;
 const MAX_LIMIT = 50;
 const MAX_AGE_HOURS_LIMIT = 720;
 const CDN_CACHE = "public, s-maxage=120, stale-while-revalidate=600";
@@ -36,8 +38,12 @@ export async function GET(request: Request) {
 
   const ids = [...new Set((params.get("ids") ?? "").split(",").map((s) => s.trim()).filter(Boolean))];
   const urls = [...new Set(params.getAll("urls").map((s) => s.trim()).filter(Boolean))];
-  if (ids.length + urls.length === 0) return badRequest("ids 또는 urls가 필요합니다");
-  if (ids.length + urls.length > MAX_FEEDS) return badRequest(`피드는 최대 ${MAX_FEEDS}개까지 요청할 수 있습니다`);
+  // 키워드 패널: 구글 뉴스 검색 RSS
+  const queries = [...new Set(params.getAll("q").map((s) => s.trim()).filter(Boolean))];
+  const total = ids.length + urls.length + queries.length;
+  if (total === 0) return badRequest("ids, urls 또는 q가 필요합니다");
+  if (total > MAX_FEEDS) return badRequest(`피드는 최대 ${MAX_FEEDS}개까지 요청할 수 있습니다`);
+  if (queries.some((q) => q.length > MAX_QUERY_LENGTH)) return badRequest(`검색어는 ${MAX_QUERY_LENGTH}자까지입니다`);
 
   const limit = intParam(params.get("limit"), DEFAULT_LIMIT, 1, MAX_LIMIT);
   if (limit === null) return badRequest(`limit은 1~${MAX_LIMIT} 사이 정수여야 합니다`);
@@ -51,6 +57,7 @@ export async function GET(request: Request) {
       return { feed: id, url: feed?.url ?? null, source: feed?.name };
     }),
     ...urls.map((url) => ({ feed: url, url })),
+    ...queries.map((q) => ({ feed: `q:${q}`, url: googleNewsUrl(q) })),
   ];
 
   const results = await Promise.allSettled(

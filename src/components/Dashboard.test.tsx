@@ -327,4 +327,44 @@ describe("Dashboard — onboarding, command bar, boards, read state, drag", () =
     fireEvent.drop(second);
     expect(panelTitles()).toEqual(["🇺🇸 미국 · 종합", "🇰🇷 한국 · 종합"]);
   });
+
+  it("switches the board to the headline wall and back, saving the choice", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await panelLink(/기사 kr-yonhap-top/);
+    await userEvent.click(screen.getByRole("button", { name: "헤드라인 벽" }));
+    const wall = await screen.findByRole("region", { name: "헤드라인 벽" });
+    expect(screen.queryAllByRole("article")).toHaveLength(0);
+    expect(await within(wall).findByRole("link", { name: /기사 kr-yonhap-top/ })).toBeInTheDocument();
+    expect(within(wall).getByRole("link", { name: /기사 us-nyt-top/ })).toBeInTheDocument();
+    await waitFor(() => expect(savedLayout()?.boards?.[0].view).toBe("wall"));
+    await userEvent.click(screen.getByRole("button", { name: "패널" }));
+    expect(await screen.findAllByRole("article")).toHaveLength(2);
+  });
+
+  it("watches a keyword: highlights it in panels and counts mentions", async () => {
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    await panelLink(/기사 kr-yonhap-top/);
+    await userEvent.click(screen.getByRole("button", { name: "키워드 워치" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "키워드 추가" }), "yonhap{Enter}");
+    expect(await panelLink(/기사 kr-yonhap-top/)).toHaveAttribute("data-watched", "true");
+    expect(screen.getByRole("button", { name: "키워드 워치, 새 언급 1건" })).toBeInTheDocument();
+    await waitFor(() => expect(savedLayout()?.watchKeywords).toEqual(["yonhap"]));
+  });
+
+  it("merges the same story from two panels into one row with an outlet count", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const ids = new URL(url, "http://localhost").searchParams.get("ids") ?? "";
+      const [title, source] = ids.startsWith("kr") ? ["Iran closes Hormuz strait to tankers", "연합뉴스"] : ["Tankers halted as Iran shuts Hormuz strait", "NYT"];
+      return respond({
+        articles: [{ id: ids, title, link: `https://news.example.com/${ids}`, publishedAt: new Date().toISOString(), source }],
+        errors: [],
+        fetchedAt: new Date().toISOString(),
+      });
+    });
+    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
+    renderDashboard();
+    expect(await panelLink(/Iran closes Hormuz/)).toHaveTextContent("+1개 매체");
+  });
 });

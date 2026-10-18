@@ -252,3 +252,19 @@ describe("parseFeed — images", () => {
     expect(parseFeed(xml).articles[0].image).toBe("https://img.example.com/atom.jpg");
   });
 });
+
+describe("parseFeed — item <source> (Google News)", () => {
+  const xml = fixture("google-news.xml").toString("utf8");
+
+  it("uses the item source as the outlet and strips it from the title", () => {
+    const { articles } = parseFeed(xml, { now });
+    expect(articles[0]).toMatchObject({ source: "NewsNation", title: "Oil tanker explodes in Strait of Hormuz" });
+    expect(articles[1]).toMatchObject({ source: "Reuters", title: "Iran - US talks: what's next - analysis" });
+  });
+
+  it("still prefers an explicit source name", () => {
+    const { articles } = parseFeed(xml, { now, source: "Catalog Name" });
+    expect(articles[0].source).toBe("Catalog Name");
+    expect(articles[0].title).toBe("Oil tanker explodes in Strait of Hormuz - NewsNation");
+  });
+});

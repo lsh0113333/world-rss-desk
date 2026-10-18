@@ -131,4 +131,21 @@ describe("GET /api/feeds", () => {
       expect(mockedLoadFeed).not.toHaveBeenCalled();
     });
   });
+
+  it("loads keyword queries from Google News without a fixed source name", async () => {
+    mockedLoadFeed.mockResolvedValue(feedOf("Google News", [["https://news.google.com/rss/articles/1", recent]]));
+    const res = await call(`q=${encodeURIComponent("반도체")}`);
+    expect(res.status).toBe(200);
+    const [url, opts] = mockedLoadFeed.mock.calls[0];
+    expect(url).toContain("https://news.google.com/rss/search?");
+    expect(new URL(url).searchParams.get("q")).toBe("반도체 when:2d");
+    expect(opts?.source).toBeUndefined();
+    expect(opts?.checkUrl).toBe(assertSafeUrl);
+  });
+
+  it("counts queries toward the feed limit and rejects overly long ones", async () => {
+    const ids = Array.from({ length: 12 }, (_, i) => `id${i}`).join(",");
+    expect((await call(`ids=${ids}&q=x`)).status).toBe(400);
+    expect((await call(`q=${"x".repeat(81)}`)).status).toBe(400);
+  });
 });

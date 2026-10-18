@@ -15,12 +15,14 @@ import {
   removePanel,
   renameBoard,
   setActiveBoard,
+  setBoardView,
+  setWatchKeywords,
   restorePanel,
   updatePanel,
   type PanelInput,
   type RemoveResult,
 } from "@/lib/layout-store";
-import type { Layout, Panel } from "@/types/layout";
+import type { BoardView, Layout, Panel } from "@/types/layout";
 
 const defaultRepository = new LocalStorageLayoutRepository();
 
@@ -41,6 +43,8 @@ export interface UseLayout {
   renameBoard(id: string, name: string): void;
   removeBoard(id: string): void;
   setActiveBoard(id: string): void;
+  setBoardView(id: string, view: BoardView): void;
+  setWatchKeywords(keywords: string[]): void;
   markSeen(id: string): void;
   markAllSeen(): void;
   replace(layout: Layout): void;
@@ -105,6 +109,8 @@ export function useLayout(repository: LayoutRepository = defaultRepository): Use
     renameBoard: useCallback((id, name) => apply((l) => renameBoard(l, id, name)), [apply]),
     removeBoard: useCallback((id) => apply((l) => removeBoard(l, id)), [apply]),
     setActiveBoard: useCallback((id) => apply((l) => setActiveBoard(l, id)), [apply]),
+    setBoardView: useCallback((id, view) => apply((l) => setBoardView(l, id, view)), [apply]),
+    setWatchKeywords: useCallback((keywords) => apply((l) => setWatchKeywords(l, keywords)), [apply]),
     markSeen: useCallback((id) => apply((l) => markSeen(l, id, new Date().toISOString())), [apply]),
     markAllSeen: useCallback(() => apply((l) => markAllSeen(l, new Date().toISOString())), [apply]),
     replace: useCallback((next) => setLayout(next), []),

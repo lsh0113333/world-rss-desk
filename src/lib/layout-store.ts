@@ -1,7 +1,8 @@
 import type { Category, CountryCode } from "@/types/catalog";
-import type { Board, Layout, Panel, PanelView } from "@/types/layout";
+import type { Board, BoardView, Layout, Panel, PanelView } from "@/types/layout";
 import { feedsFor, getFeedById } from "./catalog";
 import { CATEGORIES } from "./constants";
+import { normalizeKeywords } from "./watch";
 
 export const LIMIT_MIN = 5;
 export const LIMIT_MAX = 30;
@@ -13,6 +14,7 @@ const MAX_TOTAL_PANELS = MAX_PANELS * MAX_BOARDS;
 export const DEFAULT_BOARD: Board = { id: "main", name: "내 화면" };
 /** /api/feeds의 요청당 최대 피드 수와 같다 */
 export const MAX_FEEDS_PER_PANEL = 12;
+export const MAX_QUERY_LENGTH = 80;
 
 export type IdFactory = () => string;
 
@@ -31,14 +33,17 @@ export interface PanelInput {
   feedIds?: string[];
   customUrls?: string[];
   limit?: number;
+  query?: string;
 }
 
-/** feedIds를 안 주면 나라·분야에 맞는 카탈로그 피드를 자동 선택 */
+/** feedIds를 안 주면 나라·분야에 맞는 카탈로그 피드를 자동 선택 (키워드 패널은 피드 없이 검색어만) */
 export function createPanel(input: PanelInput, makeId: IdFactory = newId): Panel {
-  const feedIds = input.feedIds ?? feedsFor(input.country, input.category).map((f) => f.id);
+  const query = input.query?.trim().slice(0, MAX_QUERY_LENGTH);
+  const feedIds = input.feedIds ?? (query && !input.country && !input.category ? [] : feedsFor(input.country, input.category).map((f) => f.id));
   return {
     id: makeId(),
     ...(input.title ? { title: input.title } : {}),
+    ...(query ? { query } : {}),
     ...(input.country ? { country: input.country } : {}),
     ...(input.category ? { category: input.category } : {}),
     feedIds: feedIds.slice(0, MAX_FEEDS_PER_PANEL),
@@ -97,6 +102,7 @@ function validatePanel(raw: unknown): Panel | null {
   if (p.country !== undefined && typeof p.country !== "string") return null;
   if (p.category !== undefined && !(typeof p.category === "string" && categoryIds.has(p.category))) return null;
 
+  const query = typeof p.query === "string" ? p.query.trim().slice(0, MAX_QUERY_LENGTH) : "";
   const lastSeenAt = typeof p.lastSeenAt === "string" && !Number.isNaN(Date.parse(p.lastSeenAt)) ? p.lastSeenAt : undefined;
   return {
     id: p.id,
@@ -105,6 +111,7 @@ function validatePanel(raw: unknown): Panel | null {
     ...(p.category ? { category: p.category as Category } : {}),
     feedIds: p.feedIds,
     customUrls: p.customUrls,
+    ...(query ? { query } : {}),
     limit: clampLimit(p.limit),
     ...(lastSeenAt ? { lastSeenAt } : {}),
     ...(VIEWS.includes(p.view as PanelView) ? { view: p.view as PanelView } : {}),
@@ -119,9 +126,9 @@ function validateBoards(raw: unknown): Board[] | null | undefined {
   const boards: Board[] = [];
   for (const b of raw) {
     if (!b || typeof b !== "object") return null;
-    const { id, name } = b as Record<string, unknown>;
+    const { id, name, view } = b as Record<string, unknown>;
     if (typeof id !== "string" || !id || typeof name !== "string") return null;
-    boards.push({ id, name });
+    boards.push({ id, name, ...(view === "wall" ? { view: "wall" as const } : {}) });
   }
   return new Set(boards.map((b) => b.id)).size === boards.length ? boards : null;
 }
@@ -147,7 +154,14 @@ export function validateLayout(raw: unknown): Layout | null {
     return rest;
   });
   const active = typeof l.activeBoardId === "string" && boardIds.has(l.activeBoardId) ? l.activeBoardId : undefined;
-  return { version: 1, panels: valid, ...(boards ? { boards } : {}), ...(active ? { activeBoardId: active } : {}) };
+  const watch = Array.isArray(l.watchKeywords) ? normalizeKeywords(l.watchKeywords.filter((k): k is string => typeof k === "string")) : [];
+  return {
+    version: 1,
+    panels: valid,
+    ...(boards ? { boards } : {}),
+    ...(active ? { activeBoardId: active } : {}),
+    ...(watch.length ? { watchKeywords: watch } : {}),
+  };
 }
 
 /** 저장된 데이터를 현재 버전으로 올린다. 새 버전이 생기면 여기에 단계별 변환을 추가 */
@@ -212,6 +226,27 @@ export function addBoard(layout: Layout, name: string, makeId: IdFactory = newId
 export function renameBoard(layout: Layout, id: string, name: string): Layout {
   if (!name.trim()) return layout;
   return { ...layout, boards: boardsOf(layout).map((b) => (b.id === id ? { ...b, name: name.trim() } : b)) };
+}
+
+/** 보드 보기 전환. 기본 보드만 있는 레이아웃이면 boards를 만들어 저장한다 */
+export function setBoardView(layout: Layout, id: string, view: BoardView): Layout {
+  const boards = boardsOf(layout);
+  if (!boards.some((b) => b.id === id)) return layout;
+  return {
+    ...layout,
+    boards: boards.map((b) => {
+      if (b.id !== id) return b;
+      const rest = { id: b.id, name: b.name };
+      return view === "wall" ? { ...rest, view } : rest;
+    }),
+  };
+}
+
+export function setWatchKeywords(layout: Layout, keywords: string[]): Layout {
+  const next = normalizeKeywords(keywords);
+  const rest = { ...layout };
+  delete rest.watchKeywords;
+  return next.length ? { ...rest, watchKeywords: next } : rest;
 }
 
 export function setActiveBoard(layout: Layout, id: string): Layout {

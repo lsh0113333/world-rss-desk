@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addRead, LocalStorageReadHistoryRepository, MAX_READ_IDS, READ_KEY } from "./read-history";
+import { addRead, LocalStorageReadHistoryRepository, MAX_READ_IDS, READ_EVENTS_KEY, READ_KEY } from "./read-history";
 
 class MemoryStorage {
   data = new Map<string, string>();
@@ -34,5 +34,20 @@ describe("LocalStorageReadHistoryRepository", () => {
     expect(await repo.load()).toEqual([]);
     storage.setItem(READ_KEY, JSON.stringify([1, "x"]));
     expect(await repo.load()).toEqual(["x"]);
+  });
+});
+
+describe("LocalStorageReadHistoryRepository events", () => {
+  it("round-trips read events and drops malformed entries", async () => {
+    const storage = new MemoryStorage();
+    const repo = new LocalStorageReadHistoryRepository(storage);
+    expect(await repo.loadEvents()).toEqual([]);
+    const event = { id: "a", at: "2026-10-18T00:00:00Z", source: "BBC", country: "GB", category: "world" as const, terms: ["iran"] };
+    await repo.saveEvents([event]);
+    expect(await repo.loadEvents()).toEqual([event]);
+    storage.setItem(READ_EVENTS_KEY, JSON.stringify([event, { id: 1 }, { id: "b", at: "x", source: "S", terms: "bad" }, "junk"]));
+    expect(await repo.loadEvents()).toEqual([event]);
+    storage.setItem(READ_EVENTS_KEY, "{bad");
+    expect(await repo.loadEvents()).toEqual([]);
   });
 });

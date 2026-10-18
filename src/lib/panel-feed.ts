@@ -2,14 +2,21 @@ import type { Article } from "@/types/article";
 import type { Panel } from "@/types/layout";
 import type { CatalogFeed } from "@/types/catalog";
 import { feedsFor, getFeedById } from "./catalog";
+import { panelTitle } from "./constants";
+
+/** 패널 기본 제목: 키워드 패널은 "🔎 검색어", 그 밖에는 "🇰🇷 한국 · 경제" */
+export function defaultPanelTitle(panel: Panel): string {
+  return panel.query && !panel.country && !panel.category ? `🔎 ${panel.query}` : panelTitle(panel.country, panel.category);
+}
 
 /** 패널 → /api/feeds URL (SWR 키). 카탈로그에서 빠진 id는 제외. 피드가 없으면 null */
 export function buildFeedsUrl(panel: Panel, opts: { fresh?: boolean } = {}): string | null {
   const ids = panel.feedIds.filter((id) => getFeedById(id));
-  if (ids.length === 0 && panel.customUrls.length === 0) return null;
+  if (ids.length === 0 && panel.customUrls.length === 0 && !panel.query) return null;
   const params = new URLSearchParams();
   if (ids.length) params.set("ids", ids.join(","));
   for (const url of panel.customUrls) params.append("urls", url);
+  if (panel.query) params.set("q", panel.query);
   params.set("limit", String(panel.limit));
   if (opts.fresh) params.set("fresh", "1");
   return `/api/feeds?${params.toString()}`;
@@ -26,6 +33,7 @@ export function countNew(articles: Article[], lastSeenAt: string | undefined): n
 
 /** 에러 목록 표시용: 카탈로그 id는 매체명, 커스텀 URL은 그대로 */
 export function feedLabel(feed: string): string {
+  if (feed.startsWith("q:")) return `구글 뉴스 '${feed.slice(2)}'`;
   return getFeedById(feed)?.name ?? feed;
 }
 

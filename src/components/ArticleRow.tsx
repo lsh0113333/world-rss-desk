@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
 import { formatRelative } from "@/lib/time";
+import { highlightParts, matchKeywords } from "@/lib/watch";
 import type { Article } from "@/types/article";
 import { Thumb } from "./Thumb";
 
@@ -17,15 +18,26 @@ interface Props {
   now: Date;
   /** 이미 읽은 기사 — 흐리게 */
   read?: boolean;
+  /** 같은 소식을 다룬 다른 매체 수 ("+3개 매체") */
+  alsoIn?: number;
+  /** 키워드 워치: 제목에서 <mark>로 강조 */
+  keywords?: string[];
   /** 일반 클릭 시 호출(원문 패널에 열기). 수정키·가운데 클릭은 기본 동작(새 탭) */
   onSelect?(article: Article): void;
   /** 어떤 방식으로든 기사를 열었을 때 (읽음 기록용) */
   onOpen?(article: Article): void;
 }
 
-export function ArticleRow({ article, isNew, selected = false, fresh = false, read = false, variant = "text", note, now, onSelect, onOpen }: Props) {
+export function ArticleRow(props: Props) {
+  const { article, isNew, selected = false, fresh = false, read = false, variant = "text", note, now, onSelect, onOpen, alsoIn, keywords = [] } = props;
   const time = formatRelative(article.publishedAt, now);
-  const meta = [article.source, note, time].filter(Boolean).join(" · ");
+  const meta = (
+    <>
+      {[article.source, note, time].filter(Boolean).join(" · ")}
+      {alsoIn ? <span className="ml-1.5 rounded bg-panel-header px-1 py-px text-[11px] font-medium text-muted">+{alsoIn}개 매체</span> : null}
+    </>
+  );
+  const watched = matchKeywords(article.title, keywords).length > 0;
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     onOpen?.(article);
@@ -41,7 +53,17 @@ export function ArticleRow({ article, isNew, selected = false, fresh = false, re
       }`}
     >
       {isNew && <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 -translate-y-0.5 rounded-full bg-accent" />}
-      {article.title}
+      {watched
+        ? highlightParts(article.title, keywords).map((part, i) =>
+            part.hit ? (
+              <mark key={i} className="rounded-sm bg-amber-100 px-0.5 text-inherit dark:bg-amber-900/60">
+                {part.text}
+              </mark>
+            ) : (
+              <span key={i}>{part.text}</span>
+            ),
+          )
+        : article.title}
     </span>
   );
 
@@ -58,6 +80,7 @@ export function ArticleRow({ article, isNew, selected = false, fresh = false, re
         data-read={read || undefined}
         data-new={isNew || undefined}
         data-fresh={fresh || undefined}
+        data-watched={watched || undefined}
         className={`group block rounded-lg px-2 py-2 transition-colors hover:bg-panel-header ${selected ? "bg-accent-soft hover:bg-accent-soft" : ""}`}
       >
         {variant === "hero" ? (

@@ -19,6 +19,12 @@ describe("Thumb", () => {
     expect(screen.getByRole("presentation")).toHaveAttribute("src", `/api/thumb?url=${encodeURIComponent(base.link)}`);
   });
 
+  it("skips the og:image lookup for Google News links", () => {
+    render(<Thumb article={{ ...base, link: "https://news.google.com/rss/articles/CBMi?oc=5" }} className="h-12 w-16" />);
+    expect(screen.queryByRole("presentation")).not.toBeInTheDocument();
+    expect(screen.getByText("E")).toBeInTheDocument();
+  });
+
   it("shows the outlet initial when the image fails", () => {
     render(<Thumb article={base} className="h-12 w-16" />);
     fireEvent.error(screen.getByRole("presentation"));
