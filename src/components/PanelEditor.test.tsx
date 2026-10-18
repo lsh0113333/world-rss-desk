@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { feedsFor } from "@/lib/catalog";
 import type { Panel } from "@/types/layout";
+import type { DiscoverResult } from "@/services/discover";
 import { PanelEditor, type PanelEditorProps } from "./PanelEditor";
 
 function setup(props: Partial<PanelEditorProps> = {}) {
@@ -10,7 +11,7 @@ function setup(props: Partial<PanelEditorProps> = {}) {
     onSave: vi.fn(),
     onClose: vi.fn(),
     onDelete: vi.fn(),
-    validateFeedUrl: vi.fn(async () => null as string | null),
+    discover: vi.fn(async (): Promise<DiscoverResult> => ({ feeds: [{ url: "https://example.com/rss", title: "Example Feed", articleCount: 20 }] })),
   };
   render(<PanelEditor {...handlers} {...props} />);
   return handlers;
@@ -72,22 +73,42 @@ describe("PanelEditor — add", () => {
     expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
   });
 
-  it("adds a custom url after validating it", async () => {
-    const { validateFeedUrl, onSave } = setup();
-    await userEvent.type(screen.getByLabelText("RSS 주소 직접 추가"), "example.com/rss");
-    await userEvent.click(screen.getByRole("button", { name: "추가" }));
-    expect(validateFeedUrl).toHaveBeenCalledWith("https://example.com/rss");
-    expect(await screen.findByText("https://example.com/rss")).toBeInTheDocument();
+  it("finds feeds from a site address and adds the chosen one as a custom url", async () => {
+    const { discover, onSave } = setup();
+    await userEvent.type(screen.getByLabelText("RSS 또는 사이트 주소"), "example.com");
+    await userEvent.click(screen.getByRole("button", { name: "찾기" }));
+    expect(discover).toHaveBeenCalledWith("example.com");
+    await userEvent.click(await screen.findByRole("button", { name: /Example Feed 추가/ }));
+    expect(screen.getByText("https://example.com/rss")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "저장" }));
     expect(onSave.mock.calls[0][0].customUrls).toEqual(["https://example.com/rss"]);
   });
 
-  it("shows the validation error and does not add the url", async () => {
-    setup({ validateFeedUrl: vi.fn(async () => "RSS 형식이 아닙니다") });
-    await userEvent.type(screen.getByLabelText("RSS 주소 직접 추가"), "https://example.com/page");
-    await userEvent.click(screen.getByRole("button", { name: "추가" }));
-    expect(await screen.findByText("RSS 형식이 아닙니다")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /삭제: https:\/\/example.com\/page/ })).not.toBeInTheDocument();
+  it("adds a catalog outlet found from its site as a catalog feed", async () => {
+    const discover = vi.fn(async (): Promise<DiscoverResult> => ({ feeds: [{ url: "https://feeds.bbci.co.uk/news/rss.xml", title: "BBC News · 종합", catalogId: "gb-bbc-top" }] }));
+    const { onSave } = setup({ discover });
+    await userEvent.type(screen.getByLabelText("RSS 또는 사이트 주소"), "bbc.com{Enter}");
+    await userEvent.click(await screen.findByRole("button", { name: /BBC News · 종합 추가/ }));
+    await userEvent.click(screen.getByRole("button", { name: "저장" }));
+    expect(onSave.mock.calls[0][0].feedIds).toContain("gb-bbc-top");
+    expect(onSave.mock.calls[0][0].customUrls).toEqual([]);
+  });
+
+  it("shows the discovery error", async () => {
+    setup({ discover: vi.fn(async (): Promise<DiscoverResult> => ({ feeds: [], error: "RSS를 찾지 못했습니다" })) });
+    await userEvent.type(screen.getByLabelText("RSS 또는 사이트 주소"), "https://example.com/page{Enter}");
+    expect(await screen.findByText("RSS를 찾지 못했습니다")).toBeInTheDocument();
+  });
+
+  it("saves a keyword-only panel without a country", async () => {
+    const { onSave } = setup();
+    for (const box of feedList().getAllByRole("checkbox")) await userEvent.click(box);
+    await userEvent.type(screen.getByLabelText("키워드 (구글 뉴스)"), "반도체");
+    await userEvent.click(screen.getByRole("button", { name: "저장" }));
+    const value = onSave.mock.calls[0][0];
+    expect(value).toMatchObject({ query: "반도체", feedIds: [], customUrls: [] });
+    expect(value.country).toBeUndefined();
+    expect(value.category).toBeUndefined();
   });
 
   it("closes on cancel and Escape", async () => {

@@ -77,4 +77,14 @@ describe("SettingsMenu", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "기본 구성으로 초기화" }));
     expect(onReset).toHaveBeenCalled();
   });
+
+  it("opens the feed status dialog", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    setup();
+    await openMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: "피드 상태" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "피드 상태" })).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
 });

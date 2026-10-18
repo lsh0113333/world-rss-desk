@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { downloadLayout } from "@/lib/layout-download";
 import { parseImportedLayout } from "@/lib/layout-store";
 import type { Layout } from "@/types/layout";
+import { FeedHealthDialog } from "./FeedHealthDialog";
 import { MoreIcon } from "./Icons";
 
 interface Props {
@@ -16,6 +17,7 @@ const item = "block w-full px-3 py-2 text-left text-sm text-body hover:bg-panel-
 
 export function SettingsMenu({ layout, onImport, onReset }: Props) {
   const [open, setOpen] = useState(false);
+  const [health, setHealth] = useState(false);
   const inputId = useId();
   const root = useRef<HTMLDivElement>(null);
 
@@ -79,11 +81,23 @@ export function SettingsMenu({ layout, onImport, onReset }: Props) {
               e.target.value = "";
             }}
           />
+          <button
+            type="button"
+            role="menuitem"
+            className={item}
+            onClick={() => {
+              setOpen(false);
+              setHealth(true);
+            }}
+          >
+            피드 상태
+          </button>
           <button type="button" role="menuitem" className={item} onClick={reset}>
             기본 구성으로 초기화
           </button>
         </div>
       )}
+      {health && <FeedHealthDialog onClose={() => setHealth(false)} />}
     </div>
   );
 }

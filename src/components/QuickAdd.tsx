@@ -3,11 +3,12 @@
 import { useEffect, useId, useState } from "react";
 import { categoriesForCountry, feedsByCountry } from "@/lib/catalog";
 import { CONTINENTS, countriesByContinent, getCategory, getCountry } from "@/lib/constants";
+import { MAX_QUERY_LENGTH } from "@/lib/layout-store";
 import type { Category, CountryCode } from "@/types/catalog";
 import { CloseIcon } from "./Icons";
 
 interface Props {
-  onAdd(input: { country: CountryCode; category?: Category }): void;
+  onAdd(input: { country: CountryCode; category?: Category } | { query: string }): void;
   onClose(): void;
   /** 매체 직접 선택·RSS 주소 추가가 가능한 상세 편집 창 */
   onAdvanced(): void;
@@ -21,6 +22,7 @@ const groups = CONTINENTS.map((c) => ({ ...c, countries: countriesByContinent(c.
 export function QuickAdd({ onAdd, onClose, onAdvanced }: Props) {
   const titleId = useId();
   const [country, setCountry] = useState<CountryCode | null>(null);
+  const [keyword, setKeyword] = useState("");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -49,6 +51,25 @@ export function QuickAdd({ onAdd, onClose, onAdvanced }: Props) {
 
         {!country ? (
           <div className="space-y-4 px-5 py-4">
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (keyword.trim()) onAdd({ query: keyword.trim() });
+              }}
+            >
+              <input
+                aria-label="키워드로 패널 만들기"
+                value={keyword}
+                maxLength={MAX_QUERY_LENGTH}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="또는 키워드로: 반도체, Hormuz… (구글 뉴스)"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-page px-3 py-1.5 text-sm text-headline outline-none focus:border-accent"
+              />
+              <button type="submit" disabled={!keyword.trim()} className="rounded-lg bg-accent px-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40">
+                만들기
+              </button>
+            </form>
             {groups.map((g) => (
               <section key={g.id}>
                 <h3 className="mb-1.5 text-xs font-semibold text-muted">{g.label}</h3>

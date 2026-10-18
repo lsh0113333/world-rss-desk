@@ -27,11 +27,12 @@ describe("CommandPalette", () => {
     expect(onRun.mock.calls[0][0].label).toBe(options[1].textContent?.replace(/^추가/, ""));
   });
 
-  it("shows an empty message and closes on Escape", async () => {
+  it("offers only a keyword panel for unmatched text and closes on Escape", async () => {
     const onClose = vi.fn();
     render(<CommandPalette layout={layout} onRun={vi.fn()} onClose={onClose} />);
     await userEvent.type(screen.getByRole("combobox", { name: "명령 검색" }), "zzzzqqq");
-    expect(screen.getByText("결과가 없어요")).toBeInTheDocument();
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.getByRole("option")).toHaveTextContent("키워드 패널 추가: 'zzzzqqq'");
     await userEvent.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
   });

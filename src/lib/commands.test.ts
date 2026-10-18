@@ -50,6 +50,13 @@ describe("searchCommands", () => {
     expect(labels("보드")).toContain("새 보드 만들기");
   });
 
+  it("always offers a keyword panel for the typed text as the last result", () => {
+    const cmds = searchCommands("반도체 수출", layout);
+    expect(cmds.at(-1)).toEqual({ kind: "keyword", label: "키워드 패널 추가: '반도체 수출' (구글 뉴스)", query: "반도체 수출" });
+    expect(searchCommands("미국", layout).at(-1)).toMatchObject({ kind: "keyword", query: "미국" });
+    expect(searchCommands("", layout).some((c) => c.kind === "keyword")).toBe(false);
+  });
+
   it("limits the number of results", () => {
     expect(searchCommands("a", layout).length).toBeLessThanOrEqual(10);
   });

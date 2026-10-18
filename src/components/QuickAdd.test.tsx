@@ -26,6 +26,12 @@ describe("QuickAdd", () => {
     expect(onAdd).toHaveBeenCalledWith({ country: "BR" });
   });
 
+  it("adds a keyword panel from the search box", async () => {
+    const { onAdd } = setup();
+    await userEvent.type(screen.getByRole("textbox", { name: "키워드로 패널 만들기" }), "  반도체 {Enter}");
+    expect(onAdd).toHaveBeenCalledWith({ query: "반도체" });
+  });
+
   it("goes back, opens the advanced editor and closes on Escape", async () => {
     const { onAdvanced, onClose } = setup();
     await userEvent.click(screen.getByRole("button", { name: /일본/ }));

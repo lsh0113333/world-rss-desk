@@ -2,13 +2,14 @@ import type { Category, CountryCode } from "@/types/catalog";
 import type { Layout } from "@/types/layout";
 import { CATALOG, categoriesForCountry, feedsByCountry } from "./catalog";
 import { CATEGORIES, COUNTRIES, getCountry, panelTitle } from "./constants";
-import { boardsOf, MAX_FEEDS_PER_PANEL } from "./layout-store";
+import { boardsOf, MAX_FEEDS_PER_PANEL, MAX_QUERY_LENGTH } from "./layout-store";
 
 export type Command =
   | { kind: "jump"; label: string; panelId: string }
   | { kind: "add"; label: string; country: CountryCode; category?: Category }
   | { kind: "outlet"; label: string; name: string; feedIds: string[] }
   | { kind: "board"; label: string; boardId: string }
+  | { kind: "keyword"; label: string; query: string }
   | { kind: "action"; label: string; action: "markAllSeen" | "refreshAll" | "newBoard" | "export" };
 
 const MAX_RESULTS = 10;
@@ -22,7 +23,7 @@ const ACTIONS: Extract<Command, { kind: "action" }>[] = [
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, "");
 const includes = (text: string, token: string) => norm(text).includes(token);
 
-/** 명령창(Ctrl+K) 검색: 패널 이동, 나라·분야 패널 추가, 매체 패널 추가, 보드 전환, 동작 */
+/** 명령창(Ctrl+K) 검색: 패널 이동, 나라·분야 패널 추가, 매체 패널 추가, 보드 전환, 동작, 키워드 패널(항상 마지막) */
 export function searchCommands(query: string, layout: Layout): Command[] {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean).map(norm);
   if (tokens.length === 0) return ACTIONS.slice(0, MAX_RESULTS);
@@ -70,5 +71,7 @@ export function searchCommands(query: string, layout: Layout): Command[] {
   for (const b of boardsOf(layout)) if (matchesAll(b.name)) results.push({ kind: "board", label: `보드로 이동: ${b.name}`, boardId: b.id });
   for (const a of ACTIONS) if (matchesAll(a.label)) results.push(a);
 
-  return results.slice(0, MAX_RESULTS);
+  // 5) 입력한 말 그대로 키워드 패널 (구글 뉴스) — 다른 결과가 많아도 자리를 남긴다
+  const text = query.trim().slice(0, MAX_QUERY_LENGTH);
+  return [...results.slice(0, MAX_RESULTS - 1), { kind: "keyword", label: `키워드 패널 추가: '${text}' (구글 뉴스)`, query: text }];
 }

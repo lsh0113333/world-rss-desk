@@ -3,17 +3,21 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { categoriesForCountry, feedsByCountry, feedsFor, getFeedById } from "@/lib/catalog";
 import { CONTINENTS, countriesByContinent, getCategory, getCountry, panelTitle } from "@/lib/constants";
-import { LIMIT_DEFAULT, LIMIT_MAX, LIMIT_MIN, MAX_FEEDS_PER_PANEL } from "@/lib/layout-store";
+import { LIMIT_DEFAULT, LIMIT_MAX, LIMIT_MIN, MAX_FEEDS_PER_PANEL, MAX_QUERY_LENGTH } from "@/lib/layout-store";
+import type { DiscoveredFeed, DiscoverResult } from "@/services/discover";
 import type { Category, Continent, CountryCode } from "@/types/catalog";
 import type { Panel } from "@/types/layout";
 import { CloseIcon } from "./Icons";
 
 export interface PanelEditorValue {
   title?: string;
-  country: CountryCode;
+  /** 키워드만 있는 패널은 나라·분야 없음 */
+  country?: CountryCode;
   category?: Category;
   feedIds: string[];
   customUrls: string[];
+  /** 키워드 패널: 구글 뉴스 검색어 */
+  query?: string;
   limit: number;
 }
 
@@ -23,19 +27,19 @@ export interface PanelEditorProps {
   onSave(value: PanelEditorValue): void;
   onClose(): void;
   onDelete?(): void;
-  /** 오류 메시지를 돌려주면 추가를 막는다. null이면 통과 */
-  validateFeedUrl?(url: string): Promise<string | null>;
+  /** RSS 또는 사이트 주소 → 찾은 피드 목록 (기본: /api/discover) */
+  discover?(input: string): Promise<DiscoverResult>;
 }
 
-/** 저장 전 커스텀 URL 검증: /api/feeds로 한 번 받아본다 */
-export async function validateFeedUrlViaApi(url: string): Promise<string | null> {
+/** 사이트 주소로 RSS 찾기: 서버가 홈페이지의 RSS 링크·흔한 경로·카탈로그를 확인한다 */
+export async function discoverViaApi(input: string): Promise<DiscoverResult> {
   try {
-    const res = await fetch(`/api/feeds?urls=${encodeURIComponent(url)}&limit=1&fresh=1`);
-    const body = (await res.json()) as { error?: string; errors?: { message: string }[] };
-    if (!res.ok) return body.error ?? `HTTP ${res.status}`;
-    return body.errors?.[0]?.message ?? null;
+    const res = await fetch(`/api/discover?url=${encodeURIComponent(input)}`);
+    const body = (await res.json()) as DiscoverResult;
+    if (!res.ok) return { feeds: [], error: body.error ?? `HTTP ${res.status}` };
+    return body;
   } catch {
-    return "확인 중 오류가 발생했습니다";
+    return { feeds: [], error: "확인 중 오류가 발생했습니다" };
   }
 }
 
@@ -46,15 +50,10 @@ const defaultSelection = (country: CountryCode, category: Category | "") =>
     .slice(0, MAX_FEEDS_PER_PANEL)
     .map((f) => f.id);
 
-function normalizeUrl(input: string): string {
-  const trimmed = input.trim();
-  return /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-
 const field = "w-full rounded border border-line bg-panel px-3 py-2 text-sm text-headline focus:outline-2 focus:outline-accent";
 const ghost = "rounded px-3 py-1.5 text-sm text-muted hover:bg-panel-header hover:text-headline";
 
-export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl = validateFeedUrlViaApi }: PanelEditorProps) {
+export function PanelEditor({ panel, onSave, onClose, onDelete, discover = discoverViaApi }: PanelEditorProps) {
   const titleId = useId();
   const initialCountry = panel?.country && getCountry(panel.country) ? panel.country : "KR";
   const initialCategory: Category | "" = panel ? (panel.category ?? "") : "top";
@@ -69,9 +68,11 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
   const [customUrls, setCustomUrls] = useState<string[]>(panel?.customUrls ?? []);
   const [title, setTitle] = useState(panel?.title ?? "");
   const [limit, setLimit] = useState(String(panel?.limit ?? LIMIT_DEFAULT));
+  const [query, setQuery] = useState(panel?.query ?? "");
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [found, setFound] = useState<DiscoveredFeed[]>([]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -88,11 +89,11 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
     return [...list, ...extra];
   }, [country, category, selected]);
 
-  const total = selected.length + customUrls.length;
+  const total = selected.length + customUrls.length + (query.trim() ? 1 : 0);
   const full = total >= MAX_FEEDS_PER_PANEL;
   const limitNumber = Number(limit);
   const limitValid = Number.isInteger(limitNumber) && limitNumber >= LIMIT_MIN && limitNumber <= LIMIT_MAX;
-  const canSave = selected.length + staleIds.length + customUrls.length > 0 && limitValid;
+  const canSave = (selected.length + staleIds.length + customUrls.length > 0 || query.trim() !== "") && limitValid;
 
   function changeCountry(next: CountryCode, nextCategory?: Category | "") {
     const cats = categoriesForCountry(next);
@@ -112,32 +113,42 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   }
 
-  async function addUrl() {
+  async function findFeeds() {
     if (!urlInput.trim() || full) return;
-    const url = normalizeUrl(urlInput);
-    if (customUrls.includes(url)) {
-      setUrlError("이미 추가된 주소입니다");
-      return;
-    }
     setChecking(true);
     setUrlError(null);
-    const error = await validateFeedUrl(url);
+    setFound([]);
+    const result = await discover(urlInput.trim());
     setChecking(false);
-    if (error) {
-      setUrlError(error);
+    if (result.feeds.length === 0) {
+      setUrlError(result.error ?? "RSS를 찾지 못했습니다");
       return;
     }
-    setCustomUrls((u) => [...u, url]);
+    setFound(result.feeds);
+  }
+
+  /** 카탈로그 매체면 카탈로그 피드로(매체명·주석 유지), 아니면 커스텀 URL로 */
+  function addFound(feed: DiscoveredFeed) {
+    if (full) return;
+    if (feed.catalogId) {
+      const id = feed.catalogId;
+      setSelected((s) => (s.includes(id) ? s : [...s, id]));
+    } else if (!customUrls.includes(feed.url)) {
+      setCustomUrls((u) => [...u, feed.url]);
+    }
+    setFound((list) => list.filter((f) => f !== feed));
     setUrlInput("");
   }
 
   function save() {
+    const q = query.trim();
+    const keywordOnly = q !== "" && selected.length + staleIds.length + customUrls.length === 0;
     onSave({
       ...(title.trim() ? { title: title.trim() } : {}),
-      country,
-      ...(category ? { category } : {}),
+      ...(keywordOnly ? {} : { country, ...(category ? { category } : {}) }),
       feedIds: [...selected, ...staleIds],
       customUrls,
+      ...(q ? { query: q } : {}),
       limit: limitNumber,
     });
   }
@@ -243,13 +254,13 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
 
           <div className="space-y-1">
             <label htmlFor={`${titleId}-url`} className="text-xs text-muted">
-              RSS 주소 직접 추가
+              RSS 또는 사이트 주소
             </label>
             <div className="flex gap-2">
               <input
                 id={`${titleId}-url`}
                 className={field}
-                placeholder="https://example.com/rss.xml"
+                placeholder="예: irishtimes.com 또는 https://example.com/rss.xml"
                 value={urlInput}
                 disabled={full}
                 onChange={(e) => {
@@ -259,15 +270,32 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    void addUrl();
+                    void findFeeds();
                   }
                 }}
               />
-              <button type="button" className={`${ghost} shrink-0 border border-line`} onClick={() => void addUrl()} disabled={checking || full || !urlInput.trim()}>
-                {checking ? "확인 중…" : "추가"}
+              <button type="button" className={`${ghost} shrink-0 border border-line`} onClick={() => void findFeeds()} disabled={checking || full || !urlInput.trim()}>
+                {checking ? "찾는 중…" : "찾기"}
               </button>
             </div>
             {urlError && <p className="text-xs text-error">{urlError}</p>}
+            {found.length > 0 && (
+              <ul aria-label="찾은 RSS" className="divide-y divide-line rounded border border-line">
+                {found.map((f) => (
+                  <li key={f.url} className="flex items-center gap-2 px-3 py-1.5 text-sm">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-body">{f.title}</span>
+                      <span className="block truncate text-xs text-muted">
+                        {f.catalogId ? "카탈로그 매체" : f.articleCount !== undefined ? `기사 ${f.articleCount}개 · ${f.url}` : f.url}
+                      </span>
+                    </span>
+                    <button type="button" className={`${ghost} shrink-0 border border-line`} disabled={full} onClick={() => addFound(f)} aria-label={`${f.title} 추가`}>
+                      추가
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             {customUrls.length > 0 && (
               <ul className="space-y-1 pt-1">
                 {customUrls.map((u) => (
@@ -281,6 +309,18 @@ export function PanelEditor({ panel, onSave, onClose, onDelete, validateFeedUrl 
               </ul>
             )}
           </div>
+
+          <label className="block space-y-1 text-xs text-muted">
+            <span>키워드 (구글 뉴스)</span>
+            <input
+              aria-label="키워드 (구글 뉴스)"
+              className={field}
+              value={query}
+              maxLength={MAX_QUERY_LENGTH}
+              placeholder="예: 반도체 수출, Hormuz — 최근 2일 기사를 함께 보여 줍니다"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
 
           <div className="grid grid-cols-[1fr_6rem] gap-3">
             <label className="space-y-1 text-xs text-muted">

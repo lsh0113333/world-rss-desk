@@ -124,7 +124,7 @@ describe("Dashboard", () => {
     await userEvent.click(screen.getByRole("button", { name: "+ 패널" }));
     await userEvent.click(screen.getByRole("button", { name: /매체 직접 고르기/ }));
     expect(screen.getByRole("dialog", { name: "패널 추가" })).toBeInTheDocument();
-    expect(screen.getByLabelText("RSS 주소 직접 추가")).toBeInTheDocument();
+    expect(screen.getByLabelText("RSS 또는 사이트 주소")).toBeInTheDocument();
   });
 
   it("edits a panel title", async () => {

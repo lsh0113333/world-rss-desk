@@ -134,6 +134,7 @@ export function Dashboard() {
         category: value.category,
         feedIds: value.feedIds,
         customUrls: value.customUrls,
+        query: value.query,
         limit: value.limit,
       });
     } else {
@@ -172,6 +173,8 @@ export function Dashboard() {
         return store.add({ title: c.name, feedIds: c.feedIds });
       case "board":
         return store.setActiveBoard(c.boardId);
+      case "keyword":
+        return store.add({ query: c.query });
       case "action":
         if (c.action === "markAllSeen") store.markAllSeen();
         else if (c.action === "refreshAll") refreshAll();

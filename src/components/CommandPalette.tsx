@@ -11,7 +11,7 @@ interface Props {
   onClose(): void;
 }
 
-const KIND_LABEL: Record<Command["kind"], string> = { jump: "이동", add: "추가", outlet: "매체", board: "보드", action: "동작" };
+const KIND_LABEL: Record<Command["kind"], string> = { jump: "이동", add: "추가", outlet: "매체", board: "보드", keyword: "키워드", action: "동작" };
 
 /** Ctrl+K 명령창: "미국 경제", "BBC", "테크"처럼 입력하고 Enter */
 export function CommandPalette({ layout, onRun, onClose }: Props) {
