@@ -9,7 +9,7 @@ import { hashId } from "../text";
 /** 한 사건당 AI에 보내는 기사 수 */
 export const ENRICH_ARTICLE_LIMIT = 12;
 /** 한 번 호출에 묶는 사건 수 */
-export const ENRICH_BATCH = 8;
+export const ENRICH_BATCH = 4;
 /** 한 번 실행에서 보강하는 최대 사건 수 (무료 한도 보호) */
 export const ENRICH_MAX = 16;
 /** 기사가 바뀌어도 이 시간 안에 다시 보강하지 않는다 */
@@ -77,7 +77,7 @@ export function buildEnrichPrompt(inputs: EnrichInput[]): string {
 - title_ko: 사건을 한 줄로 (40자 이내, 기사체)
 - summary_ko: 무슨 일이 있었는지 정확히 3줄 (각 줄 한 문장)
 - why_ko: 왜 중요한지 한 문장 (세계 또는 한국에 미치는 영향, 근거 범위 안에서)
-- perspectives: 나라(괄호 안 코드)별로 다루는 시각이 눈에 띄게 다를 때만 2~${MAX_PERSPECTIVES}개. angle_ko는 그 나라 매체가 무엇에 초점을 맞추는지 한 문장, refs는 근거가 된 기사 번호(예: "r2"). 시각 차이가 없으면 빈 배열.
+- perspectives: 이 서비스의 핵심이다. 기사가 2개 이상의 나라(괄호 안 코드)에서 나왔다면, 나라별로 무엇을 강조하는지 2~${MAX_PERSPECTIVES}개 정리한다. 같은 사실을 전해도 초점(안보·경제·외교·인권·자국에 미치는 영향·당사자 입장 등)이나 표현의 온도가 다르면 그것이 시각이다. angle_ko는 "그 나라 매체는 ~에 초점을 맞춘다" 식의 한 문장, refs는 근거 기사 번호(예: "r2"). 헤드라인이 거의 같은 내용일 때만 빈 배열.
 - entities: 핵심 인물·기관·장소·주제 최대 ${MAX_ENTITIES}개. name은 원어(영어), name_ko는 한국어, type은 person|org|place|topic.
 헤드라인들이 사실은 서로 다른 일이라면, 공통 주제를 제목으로 삼고 summary_ko에 그렇다고 밝혀라.
 
