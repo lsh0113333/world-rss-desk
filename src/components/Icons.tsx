@@ -91,3 +91,9 @@ export const GlobeIcon = () => (
     <path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16" />
   </Icon>
 );
+
+export const WallIcon = () => (
+  <Icon>
+    <path d="M4 6h7M4 10h7M4 14h7M4 18h7M13 6h7M13 10h7M13 14h7M13 18h7" />
+  </Icon>
+);

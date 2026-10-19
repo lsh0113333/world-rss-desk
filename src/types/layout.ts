@@ -32,9 +32,12 @@ export type BoardView = "panels" | "wall" | "world";
 export interface Board {
   id: string;
   name: string;
-  /** 없으면 "panels" */
+  /** 없으면 "world" (세계 흐름, 2026-10-19부터 기본) */
   view?: BoardView;
 }
+
+/** 화면 테마. 기본은 어둡게 */
+export type Theme = "dark" | "light";
 
 export interface Layout {
   version: 1;
@@ -44,4 +47,6 @@ export interface Layout {
   activeBoardId?: string;
   /** 키워드 워치: 모든 패널에서 강조할 관심 키워드 */
   watchKeywords?: string[];
+  /** 없으면 "dark" */
+  theme?: Theme;
 }

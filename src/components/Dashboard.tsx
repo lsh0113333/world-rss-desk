@@ -12,7 +12,7 @@ import { useWorldInsights } from "@/hooks/useWorldInsights";
 import type { Command } from "@/lib/commands";
 import { defaultPanelTitle } from "@/lib/panel-feed";
 import { downloadLayout } from "@/lib/layout-download";
-import { activeBoardId, boardsOf, buildStarterLayout, MAX_BOARDS, MAX_PANELS, panelsOnBoard } from "@/lib/layout-store";
+import { activeBoardId, boardsOf, boardViewOf, buildStarterLayout, MAX_BOARDS, MAX_PANELS, panelsOnBoard } from "@/lib/layout-store";
 import { ruleEngine, toStoryItems } from "@/lib/insights";
 import { normalizeLink } from "@/lib/merge";
 import { buildProfile, readEventOf, recommend, suggestPanels } from "@/lib/recommend";
@@ -39,6 +39,7 @@ import { TopStories } from "./TopStories";
 import { UndoToast } from "./UndoToast";
 import { WatchMenu } from "./WatchMenu";
 import { WorldView } from "./WorldView";
+import { BottomNav } from "./BottomNav";
 
 type EditorTarget = { mode: "add" } | { mode: "edit"; panelId: string };
 
@@ -86,9 +87,16 @@ export function Dashboard() {
   const boards = layout ? boardsOf(layout) : [];
   const boardId = layout ? activeBoardId(layout) : "";
   const panels = layout ? panelsOnBoard(layout, boardId) : [];
-  const boardView = boards.find((b) => b.id === boardId)?.view ?? "panels";
+  const boardView = boardViewOf(boards.find((b) => b.id === boardId));
   const keywords = useMemo(() => layout?.watchKeywords ?? [], [layout?.watchKeywords]);
   const world = useWorldInsights(boardView === "world");
+  const theme = layout?.theme ?? "dark";
+
+  // 테마: 문서 data-theme(색 토큰)과 상태 표시줄 색(theme-color)
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f6f7f9" : "#0a0e17");
+  }, [theme]);
 
   // 세계 흐름 분석 (브라우저 안, 무료): 같은 소식 묶기 · 오늘의 이슈 · 추천 · 키워드 워치
   const storyItems = useMemo(() => (layout ? toStoryItems(panelsOnBoard(layout, boardId), panelArticles) : []), [layout, boardId, panelArticles]);
@@ -247,10 +255,10 @@ export function Dashboard() {
           onOpenMenu={() => setMenuOpen(true)}
           onOpenPalette={() => setPalette(true)}
           watch={<WatchMenu keywords={keywords} mentions={mentions} readIds={readSet} now={now} onChange={store.setWatchKeywords} onSelect={openArticle} />}
-          menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} />}
+          menu={<SettingsMenu layout={layout} onImport={store.replace} onReset={store.resetToPreset} theme={theme} onThemeChange={store.setTheme} />}
         />
 
-        <main className="mx-auto max-w-[1800px] px-3 py-4 lg:px-6 lg:py-5">
+        <main className="mx-auto max-w-[1800px] px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-4 lg:px-6 lg:py-5">
           {layout && panels.length === 0 && boardView !== "world" && (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center text-sm text-muted">
               <p>패널을 추가하세요</p>
@@ -270,7 +278,7 @@ export function Dashboard() {
           )}
 
           {layout && (panels.length > 0 || boardView === "world") && (
-            <div className="mb-3 flex items-center justify-end">
+            <div className="mb-3 hidden items-center justify-end lg:flex">
                 <div role="group" aria-label="보드 보기" className="flex rounded-lg border border-line bg-panel p-0.5 text-xs">
                   {(
                     [
@@ -381,6 +389,15 @@ export function Dashboard() {
           )}
         </main>
       </div>
+
+      {layout && (
+        <BottomNav
+          view={boardView}
+          onView={(view) => store.setBoardView(boardId, view)}
+          onSearch={() => setPalette(true)}
+          onMenu={() => setMenuOpen(true)}
+        />
+      )}
 
       {selected && (
         <div className="fixed inset-y-0 right-0 z-30 w-full animate-drawer-in border-l border-line shadow-2xl lg:w-[min(760px,50vw)]">

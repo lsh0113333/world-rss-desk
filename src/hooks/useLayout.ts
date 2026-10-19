@@ -16,13 +16,14 @@ import {
   renameBoard,
   setActiveBoard,
   setBoardView,
+  setTheme,
   setWatchKeywords,
   restorePanel,
   updatePanel,
   type PanelInput,
   type RemoveResult,
 } from "@/lib/layout-store";
-import type { BoardView, Layout, Panel } from "@/types/layout";
+import type { BoardView, Layout, Panel, Theme } from "@/types/layout";
 
 const defaultRepository = new LocalStorageLayoutRepository();
 
@@ -45,6 +46,7 @@ export interface UseLayout {
   setActiveBoard(id: string): void;
   setBoardView(id: string, view: BoardView): void;
   setWatchKeywords(keywords: string[]): void;
+  setTheme(theme: Theme): void;
   markSeen(id: string): void;
   markAllSeen(): void;
   replace(layout: Layout): void;
@@ -111,6 +113,7 @@ export function useLayout(repository: LayoutRepository = defaultRepository): Use
     setActiveBoard: useCallback((id) => apply((l) => setActiveBoard(l, id)), [apply]),
     setBoardView: useCallback((id, view) => apply((l) => setBoardView(l, id, view)), [apply]),
     setWatchKeywords: useCallback((keywords) => apply((l) => setWatchKeywords(l, keywords)), [apply]),
+    setTheme: useCallback((theme) => apply((l) => setTheme(l, theme)), [apply]),
     markSeen: useCallback((id) => apply((l) => markSeen(l, id, new Date().toISOString())), [apply]),
     markAllSeen: useCallback(() => apply((l) => markAllSeen(l, new Date().toISOString())), [apply]),
     replace: useCallback((next) => setLayout(next), []),

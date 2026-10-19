@@ -1,7 +1,27 @@
 @import "tailwindcss";
 
-/* 색상 토큰 — docs/UI_GUIDE.md v2. 클래스: bg-page, bg-panel, text-headline, border-line, bg-accent-soft ... */
+/* 어두운 화면에서 Tailwind dark: 변형도 쓰이게 (OS 설정이 아니라 data-theme 기준) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* 색상 토큰 — docs/UI_GUIDE.md v3. 기본은 어두운 "뉴스룸" 테마, data-theme="light"면 밝은 테마.
+   클래스: bg-page, bg-panel, text-headline, border-line, bg-accent-soft ... */
 :root {
+  color-scheme: dark;
+  --page: #0a0e17;
+  --panel: #111723;
+  --panel-header: #182031;
+  --line: #222c3f;
+  --headline: #eef2f8;
+  --body: #c5cedc;
+  --muted: #8d9ab0;
+  --faint: #5e6b82;
+  --accent: #4f8ff7;
+  --accent-soft: #14213a;
+  --error: #f87171;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
   --page: #f6f7f9;
   --panel: #ffffff;
   --panel-header: #f8fafc;
@@ -13,22 +33,6 @@
   --accent: #2563eb;
   --accent-soft: #eff6ff;
   --error: #dc2626;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page: #0b1220;
-    --panel: #111a2e;
-    --panel-header: #16213a;
-    --line: #1f2a44;
-    --headline: #e2e8f0;
-    --body: #cbd5e1;
-    --muted: #94a3b8;
-    --faint: #64748b;
-    --accent: #60a5fa;
-    --accent-soft: #172554;
-    --error: #f87171;
-  }
 }
 
 @theme inline {
@@ -63,6 +67,19 @@
     }
     100% {
       background-color: transparent;
+    }
+  }
+
+  --animate-sheet-in: sheet-in 0.22s ease-out;
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(32px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
     }
   }
 

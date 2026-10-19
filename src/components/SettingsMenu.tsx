@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { downloadLayout } from "@/lib/layout-download";
 import { parseImportedLayout } from "@/lib/layout-store";
-import type { Layout } from "@/types/layout";
+import type { Layout, Theme } from "@/types/layout";
 import { FeedHealthDialog } from "./FeedHealthDialog";
 import { MoreIcon } from "./Icons";
 
@@ -11,11 +11,13 @@ interface Props {
   layout: Layout | null;
   onImport(layout: Layout): void;
   onReset(): void;
+  theme?: Theme;
+  onThemeChange?(theme: Theme): void;
 }
 
 const item = "block w-full px-3 py-2 text-left text-sm text-body hover:bg-panel-header hover:text-headline cursor-pointer";
 
-export function SettingsMenu({ layout, onImport, onReset }: Props) {
+export function SettingsMenu({ layout, onImport, onReset, theme = "dark", onThemeChange }: Props) {
   const [open, setOpen] = useState(false);
   const [health, setHealth] = useState(false);
   const inputId = useId();
@@ -63,7 +65,20 @@ export function SettingsMenu({ layout, onImport, onReset }: Props) {
         <MoreIcon />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 mt-1 w-52 rounded border border-line bg-panel py-1">
+        <div role="menu" className="absolute right-0 z-30 mt-1 w-52 rounded-lg border border-line bg-panel py-1 shadow-lg">
+          {onThemeChange && (
+            <button
+              type="button"
+              role="menuitem"
+              className={item}
+              onClick={() => {
+                setOpen(false);
+                onThemeChange(theme === "light" ? "dark" : "light");
+              }}
+            >
+              {theme === "light" ? "어두운 화면으로" : "밝은 화면으로"}
+            </button>
+          )}
           <button type="button" role="menuitem" className={item} onClick={exportLayout}>
             설정 내보내기
           </button>

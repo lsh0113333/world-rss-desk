@@ -296,13 +296,30 @@ describe("board view (panels / headline wall)", () => {
     const { setBoardView, boardsOf, DEFAULT_BOARD } = await import("./layout-store");
     const l = setBoardView(layoutOf(panel()), DEFAULT_BOARD.id, "wall");
     expect(boardsOf(l)).toEqual([{ ...DEFAULT_BOARD, view: "wall" }]);
-    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "panels"))[0].view).toBeUndefined();
-    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "world"))[0].view).toBe("world");
+    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "panels"))[0].view).toBe("panels");
+    // 세계 흐름이 기본이라 저장하지 않는다
+    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "world"))[0].view).toBeUndefined();
   });
 
   it("keeps a valid board view on load and drops an invalid one", () => {
-    const l = validateLayout({ version: 1, panels: [], boards: [{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y", view: "poster" }, { id: "b3", name: "z", view: "world" }] });
-    expect(l?.boards).toEqual([{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y" }, { id: "b3", name: "z", view: "world" }]);
+    const l = validateLayout({ version: 1, panels: [], boards: [{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y", view: "poster" }, { id: "b3", name: "z", view: "panels" }] });
+    expect(l?.boards).toEqual([{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y" }, { id: "b3", name: "z", view: "panels" }]);
+  });
+
+  it("보드 보기를 고른 적이 없으면 세계 흐름", async () => {
+    const { boardViewOf } = await import("./layout-store");
+    expect(boardViewOf({ id: "a", name: "a" })).toBe("world");
+    expect(boardViewOf(undefined)).toBe("world");
+    expect(boardViewOf({ id: "a", name: "a", view: "panels" })).toBe("panels");
+  });
+
+  it("테마: 기본 어둡게, 밝게만 저장·검증", async () => {
+    const { setTheme, validateLayout } = await import("./layout-store");
+    const light = setTheme(layoutOf(), "light");
+    expect(light.theme).toBe("light");
+    expect(setTheme(light, "dark").theme).toBeUndefined();
+    expect(validateLayout({ version: 1, panels: [], theme: "light" })?.theme).toBe("light");
+    expect(validateLayout({ version: 1, panels: [], theme: "neon" })?.theme).toBeUndefined();
   });
 });
 

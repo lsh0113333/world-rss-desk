@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCountry } from "@/lib/constants";
 import { formatRelative } from "@/lib/time";
 import type { Article } from "@/types/article";
@@ -31,13 +31,35 @@ function groupByCountry(articles: WorldStoryArticle[]): [string, WorldStoryArtic
   return [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
 }
 
-/** 사건 상세: AI 요약 · 왜 중요한가 · 나라별 시각(근거 기사) · 엔티티 · 나라별 기사 */
+/** 이만큼 넘게 아래로 쓸어내리면 시트를 닫는다 (px) */
+const SWIPE_CLOSE_PX = 90;
+
+/** 사건 상세: AI 요약 · 왜 중요한가 · 나라별 시각(근거 기사) · 엔티티 · 나라별 기사. 폰에서는 아래에서 올라오는 시트 */
 export function StoryDialog({ story, now, readIds, onSelect, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const startY = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+  const swipe = {
+    onTouchStart: (e: React.TouchEvent) => {
+      startY.current = e.touches[0]?.clientY ?? null;
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (startY.current === null) return;
+      setDrag(Math.max(0, (e.touches[0]?.clientY ?? startY.current) - startY.current));
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      const end = e.changedTouches[0]?.clientY ?? startY.current ?? 0;
+      const moved = startY.current === null ? 0 : end - startY.current;
+      startY.current = null;
+      setDrag(0);
+      if (moved > SWIPE_CLOSE_PX) onClose();
+    },
+  };
 
   const { insight } = story;
   const title = insight?.title ?? story.leadTitle;
@@ -61,9 +83,21 @@ export function StoryDialog({ story, now, readIds, onSelect, onClose }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/30 p-3 pt-[6vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="flex max-h-[86vh] w-full max-w-4xl flex-col rounded-xl border border-line bg-panel shadow-xl">
-        <header className="flex items-start gap-3 border-b border-line px-4 py-3 sm:px-5">
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-start sm:p-3 sm:pt-[6vh]"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        style={drag ? { transform: `translateY(${drag}px)` } : undefined}
+        className="flex max-h-[92dvh] w-full max-w-4xl animate-sheet-in flex-col rounded-t-2xl border border-line bg-panel pb-[env(safe-area-inset-bottom)] shadow-xl sm:max-h-[86vh] sm:rounded-xl sm:pb-0"
+      >
+        <div data-testid="sheet-handle" {...swipe} className="flex justify-center pb-1 pt-2.5 sm:hidden">
+          <span className="h-1 w-10 rounded-full bg-faint/60" />
+        </div>
+        <header {...swipe} className="flex items-start gap-3 border-b border-line px-4 pb-3 pt-1 sm:px-5 sm:pt-3">
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted">
               {story.countries.length}개 나라 · 매체 {story.sources.length}곳 · 기사 {story.size}
@@ -72,7 +106,7 @@ export function StoryDialog({ story, now, readIds, onSelect, onClose }: Props) {
             <h2 className="mt-0.5 text-lg font-semibold leading-snug text-headline">{title}</h2>
             {insight && <p className="mt-0.5 truncate text-xs text-faint">{story.leadTitle}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="닫기" className="rounded p-1 text-muted hover:text-headline">
+          <button type="button" onClick={onClose} aria-label="닫기" className="-mr-1 rounded-lg p-2 text-muted hover:bg-panel-header hover:text-headline">
             <CloseIcon />
           </button>
         </header>

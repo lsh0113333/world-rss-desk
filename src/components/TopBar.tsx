@@ -26,7 +26,7 @@ const ghost =
 
 export function TopBar({ online, canAdd, refreshing, coolingDown, onRefreshAll, onMarkAllSeen, onAdd, onOpenMenu, onOpenPalette, boardName = "내 화면", watch, menu }: Props) {
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-line bg-panel px-3 lg:px-6">
+    <header className="sticky top-0 z-10 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center gap-2 border-b border-line bg-panel px-3 pt-[env(safe-area-inset-top)] lg:px-6">
       {onOpenMenu && (
         <button type="button" onClick={onOpenMenu} aria-label="메뉴 열기" className="rounded-md p-1.5 text-muted hover:bg-panel-header lg:hidden">
           <MenuIcon />

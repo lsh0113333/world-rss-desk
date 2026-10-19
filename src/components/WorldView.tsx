@@ -49,8 +49,9 @@ export function WorldView({ data, error, loading, now, readIds, onSelect }: Prop
         </span>
       </div>
 
+      {/* 폰: 대표 사건 → 지도 → 나머지 사건. 데스크톱: 왼쪽 사건, 오른쪽 지도 */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-4 xl:col-start-1">
           {countryName && (
             <p className="flex items-center gap-2 text-sm text-body">
               <span>
@@ -62,18 +63,18 @@ export function WorldView({ data, error, loading, now, readIds, onSelect }: Prop
             </p>
           )}
           {featured ? <StoryCard story={featured} now={now} featured onOpen={setOpen} /> : <p className="py-8 text-center text-sm text-muted">이 나라가 함께 다루는 사건이 아직 없어요.</p>}
-          {rest.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
-              {rest.map((s) => (
-                <StoryCard key={s.id} story={s} now={now} onOpen={setOpen} />
-              ))}
-            </div>
-          )}
         </div>
-        <aside className="order-first space-y-2 xl:order-none">
+        <aside className="space-y-2 xl:col-start-2 xl:row-span-2 xl:row-start-1">
           <WorldMap counts={data.countries} selected={country} onSelect={setCountry} />
           <p className="px-1 text-xs text-faint">최근 24시간 나라별 기사량. 나라를 누르면 그 나라 매체가 다루는 사건만 보여요.</p>
         </aside>
+        {rest.length > 0 && (
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:col-start-1 2xl:grid-cols-3">
+            {rest.map((s) => (
+              <StoryCard key={s.id} story={s} now={now} onOpen={setOpen} />
+            ))}
+          </div>
+        )}
       </div>
 
       {open && (

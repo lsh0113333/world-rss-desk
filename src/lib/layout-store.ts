@@ -1,5 +1,5 @@
 import type { Category, CountryCode } from "@/types/catalog";
-import type { Board, BoardView, Layout, Panel, PanelView } from "@/types/layout";
+import type { Board, BoardView, Layout, Panel, PanelView, Theme } from "@/types/layout";
 import { feedsFor, getFeedById } from "./catalog";
 import { CATEGORIES } from "./constants";
 import { normalizeKeywords } from "./watch";
@@ -128,7 +128,7 @@ function validateBoards(raw: unknown): Board[] | null | undefined {
     if (!b || typeof b !== "object") return null;
     const { id, name, view } = b as Record<string, unknown>;
     if (typeof id !== "string" || !id || typeof name !== "string") return null;
-    boards.push({ id, name, ...(view === "wall" || view === "world" ? { view: view as BoardView } : {}) });
+    boards.push({ id, name, ...(view === "wall" || view === "panels" ? { view: view as BoardView } : {}) });
   }
   return new Set(boards.map((b) => b.id)).size === boards.length ? boards : null;
 }
@@ -154,6 +154,7 @@ export function validateLayout(raw: unknown): Layout | null {
     return rest;
   });
   const active = typeof l.activeBoardId === "string" && boardIds.has(l.activeBoardId) ? l.activeBoardId : undefined;
+  const theme = l.theme === "light" ? ("light" as const) : undefined;
   const watch = Array.isArray(l.watchKeywords) ? normalizeKeywords(l.watchKeywords.filter((k): k is string => typeof k === "string")) : [];
   return {
     version: 1,
@@ -161,6 +162,7 @@ export function validateLayout(raw: unknown): Layout | null {
     ...(boards ? { boards } : {}),
     ...(active ? { activeBoardId: active } : {}),
     ...(watch.length ? { watchKeywords: watch } : {}),
+    ...(theme ? { theme } : {}),
   };
 }
 
@@ -229,6 +231,21 @@ export function renameBoard(layout: Layout, id: string, name: string): Layout {
 }
 
 /** 보드 보기 전환. 기본 보드만 있는 레이아웃이면 boards를 만들어 저장한다 */
+/** 보드 보기를 고른 적이 없으면 세계 흐름 */
+export const DEFAULT_BOARD_VIEW: BoardView = "world";
+
+export function boardViewOf(board: Board | undefined): BoardView {
+  return board?.view ?? DEFAULT_BOARD_VIEW;
+}
+
+/** 테마: 기본 어둡게, 밝게만 저장 */
+export function setTheme(layout: Layout, theme: Theme): Layout {
+  const next = { ...layout };
+  if (theme === "light") next.theme = "light";
+  else delete next.theme;
+  return next;
+}
+
 export function setBoardView(layout: Layout, id: string, view: BoardView): Layout {
   const boards = boardsOf(layout);
   if (!boards.some((b) => b.id === id)) return layout;
@@ -237,7 +254,7 @@ export function setBoardView(layout: Layout, id: string, view: BoardView): Layou
     boards: boards.map((b) => {
       if (b.id !== id) return b;
       const rest = { id: b.id, name: b.name };
-      return view === "panels" ? rest : { ...rest, view };
+      return view === DEFAULT_BOARD_VIEW ? rest : { ...rest, view };
     }),
   };
 }

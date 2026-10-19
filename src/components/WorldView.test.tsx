@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { WorldInsights, WorldStory } from "@/types/world";
@@ -105,6 +105,20 @@ describe("WorldView", () => {
     const [article, related] = onSelect.mock.calls[0];
     expect(article).toMatchObject({ id: "a2", title: "Oil jumps after seizure", link: "https://cnbc.example/1", source: "CNBC" });
     expect(related.map((a: { id: string }) => a.id)).toEqual(["a1", "a3"]);
+  });
+
+  it("폰: 상세 시트를 손잡이에서 아래로 쓸어내리면 닫힌다 (조금만 내리면 그대로)", async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole("button", { name: /이란, 호르무즈서 유조선 나포/ }));
+    const handle = screen.getByTestId("sheet-handle");
+    fireEvent.touchStart(handle, { touches: [{ clientY: 100 }] });
+    fireEvent.touchMove(handle, { touches: [{ clientY: 140 }] });
+    fireEvent.touchEnd(handle, { changedTouches: [{ clientY: 140 }] });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    fireEvent.touchStart(handle, { touches: [{ clientY: 100 }] });
+    fireEvent.touchMove(handle, { touches: [{ clientY: 260 }] });
+    fireEvent.touchEnd(handle, { changedTouches: [{ clientY: 260 }] });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("AI 결과가 없는 사건은 나라별 기사 목록만", async () => {

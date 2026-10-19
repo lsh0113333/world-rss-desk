@@ -7,6 +7,12 @@ import type { FeedsResponse } from "@/types/article";
 import type { Layout } from "@/types/layout";
 import { Dashboard } from "./Dashboard";
 
+// 이 파일은 패널 화면을 검사한다: 보드 보기를 고르지 않았으면 "패널"로 본다 (실제 기본값 "세계 흐름"은 Dashboard.world.test.tsx)
+vi.mock("@/lib/layout-store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/layout-store")>();
+  return { ...actual, boardViewOf: (b: { view?: string } | undefined) => b?.view ?? "panels" };
+});
+
 const fetchMock = vi.fn();
 
 function respond(body: FeedsResponse) {
@@ -340,52 +346,6 @@ describe("Dashboard — onboarding, command bar, boards, read state, drag", () =
     await waitFor(() => expect(savedLayout()?.boards?.[0].view).toBe("wall"));
     await userEvent.click(screen.getByRole("button", { name: "패널" }));
     expect(await screen.findAllByRole("article")).toHaveLength(2);
-  });
-
-  it("세계 흐름 보기: 사건 카드를 보여 주고, 기사를 누르면 같은 사건의 다른 매체와 함께 원문 서랍을 연다", async () => {
-    const now = new Date().toISOString();
-    const insights = {
-      updatedAt: now,
-      countries: { KR: 3, US: 2 },
-      stories: [
-        {
-          id: "s-1",
-          leadTitle: "Chip exports surge",
-          terms: ["chip"],
-          countries: ["KR", "US"],
-          sources: ["연합", "CNBC"],
-          size: 2,
-          firstSeenAt: now,
-          lastSeenAt: now,
-          trend: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-          rising: false,
-          entities: [],
-          articles: [
-            { id: "w1", title: "반도체 수출 급증", link: "https://yna.example/1", source: "연합", country: "KR", publishedAt: now },
-            { id: "w2", title: "Chip exports surge", link: "https://cnbc.example/1", source: "CNBC", country: "US", publishedAt: now },
-          ],
-        },
-      ],
-    };
-    fetchMock.mockImplementation((url: string) =>
-      url.startsWith("/api/insights")
-        ? Promise.resolve(new Response(JSON.stringify(insights), { status: 200 }))
-        : url.startsWith("/api/article")
-          ? Promise.resolve(new Response(JSON.stringify({ mode: "link", url: "https://yna.example/1", reason: "x" }), { status: 200 }))
-          : respond(feedsFor(url)),
-    );
-    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(twoPanels));
-    renderDashboard();
-    await panelLink(/기사 kr-yonhap-top/);
-    await userEvent.click(screen.getByRole("button", { name: "세계 흐름" }));
-    expect(await screen.findByRole("region", { name: "지금 세계 지도" })).toBeInTheDocument();
-    expect(screen.queryAllByRole("article")).toHaveLength(0);
-    await waitFor(() => expect(savedLayout()?.boards?.[0].view).toBe("world"));
-
-    await userEvent.click(await screen.findByRole("button", { name: /Chip exports surge/ }));
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /반도체 수출 급증/ }));
-    expect(screen.queryByRole("dialog", { name: /Chip exports surge/ })).not.toBeInTheDocument();
-    expect(await screen.findByText("같은 소식, 다른 매체")).toBeInTheDocument();
   });
 
   it("watches a keyword: highlights it in panels and counts mentions", async () => {
