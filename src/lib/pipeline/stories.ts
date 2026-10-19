@@ -1,7 +1,7 @@
 import type { StoryItem } from "@/types/insights";
 import type { PipelineArticle } from "@/types/world";
 import { hashId } from "../text";
-import { findIssues } from "../trending";
+import { findEvents } from "./events";
 
 /** 한 번의 실행에서 저장하는 사건 수 */
 export const STORY_LIMIT = 40;
@@ -54,12 +54,11 @@ export function toPipelineItems(articles: PipelineArticle[]): StoryItem[] {
 }
 
 /**
- * 수집된 전체 기사 → 사건 초안. 1차 규칙 엔진의 "오늘의 이슈"(여러 나라·매체가 함께 쓰는 키워드 묶음)를
- * 전체 카탈로그 규모로 돌린다. 점수: 나라 수 × 3 + 매체 수.
+ * 수집된 전체 기사 → 사건 초안. 여러 나라·매체가 함께 쓰는 단어 쌍으로 사건을 찾는다 (events.ts).
  */
 export function buildStories(articles: PipelineArticle[], now: Date): StoryDraft[] {
   if (articles.length === 0) return [];
-  const issues = findIssues(toPipelineItems(articles), now, { limit: STORY_LIMIT });
+  const issues = findEvents(toPipelineItems(articles), now, { limit: STORY_LIMIT });
   return issues.map((issue) => {
     const items = issue.items.slice(0, STORY_ARTICLE_LIMIT);
     const lead = items[0].article;
