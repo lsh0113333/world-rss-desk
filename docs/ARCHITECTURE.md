@@ -187,6 +187,23 @@ interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?
 - 헤더: `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`. 잘못된 url은 400.
 - `frame` 판정: `X-Frame-Options`가 있으면(DENY/SAMEORIGIN/ALLOW-FROM) 불가. CSP `frame-ancestors`가 있으면 `*`가 포함된 경우만 허용(우리 도메인이 명시될 일은 없으므로).
 
+## 세계 흐름 파이프라인 (서버, ADR-015)
+```
+GitHub Actions (매시 17분, .github/workflows/pipeline.yml → scripts/run-pipeline.ts → services/pipeline.ts)
+  ① Ingest     CATALOG 전체 loadFeed (동시 20, 48시간 이내·날짜 있는 기사)
+  ② Normalize  articles upsert (id = sha1(normalizeLink).slice(16), ignore-duplicates)      → Supabase
+  ③ Aggregate  최근 24시간 → lib/pipeline/events.findEvents(단어 쌍) → stories.assignStoryIds(이어 쓰기)
+               → stories / story_articles upsert, story_snapshots(시간별 크기)
+  ④ Enrich     lib/pipeline/enrich: selectForEnrichment → buildEnrichPrompt(4개씩) → services/gemini(responseSchema)
+               → parseEnrichment(근거 참조 검증) → story_insights / entities / story_entities
+  ⑤ 정리       articles 14일, stories 30일, snapshots 7일. pipeline_runs에 통계(나라별 기사 수 포함)
+Vercel /api/insights → services/world-insights.readWorldInsights(publishable 키) → WorldInsights (CDN 5분)
+  → useWorldInsights → WorldView: WorldMap(타일 지도, lib/world-map) + StoryCard + StoryDialog(요약·왜 중요한가·나라별 시각·엔티티)
+```
+- 스키마: `supabase/migrations/0001_insights.sql` (모든 테이블 RLS, anon은 select만). 적용은 Supabase Management API(`/v1/projects/{ref}/database/query`).
+- 비밀값: GitHub Secrets `SUPABASE_URL`·`SUPABASE_SECRET_KEY`·`GEMINI_API_KEY`, Vercel env `SUPABASE_URL`·`SUPABASE_PUBLISHABLE_KEY`. 등록은 `bash scripts/setup-secrets.sh`(사용자가 직접 실행).
+- 보드 보기 `world`(세계 흐름)는 패널 데이터와 무관하게 `/api/insights`만 쓴다.
+
 ## 패턴
 - Server Component는 셸(`page.tsx`, `layout.tsx`)만 맡는다. 레이아웃이 localStorage에 있으므로 그리드 이하는 Client Component다.
 - `services/`는 I/O만, `lib/`는 순수 함수로 둔다. Route Handler는 둘을 조립하는 얇은 계층이다.
@@ -240,7 +257,7 @@ PanelGrid ──▶ Panel ──usePanelFeed (SWR, refreshInterval 2분)──�
 
 ## 배포와 소스 관리
 ```
-노트북(개발) ── git push ──▶ GitHub private repo ── 자동 연동 ──▶ Vercel (24시간 서비스)
+노트북(개발) ── git push ──▶ GitHub 공개 repo(lsh0113333/world-rss-desk) ── npx vercel deploy --prod ──▶ Vercel (24시간 서비스)
      │                                                         ▲
      └ python scripts/execute.py 0-mvp (로컬 git에 step별 커밋)    └ 폰·다른 PC에서 접속
 ```
