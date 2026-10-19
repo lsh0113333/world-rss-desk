@@ -28,6 +28,14 @@ describe("GET /api/insights", () => {
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=300");
   });
 
+  it("결과가 아직 없으면 짧게만 캐시", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://x.supabase.co");
+    vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", "pk");
+    vi.mocked(readWorldInsights).mockResolvedValue({ updatedAt: null, stories: [], countries: {} });
+    const res = await GET();
+    expect(res.headers.get("Cache-Control")).toBe("public, s-maxage=30");
+  });
+
   it("읽기 실패는 502", async () => {
     vi.stubEnv("SUPABASE_URL", "https://x.supabase.co");
     vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", "pk");

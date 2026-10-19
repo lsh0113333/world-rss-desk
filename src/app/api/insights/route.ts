@@ -14,7 +14,9 @@ export async function GET() {
   if (!url || !key) return Response.json(EMPTY, { headers: { "Cache-Control": "no-store" } });
   try {
     const insights = await readWorldInsights(createDb({ url, key }));
-    return Response.json(insights, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900" } });
+    // 아직 결과가 없으면(첫 실행 전) 빈 응답을 오래 캐시하지 않는다
+    const cache = insights.updatedAt ? "public, s-maxage=300, stale-while-revalidate=900" : "public, s-maxage=30";
+    return Response.json(insights, { headers: { "Cache-Control": cache } });
   } catch (err) {
     console.error("insights", err instanceof Error ? err.message : err);
     return Response.json({ error: "세계 흐름을 불러오지 못했습니다" }, { status: 502, headers: { "Cache-Control": "no-store" } });
