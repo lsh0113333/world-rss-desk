@@ -297,11 +297,12 @@ describe("board view (panels / headline wall)", () => {
     const l = setBoardView(layoutOf(panel()), DEFAULT_BOARD.id, "wall");
     expect(boardsOf(l)).toEqual([{ ...DEFAULT_BOARD, view: "wall" }]);
     expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "panels"))[0].view).toBeUndefined();
+    expect(boardsOf(setBoardView(l, DEFAULT_BOARD.id, "world"))[0].view).toBe("world");
   });
 
   it("keeps a valid board view on load and drops an invalid one", () => {
-    const l = validateLayout({ version: 1, panels: [], boards: [{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y", view: "poster" }] });
-    expect(l?.boards).toEqual([{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y" }]);
+    const l = validateLayout({ version: 1, panels: [], boards: [{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y", view: "poster" }, { id: "b3", name: "z", view: "world" }] });
+    expect(l?.boards).toEqual([{ id: "b1", name: "x", view: "wall" }, { id: "b2", name: "y" }, { id: "b3", name: "z", view: "world" }]);
   });
 });
 

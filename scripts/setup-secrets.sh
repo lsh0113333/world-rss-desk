@@ -16,7 +16,8 @@ URL="https://$REF.supabase.co"
 set -a; . ./.env.local; set +a
 
 key() {
-  supabase projects api-keys --project-ref "$REF" -o json 2>/dev/null |
+  # --reveal: 없으면 secret 키가 가려진 값(sb_secret_abcd••••)으로 나온다
+  supabase projects api-keys --project-ref "$REF" --reveal -o json 2>/dev/null |
     node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const k=JSON.parse(s).find(x=>x.type===process.argv[1]);if(!k)process.exit(1);process.stdout.write(k.api_key)})' "$1"
 }
 

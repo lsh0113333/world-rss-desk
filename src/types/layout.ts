@@ -25,8 +25,8 @@ export interface Panel {
   boardId?: string;
 }
 
-/** 보드 보기: 패널 그리드(기본) / 헤드라인 벽(국기+제목만 여러 열) */
-export type BoardView = "panels" | "wall";
+/** 보드 보기: 패널 그리드(기본) / 헤드라인 벽(국기+제목만 여러 열) / 세계 흐름(사건 카드+지도, 파이프라인 결과) */
+export type BoardView = "panels" | "wall" | "world";
 
 /** 보드(탭): 패널 묶음. 예: 아침 브리핑, 경제, 테크 */
 export interface Board {

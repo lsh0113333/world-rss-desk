@@ -128,7 +128,7 @@ function validateBoards(raw: unknown): Board[] | null | undefined {
     if (!b || typeof b !== "object") return null;
     const { id, name, view } = b as Record<string, unknown>;
     if (typeof id !== "string" || !id || typeof name !== "string") return null;
-    boards.push({ id, name, ...(view === "wall" ? { view: "wall" as const } : {}) });
+    boards.push({ id, name, ...(view === "wall" || view === "world" ? { view: view as BoardView } : {}) });
   }
   return new Set(boards.map((b) => b.id)).size === boards.length ? boards : null;
 }
@@ -237,7 +237,7 @@ export function setBoardView(layout: Layout, id: string, view: BoardView): Layou
     boards: boards.map((b) => {
       if (b.id !== id) return b;
       const rest = { id: b.id, name: b.name };
-      return view === "wall" ? { ...rest, view } : rest;
+      return view === "panels" ? rest : { ...rest, view };
     }),
   };
 }

@@ -8,6 +8,7 @@ import { useNow } from "@/hooks/useNow";
 import { useOnline } from "@/hooks/useOnline";
 import { MANUAL_REFRESH_COOLDOWN_MS } from "@/hooks/usePanelFeed";
 import { useReadHistory } from "@/hooks/useReadHistory";
+import { useWorldInsights } from "@/hooks/useWorldInsights";
 import type { Command } from "@/lib/commands";
 import { defaultPanelTitle } from "@/lib/panel-feed";
 import { downloadLayout } from "@/lib/layout-download";
@@ -37,6 +38,7 @@ import { TopBar } from "./TopBar";
 import { TopStories } from "./TopStories";
 import { UndoToast } from "./UndoToast";
 import { WatchMenu } from "./WatchMenu";
+import { WorldView } from "./WorldView";
 
 type EditorTarget = { mode: "add" } | { mode: "edit"; panelId: string };
 
@@ -58,6 +60,8 @@ export function Dashboard() {
   const [palette, setPalette] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [selected, setSelected] = useState<Article | null>(null);
+  /** 세계 흐름에서 연 기사: 같은 사건의 다른 매체 기사 (없으면 패널의 같은 소식 묶음) */
+  const [selectedRelated, setSelectedRelated] = useState<Article[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropId, setDropId] = useState<string | null>(null);
@@ -84,6 +88,7 @@ export function Dashboard() {
   const panels = layout ? panelsOnBoard(layout, boardId) : [];
   const boardView = boards.find((b) => b.id === boardId)?.view ?? "panels";
   const keywords = useMemo(() => layout?.watchKeywords ?? [], [layout?.watchKeywords]);
+  const world = useWorldInsights(boardView === "world");
 
   // 세계 흐름 분석 (브라우저 안, 무료): 같은 소식 묶기 · 오늘의 이슈 · 추천 · 키워드 워치
   const storyItems = useMemo(() => (layout ? toStoryItems(panelsOnBoard(layout, boardId), panelArticles) : []), [layout, boardId, panelArticles]);
@@ -106,8 +111,17 @@ export function Dashboard() {
     (article: Article) => {
       onOpen(article);
       setSelected(article);
+      setSelectedRelated(null);
     },
     [onOpen],
+  );
+  const openWorldArticle = useCallback(
+    (article: Article, related: Article[], country?: CountryCode) => {
+      markRead(article.id, readEventOf({ article, panelId: "world", ...(country ? { country } : {}) }, new Date()));
+      setSelected(article);
+      setSelectedRelated(related);
+    },
+    [markRead],
   );
 
   // 단축키: Ctrl/⌘+K 명령창, Esc 원문 닫기
@@ -237,7 +251,7 @@ export function Dashboard() {
         />
 
         <main className="mx-auto max-w-[1800px] px-3 py-4 lg:px-6 lg:py-5">
-          {layout && panels.length === 0 && (
+          {layout && panels.length === 0 && boardView !== "world" && (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center text-sm text-muted">
               <p>패널을 추가하세요</p>
               <div className="flex gap-2">
@@ -255,12 +269,12 @@ export function Dashboard() {
             </div>
           )}
 
-          {panels.length > 0 && (
-            <>
-              <div className="mb-3 flex items-center justify-end">
+          {layout && (panels.length > 0 || boardView === "world") && (
+            <div className="mb-3 flex items-center justify-end">
                 <div role="group" aria-label="보드 보기" className="flex rounded-lg border border-line bg-panel p-0.5 text-xs">
                   {(
                     [
+                      ["world", "세계 흐름"],
                       ["panels", "패널"],
                       ["wall", "헤드라인 벽"],
                     ] as const
@@ -276,7 +290,15 @@ export function Dashboard() {
                     </button>
                   ))}
                 </div>
-              </div>
+            </div>
+          )}
+
+          {boardView === "world" && (
+            <WorldView data={world.data} error={world.error} loading={world.loading} now={now} readIds={readSet} onSelect={openWorldArticle} />
+          )}
+
+          {panels.length > 0 && boardView !== "world" && (
+            <>
               <IssueBar issues={insights.issues} onOpen={setOpenIssue} />
               <ForYou
                 recommendations={recommendations}
@@ -366,7 +388,7 @@ export function Dashboard() {
             article={selected}
             onClose={closeReader}
             mobile={!wide}
-            related={(clusters.get(selected.id)?.items ?? []).filter((i) => i.article.id !== selected.id).map((i) => i.article)}
+            related={selectedRelated ?? (clusters.get(selected.id)?.items ?? []).filter((i) => i.article.id !== selected.id).map((i) => i.article)}
             onSelect={openArticle}
           />
         </div>
