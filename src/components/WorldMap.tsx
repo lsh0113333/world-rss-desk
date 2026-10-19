@@ -16,7 +16,8 @@ const LEVEL_BG = ["var(--panel-header)", "color-mix(in srgb, var(--accent) 14%, 
 
 /** 지금 세계 지도: 최근 24시간 나라별 기사량 (타일 지도). 누르면 그 나라가 다루는 사건만 */
 export function WorldMap({ counts, selected, onSelect }: Props) {
-  const scale = mapScale(counts);
+  // 색 단계는 지도 위 나라끼리 비교 (국제·지역 매체 수가 최댓값을 차지하지 않게)
+  const scale = mapScale(Object.fromEntries(Object.entries(counts).filter(([code]) => TILE_POSITIONS[code])));
   const toggle = (code: CountryCode) => onSelect(selected === code ? null : code);
 
   const tile = (code: CountryCode) => {
@@ -32,7 +33,7 @@ export function WorldMap({ counts, selected, onSelect }: Props) {
         title={`${meta?.name ?? code} · 최근 24시간 기사 ${n}건`}
         onClick={() => toggle(code)}
         style={{ background: LEVEL_BG[level] }}
-        className={`flex aspect-square min-w-0 items-center justify-center rounded-[5px] text-[10px] font-semibold leading-none sm:text-[11px] ${
+        className={`flex aspect-square w-full min-w-0 items-center justify-center rounded-[5px] border border-line/70 text-[10px] font-semibold leading-none sm:text-[11px] ${
           level >= 4 ? "text-white" : level >= 3 ? "text-headline" : "text-muted"
         } ${active ? "ring-2 ring-headline ring-offset-1 ring-offset-panel" : "hover:ring-1 hover:ring-faint"}`}
       >

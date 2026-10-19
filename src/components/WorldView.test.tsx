@@ -125,3 +125,11 @@ describe("WorldView", () => {
     expect(screen.getByText(/세계 흐름을 불러오지 못했습니다/)).toBeInTheDocument();
   });
 });
+
+describe("WorldMap 색 단계", () => {
+  it("국제·지역 매체 수는 나라 색 단계 계산에서 빠진다 (가장 많은 나라가 가장 진하다)", () => {
+    render(<WorldView data={{ ...data, countries: { WORLD: 500, GB: 40, US: 10 } }} loading={false} now={NOW} readIds={new Set()} onSelect={vi.fn()} />);
+    const gb = screen.getByRole("button", { name: /영국 기사 40건/ });
+    expect(gb.className).toContain("text-white");
+  });
+});
