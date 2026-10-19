@@ -1,0 +1,48 @@
+name: world-pipeline
+
+# 세계 흐름 파이프라인: 매시간 카탈로그 피드 수집 → 사건 묶기 → AI 보강(Gemini 무료) → Supabase 저장
+# 공개 저장소라 Actions는 무료. 정각은 혼잡해서 17분에 실행한다.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: world-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Run pipeline
+        run: npx tsx scripts/run-pipeline.ts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # 공개 저장소의 스케줄 워크플로는 저장소 활동이 60일 없으면 꺼진다 → 50일째 빈 커밋으로 유지
+      - name: Keepalive
+        if: github.event_name == 'schedule'
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -gt $(( 50 * 86400 )) ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "chore: keepalive (스케줄 워크플로 유지)"
+            git push
+          fi

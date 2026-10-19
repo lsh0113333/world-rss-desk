@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "feeds:check": "tsx scripts/check-feeds.ts"
+    "feeds:check": "tsx scripts/check-feeds.ts",
+    "pipeline": "tsx scripts/run-pipeline.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
