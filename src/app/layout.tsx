@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "World RSS Desk",
-  description: "대륙·나라·분야별 RSS 헤드라인을 한 화면에서",
+  description: "대륙 → 나라 → 매체별 세계 뉴스 헤드라인을 한 페이지에서",
   appleWebApp: { capable: true, title: "RSS Desk", statusBarStyle: "black-translucent" },
 };
 
@@ -25,6 +25,11 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* App Router 루트 레이아웃이라 모든 페이지에 적용된다 (이 규칙은 pages/_document용) */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=JetBrains+Mono:wght@500;700&display=swap" />
       </head>
       <body className="antialiased">{children}</body>
     </html>
