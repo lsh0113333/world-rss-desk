@@ -79,3 +79,18 @@
 **결정**: 소스는 GitHub private repo에 두고, Vercel Git 연동으로 push하면 자동 배포되게 한다.
 **이유**: 노트북을 꺼도 서비스와 소스가 클라우드에 남는다. preview 배포로 phase별 결과를 폰에서 바로 확인할 수 있다.
 **트레이드오프**: GitHub 계정과 Vercel 계정 연결이 필요하다(최초 1회 수동 설정).
+
+### ADR-016: 가판대 한 페이지로 전면 개편 (2026-10-22, ADR-012·013·014 화면 폐기)
+**결정**: 첫 화면을 `/api/front` 하나로 그리는 가판대로 바꾼다. 대륙 7개(국제 구역 없음) → 나라 → 매체(대표 피드 1개) → 최신 제목. 묶음 지역(EU·ME·ASIA·LATAM·AFRICA) 매체는 본사 나라로 옮긴다(`src/lib/newsstand.ts`). 응답은 CDN 10분 캐시 + stale-while-revalidate 하루. 보드·패널·편집기·헤드라인 벽·세계 흐름 화면과 `/api/article`·`/api/discover`·`/api/feeds`·`/api/insights`·`/api/thumb`, Readability·linkedom 의존성은 삭제했다(2026-10-24).
+**이유**: 사용자 원칙 "단순함 ... 딱 봤을때 설명을 안해줘도". 기능이 쌓여 주인도 구조를 이해하기 어려워졌다(`intent/2026-10-20-newsstand.md`).
+**트레이드오프**: 사용자 RSS 추가·키워드·읽기 모드가 사라졌다. 하루 넘게 방문이 없으면 첫 요청이 10초 이상 걸린다(매체 129곳 수집).
+
+### ADR-017: 온톨로지 실험실 — 판단은 규칙, AI는 읽기와 말하기 (2026-10-24)
+**결정**: 다음 개편은 분야와 무관한 온톨로지 핵심(객체·관계·시간, 정의는 설정 파일) 위에 분야를 꽂는 구조로 간다(세계 뉴스 → "나" → 공공 지원, `intent/2026-10-23-ontology-lab.md`). AI(Gemini)는 기사에서 정해진 유형의 사건·행위자를 **추출**하고 결과를 한 문장으로 **표현**하는 데만 쓰고, 중요도·연관·권고 같은 **판단은 규칙**으로 한다. 모든 결론에는 근거를 붙인다.
+**이유**: 사용자 목표는 "엄격한 기준을 통해 딱 이렇게 하심돼요"라는 결과다. 규칙 판단은 같은 입력에 같은 답을 내고 이유를 설명할 수 있다. 핵심을 분야와 무관하게 두어야 세계 뉴스에서 만든 것을 궁극 목표(공공 지원)에서 다시 쓸 수 있다.
+**트레이드오프**: 규칙을 사람이 계속 다듬어야 한다. 추출 품질이 전체를 좌우한다(유형 고정, 여러 나라 보도 우선으로 완화).
+
+### ADR-018: 예약 실행은 Supabase pg_cron → GitHub workflow_dispatch (2026-10-24)
+**결정**: Supabase pg_cron이 30분마다 pg_net으로 GitHub Actions `workflow_dispatch`를 호출한다(`supabase/migrations/0002_scheduler.sql`). 토큰(fine-grained, 이 저장소 Actions 쓰기만)은 Supabase Vault에 두고 실행할 때 읽는다. GitHub 자체 schedule은 예비로 남긴다(같은 concurrency 그룹이라 겹치지 않음).
+**이유**: GitHub schedule은 실제로 3~6시간 간격으로 밀렸다(2026-10-20~21 기록). Vercel Hobby cron은 하루 1회다. pg_cron·pg_net·Vault는 Supabase 무료 플랜에 있다.
+**트레이드오프**: 토큰 하나를 사용자가 만들어 넣어야 하고(`scripts/setup-scheduler.sh`), 만료되면 다시 넣어야 한다. 30분마다 쓰기가 생겨 Supabase 7일 비활동 정지도 함께 막는다.
