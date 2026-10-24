@@ -84,4 +84,15 @@ describe("findEvents 흔한 단어", () => {
     const events = findEvents([...background, ...mixed], NOW);
     expect(events.some((e) => e.items.some((i) => mixed.includes(i)))).toBe(false);
   });
+
+  it("나라 사건: 기준을 낮추면 한 나라 매체 2곳이 함께 쓴 사건도 찾는다 (온톨로지 v0)", () => {
+    const domestic = [
+      item("Seoul subway fare hike approved by city council", "yna", "KR"),
+      item("City council approves Seoul subway fare hike", "koreaherald", "KR"),
+    ];
+    expect(findEvents(domestic, NOW).length).toBe(0);
+    const events = findEvents(domestic, NOW, { minSources: 2, minCountries: 1 });
+    expect(events).toHaveLength(1);
+    expect(events[0].countries).toEqual(["KR"]);
+  });
 });

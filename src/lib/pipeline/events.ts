@@ -38,8 +38,18 @@ function jaccard<T>(a: Set<T>, b: Set<T>): number {
   return shared / (a.size + b.size - shared);
 }
 
-export function findEvents(items: StoryItem[], now: Date, opts: { limit?: number } = {}): Issue[] {
+export interface FindEventsOptions {
+  limit?: number;
+  /** 기본 3. 나라 사건(한 나라 안)은 2 */
+  minSources?: number;
+  /** 기본 2. 나라 사건은 1 */
+  minCountries?: number;
+}
+
+export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOptions = {}): Issue[] {
   const limit = opts.limit ?? EVENT_LIMIT;
+  const minSources = opts.minSources ?? MIN_SOURCES;
+  const minCountries = opts.minCountries ?? MIN_COUNTRIES;
 
   const seen = new Set<string>();
   const unique = items.filter((i) => {
@@ -86,7 +96,7 @@ export function findEvents(items: StoryItem[], now: Date, opts: { limit?: number
   }
 
   const candidates = [...pairs.values()]
-    .filter((p) => p.sources.size >= MIN_SOURCES && p.countries.size >= MIN_COUNTRIES)
+    .filter((p) => p.sources.size >= minSources && p.countries.size >= minCountries)
     .sort(
       (a, b) =>
         score(b.sources.size, b.countries.size) - score(a.sources.size, a.countries.size) ||
@@ -123,7 +133,7 @@ export function findEvents(items: StoryItem[], now: Date, opts: { limit?: number
   for (const { g } of ranked) {
     if (events.length >= limit) break;
     const m = measure([...g.items].filter((i) => !taken.has(i)));
-    if (m.sources.size < MIN_SOURCES || m.countries.size < MIN_COUNTRIES) continue;
+    if (m.sources.size < minSources || m.countries.size < minCountries) continue;
     for (const i of m.list) taken.add(i);
     const sorted = m.list.sort((a, b) => time(b) - time(a));
     const label = g.terms
