@@ -31,7 +31,7 @@
 1. **온톨로지 실험실 0단계 (정리와 기반)** — 진행 상황
    - [x] 옛 화면 코드 걷어내기 (`57e323b`, 104개 파일·약 9,500줄 삭제, 테스트 228개)
    - [x] ADR-016(가판대)·017(판단은 규칙, AI는 읽기와 말하기)·018(예약 실행), CLAUDE.md 규칙 갱신
-   - [ ] **사용자 할 일**: GitHub fine-grained 토큰 만들기 → `.env.local`에 `GITHUB_DISPATCH_TOKEN=...` 한 줄 → `! bash scripts/setup-scheduler.sh` (Supabase pg_cron이 30분마다 파이프라인 실행)
+   - [x] 예약 실행: 사용자가 fine-grained 토큰을 만들어 `scripts/setup-scheduler.sh` 실행(2026-10-24 05:12Z). Vault 저장, `cron.job` 'world-pipeline-dispatch' `*/30 * * * *` 활성, 즉시 실행 확인(run 40065323826). 토큰 만료 시 같은 스크립트로 교체
    - [ ] 온톨로지 v0 설정 초안(객체·관계·사건 유형) → 사용자와 검토
    - 그다음 1단계(세계 상황판) 시안
 2. 개편 전 현황 점검에서 나온 문제 (2026-10-20, 사용자와 함께 확인)
