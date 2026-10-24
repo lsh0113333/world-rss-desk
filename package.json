@@ -13,9 +13,7 @@
     "pipeline": "tsx scripts/run-pipeline.ts"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.6.0",
     "fast-xml-parser": "^5.11.2",
-    "linkedom": "^0.18.13",
     "next": "15.5.28",
     "react": "19.1.0",
     "react-dom": "19.1.0",
