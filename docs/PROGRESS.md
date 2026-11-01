@@ -1,6 +1,6 @@
 # 진행 상황 (이어서 작업하기용)
 
-마지막 갱신: 2026-11-01. 새 세션은 이 파일 → `CLAUDE.md` → `intent/` → `docs/*.md` 순서로 읽고 "남은 작업"부터 이어서 한다.
+마지막 갱신: 2026-11-01. 문서 목차는 `README.md`. 새 세션은 이 파일 → `CLAUDE.md` → `intent/` → `docs/*.md` 순서로 읽고 "남은 작업"부터 이어서 한다.
 같은 대화를 이어가려면 프로젝트 폴더에서 `claude --continue`.
 
 ## 일하는 방식 (2026-10-18부터)
@@ -43,4 +43,4 @@
 - Vercel 환경 변수: `CRON_SECRET`(Production) — cron 재점검용. 값은 Vercel에만 있음(필요하면 `vercel env rm` 후 새로 추가)
 - Node.js: `C:\nodejs` (사용자 PATH에 등록됨. Bash에서는 `export PATH="/c/nodejs:$PATH"`)
 - 카탈로그 피드 id는 사용자 설정이 참조하므로 바꾸지 않는다
-- 새 피드 추가 절차: 후보 probe → `catalog.json` 추가 → `npm run feeds:check` → 배포 → 배포 서버에서 `/api/feeds?fresh=1&ids=…` (서버 IP 차단 확인) → `docs/FEEDS.md`
+- 새 피드 추가 절차: `docs/FEEDS.md` 5절

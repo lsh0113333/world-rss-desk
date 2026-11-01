@@ -1,47 +1,63 @@
-# World RSS Desk
+# 오늘의 세계 (World RSS Desk)
 
-대륙 > 나라 > 분야별 무료 RSS 헤드라인을 한 화면의 패널 그리드로 모아 보는 1인용 뉴스 대시보드.
+세계 흐름을 한눈에 잡는 사이트이자, 온톨로지를 직접 만들고 공부하는 실험실입니다.
 
-- 기본 패널 8개(한국·미국·일본·중국·유럽·국제), 패널 추가/편집/순서 변경, 보드(탭), 드래그 앤 드롭
-- 55개 나라·지역, 270개 검증된 피드 카탈로그(해외는 영어판) + 사이트 주소로 RSS 찾기 + 키워드 패널(구글 뉴스)
-- 2분 자동 갱신, 패널별/전체 수동 새로고침, 새 기사 강조, 매일 피드 자동 점검
-- 세계 흐름: 같은 소식 묶기("+N개 매체"), 오늘의 이슈(나라별 비교), 헤드라인 벽, 키워드 워치, 내 관심사 추천 — 모두 브라우저 안에서 계산(무료)
-- 원문 보기: 읽기 모드 우선, 못 여는 기사는 요약 카드 + 같은 소식 다른 매체
-- 설정은 브라우저에 저장, JSON 내보내기/가져오기로 기기 간 이동
-- 폰 홈 화면에 앱처럼 설치(PWA)
+**사이트**: https://world-rss-desk.vercel.app
 
-의도 기록: [intent/](intent/README.md) (기능마다 "무엇을, 왜"를 먼저 적는다) · 설계 문서: [PRD](docs/PRD.md) · [아키텍처](docs/ARCHITECTURE.md) · [ADR](docs/ADR.md) · [UI 가이드](docs/UI_GUIDE.md) · [운영·비용](docs/OPERATIONS.md) · [RSS 수집 기준](docs/FEEDS.md)
+궁극 목표는 "지금 상황이 이러시니 이렇게 하시면 돼요"라는 한 문장 솔루션입니다. 먼저 세계 뉴스로 구조를 검증하고, 공공 지원 분야로 넓혀 갑니다.
 
-운영 주소: https://world-rss-desk.vercel.app
+## 화면
+
+| 주소 | 내용 |
+|---|---|
+| `/` | 지금 흐름 8개, 세계 5, IT 5, 대륙별 사건. 누르면 근거 기사까지 펼쳐짐 |
+| `/actors/...` | 행위자가 나온 사건, 함께 나온 행위자 |
+| `/ontology` | 시스템 구조, 규칙, 규칙 실험 (저장되지 않음) |
+
+## 원리
+
+```
+Supabase가 30분마다 실행 요청 → GitHub Actions에서 파이프라인 실행
+
+ 1. 감지  RSS 270개 피드에서 기사 수집           규칙
+ 2. 묶기  같은 일을 다룬 기사끼리 묶음            규칙
+ 3. 읽기  새 묶음만 사건·행위자·장소 추출         AI (Gemini)
+ 4. 저장  객체와 관계로 저장                     규칙 (PostgreSQL)
+ 5. 판단  점수 = 보도 규모 × 유형 배수 + 떠오름   규칙
+ 6. 결과  상황판 저장 → 사이트는 이것만 읽음      Vercel
+```
+
+- **온톨로지는 사람이 정한 설계도입니다.** 무엇이 있고 어떤 관계인지, 무엇이 더 중요한지를 [`src/ontology/world.ts`](src/ontology/world.ts)에 정합니다.
+- **판단은 규칙, AI는 읽기와 말하기만.** 같은 입력이면 같은 순위가 나오고, 모든 결론에 근거 기사가 붙습니다.
+- 모두 무료 플랜으로 돌아가고, 노트북을 꺼도 동작합니다.
+
+## 문서
+
+| 문서 | 언제 보나 |
+|---|---|
+| [운영 안내](docs/GUIDE.md) | **처음 볼 곳.** 평소 운영, 문제 대응, 규칙 바꾸는 법 |
+| [진행 상황](docs/PROGRESS.md) | 지금 어디까지 했고 다음에 무엇을 하나 |
+| [온톨로지](docs/ONTOLOGY.md) | 객체, 관계, 사건 유형, 판단 규칙의 설계 |
+| [아키텍처](docs/ARCHITECTURE.md) | 코드 구조, 테이블, 비밀값 위치 |
+| [제품 요구사항](docs/PRD.md) | 목표, 사용자, 화면별 요구사항 |
+| [설계 결정 기록](docs/ADR.md) | 왜 이렇게 만들었나 (ADR) |
+| [UI 가이드](docs/UI_GUIDE.md) | 색, 글꼴, 화면 규칙 |
+| [운영 개요](docs/OPERATIONS.md) | 무료 한도, 비용, 배포, 위험 |
+| [RSS 수집 기준](docs/FEEDS.md) | 매체 선정 기준과 현황, 뺀 매체와 이유 |
+| [의도 기록](intent/README.md) | 기능마다 "무엇을, 왜"를 사용자의 말로 적은 곳 |
+| [개발 규칙](CLAUDE.md) | 코드를 고칠 때 지킬 규칙 |
 
 ## 실행
 
-Node.js 24 필요.
+Node.js 24가 필요합니다. 화면을 로컬에서 보려면 `.env.local`에 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`가 있어야 합니다.
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+npm run dev                # 로컬 화면 http://localhost:3000
+npm run lint && npm run build && npm run test   # 올리기 전 확인
+npm run query -- "select dst, count(*) from links group by dst"   # 그래프에 읽기 쿼리
+npm run feeds:check        # RSS 피드 점검
+npx vercel deploy --prod --yes   # 사이트 배포
 ```
 
-| 명령 | 설명 |
-|------|------|
-| `npm run dev` | 개발 서버 |
-| `npm run build` / `npm start` | 프로덕션 빌드 / 실행 |
-| `npm run lint` | ESLint |
-| `npm run test` | 테스트 (네트워크 사용 안 함) |
-| `npm run feeds:check` | 카탈로그 피드가 실제로 동작하는지 점검 (네트워크 사용) |
-
-## 배포 (Vercel, 무료)
-
-```bash
-npx vercel login     # 최초 1회, 브라우저에서 로그인
-npx vercel --prod    # 배포 → https://<프로젝트명>.vercel.app
-```
-
-서울 리전(`icn1`)은 `vercel.json`에 설정되어 있다. 환경변수는 필요 없다.
-
-## 매체 추가
-
-`src/data/catalog.json`에 항목을 추가하고 `npm run test`(스키마 검사)와 `npm run feeds:check`(실동작)를 통과시킨다.
-일부 매체는 집에서는 되지만 Vercel 서버 IP를 차단한다(예: Japan Today 403). 배포 후 `/api/feeds?fresh=1&ids=<id>`로 한 번 더 확인한다.
-id는 `{나라}-{매체}-{분야}` 형식이며, 사용자 설정이 참조하므로 한번 정하면 바꾸지 않는다.
+파이프라인 코드는 `main`에 push하면 다음 실행부터 반영됩니다. 사이트는 Vercel 배포까지 해야 반영됩니다.
