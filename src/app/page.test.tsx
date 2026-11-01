@@ -11,9 +11,9 @@ afterEach(() => {
 });
 
 describe("Home", () => {
-  it("가판대: 상단 바에 이름, 불러오는 동안 자리 표시", () => {
+  it("오늘의 세계: 제목, 불러오는 동안 자리 표시", () => {
     render(<Home />);
-    expect(screen.getByRole("banner")).toHaveTextContent("세계 가판대");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("오늘의 세계");
     expect(screen.getByLabelText("불러오는 중")).toBeInTheDocument();
   });
 });

@@ -18,7 +18,7 @@
   --accent: #4f8ff7;
   --accent-soft: #14213a;
   --error: #f87171;
-  /* 가판대 대륙 색 (intent/2026-10-20-newsstand.md) */
+  /* 대륙 색 (intent/2026-10-20-newsstand.md) */
   --c-asia: #ff7a59;
   --c-europe: #5b9cff;
   --c-north-america: #f2668b;
@@ -26,6 +26,7 @@
   --c-middle-east: #d9a066;
   --c-africa: #63c66b;
   --c-oceania: #2ec4b6;
+  --it: #7ee0a1;
 }
 
 :root[data-theme="light"] {
@@ -48,6 +49,7 @@
   --c-middle-east: #a8692c;
   --c-africa: #2f8f3a;
   --c-oceania: #0f8a80;
+  --it: #11804a;
 }
 
 @theme inline {

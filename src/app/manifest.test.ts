@@ -4,7 +4,7 @@ import manifest from "./manifest";
 describe("web app manifest", () => {
   it("describes an installable standalone app", () => {
     const m = manifest();
-    expect(m).toMatchObject({ name: "World RSS Desk", short_name: "RSS Desk", start_url: "/", display: "standalone", lang: "ko" });
+    expect(m).toMatchObject({ name: "오늘의 세계", short_name: "오늘의 세계", start_url: "/", display: "standalone", lang: "ko" });
   });
 
   it("provides 192px and 512px png icons", () => {

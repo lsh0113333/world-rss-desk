@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "World RSS Desk",
-    short_name: "RSS Desk",
-    description: "대륙·나라·분야별 RSS 헤드라인을 한 화면에서",
+    name: "오늘의 세계",
+    short_name: "오늘의 세계",
+    description: "한눈에 보는 오늘의 세계 흐름",
     lang: "ko",
     start_url: "/",
     display: "standalone",

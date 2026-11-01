@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "World RSS Desk",
-  description: "대륙 → 나라 → 매체별 세계 뉴스 헤드라인을 한 페이지에서",
-  appleWebApp: { capable: true, title: "RSS Desk", statusBarStyle: "black-translucent" },
+  title: "오늘의 세계",
+  description: "한눈에 보는 오늘의 세계 흐름",
+  appleWebApp: { capable: true, title: "오늘의 세계", statusBarStyle: "black-translucent" },
 };
 
-// 기본은 어두운 테마 (밝게 바꾸면 Dashboard가 theme-color를 바꾼다). 노치·홈 바 영역까지 그린다
+// 어두운 테마. 노치·홈 바 영역까지 그린다
 export const viewport: Viewport = {
   themeColor: "#0a0e17",
   viewportFit: "cover",

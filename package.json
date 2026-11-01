@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "feeds:check": "tsx scripts/check-feeds.ts",
-    "pipeline": "tsx scripts/run-pipeline.ts"
+    "pipeline": "tsx scripts/run-pipeline.ts",
+    "query": "tsx scripts/query.ts"
   },
   "dependencies": {
     "fast-xml-parser": "^5.11.2",

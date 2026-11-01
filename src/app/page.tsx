@@ -1,5 +1,5 @@
-import { Newsstand } from "@/components/Newsstand";
+import { WorldBoardView } from "@/components/WorldBoardView";
 
 export default function Home() {
-  return <Newsstand />;
+  return <WorldBoardView />;
 }
