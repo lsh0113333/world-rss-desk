@@ -3,12 +3,12 @@ import { normalizeLink } from "@/lib/merge";
 import { findClusters, planClusters, type Cluster, type EventProgress } from "@/lib/ontology/cluster";
 import { buildExtractPrompt, EXTRACT_SCHEMA, parseExtraction, type ExtractedEvent, type ExtractInput } from "@/lib/ontology/extract";
 import { inList, isValidLink } from "@/lib/ontology/graph";
-import { buildBoard } from "@/lib/ontology/rules";
+import { buildBoard, diffBoards, type PreviousBoard } from "@/lib/ontology/rules";
 import { hashId } from "@/lib/text";
 import { assertSafeUrl } from "@/lib/url-guard";
 import { allCountryCodes, continentOfCountry, CONTINENTS, countryName } from "@/ontology/countries";
 import { baseCountry } from "@/ontology/outlets";
-import { ACTOR_ROLES, EVENT_TYPES, FLOWS, LINK_TYPES, OBJECT_TYPES, type EventType, type FlowId, type LinkType } from "@/ontology/world";
+import { ACTOR_ROLES, EVENT_TYPES, FLOWS, LINK_TYPES, OBJECT_TYPES, RULES, type EventType, type FlowId, type LinkType } from "@/ontology/world";
 import type { CatalogFeed } from "@/types/catalog";
 import type { BoardActor, BoardArticle, BoardStats, EventFact, OntologyStats, PipelineArticle } from "@/types/world";
 import { loadFeed, type ParsedFeed } from "./rss";
@@ -34,7 +34,8 @@ const EXTRACT_ARTICLE_LIMIT = 12;
 const CHUNK = 100;
 const KEEP_ARTICLES_DAYS = 14;
 const KEEP_GRAPH_DAYS = 30;
-const KEEP_SNAPSHOTS_DAYS = 1;
+/** 어제와 비교하려면 하루보다 길게 둔다 */
+const KEEP_SNAPSHOTS_DAYS = 2;
 
 export interface PipelineStats {
   feedsOk: number;
@@ -372,6 +373,11 @@ export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
       ontology: await ontologyStats(db),
     };
     const board = buildBoard(facts, now, boardStats);
+    const [yesterday] = await db.select<{ generated_at: string; payload: PreviousBoard }>(
+      "board_snapshots",
+      `select=generated_at,payload&generated_at=lte.${iso(now.getTime() - RULES.changeHours * HOUR)}&order=generated_at.desc&limit=1`,
+    );
+    if (yesterday) board.changes = diffBoards(board, yesterday.payload, yesterday.generated_at);
     await db.insert("board_snapshots", { generated_at: seen, payload: board });
 
     const stats: PipelineStats = {

@@ -2,7 +2,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BOARD_PREFS_KEY } from "@/lib/board-prefs";
+import { BOARD_PREFS_KEY, BOARD_RULES_KEY } from "@/lib/board-prefs";
+import { multipliersFromConfig } from "@/lib/ontology/rules";
 import { boardFixture } from "./__fixtures__/board";
 import { WorldBoardView } from "./WorldBoardView";
 
@@ -114,6 +115,55 @@ describe("WorldBoardView", () => {
     fetchMock.mockImplementation(() => json(old));
     renderBoard();
     expect(await screen.findByText(/갱신이 늦어지고 있어요/)).toBeInTheDocument();
+  });
+
+  it("저장한 내 기준으로 순위를 바꾸고, 바로 되돌릴 수 있다", async () => {
+    window.localStorage.setItem(BOARD_RULES_KEY, JSON.stringify({ ...multipliersFromConfig(), "armed-conflict": 0 }));
+    renderBoard();
+    const firstRow = () => within(screen.getByRole("region", { name: "세계 5" })).getAllByRole("listitem")[0];
+    await screen.findByText("내 기준 적용 중");
+    expect(firstRow()).not.toHaveTextContent("흑해에서 화물선 침몰");
+
+    await userEvent.click(screen.getByRole("button", { name: "원래대로" }));
+    expect(screen.queryByText("내 기준 적용 중")).not.toBeInTheDocument();
+    expect(firstRow()).toHaveTextContent("흑해에서 화물선 침몰");
+    expect(window.localStorage.getItem(BOARD_RULES_KEY)).toBeNull();
+  });
+
+  it("기본 기준이면 내 기준 표시가 없다", async () => {
+    renderBoard();
+    await screen.findByRole("region", { name: "세계 5" });
+    expect(screen.queryByText("내 기준 적용 중")).not.toBeInTheDocument();
+  });
+
+  it("어제와 달라진 것: 새로 오른 일, 커진 일, 내려간 일", async () => {
+    const board = boardFixture();
+    board.changes = {
+      comparedTo: new Date(Date.now() - 24 * 3_600_000).toISOString(),
+      appeared: ["event:war"],
+      grew: [{ id: "event:ai", countriesBefore: 1 }],
+      faded: [{ id: "event:old", title: "어제의 큰일" }],
+    };
+    fetchMock.mockImplementation(() => json(board));
+    renderBoard();
+    const changes = await screen.findByRole("region", { name: "어제와 달라진 것" });
+    expect(within(changes).getByRole("button", { name: /흑해에서 화물선 침몰/ })).toBeInTheDocument();
+    expect(within(changes).getByRole("button", { name: /중국 첫 AI 영화 개봉/ })).toHaveTextContent("1개 나라에서 3개 나라로");
+    expect(within(changes).getByText("어제의 큰일")).toBeInTheDocument();
+  });
+
+  it("비교 기록이 없거나 달라진 것이 없으면 칸을 숨긴다", async () => {
+    const { unmount } = renderBoard();
+    await screen.findByRole("region", { name: "세계 5" });
+    expect(screen.queryByRole("region", { name: "어제와 달라진 것" })).not.toBeInTheDocument();
+    unmount();
+
+    const board = boardFixture();
+    board.changes = { comparedTo: new Date().toISOString(), appeared: [], grew: [], faded: [] };
+    fetchMock.mockImplementation(() => json(board));
+    renderBoard();
+    await screen.findByRole("region", { name: "세계 5" });
+    expect(screen.queryByRole("region", { name: "어제와 달라진 것" })).not.toBeInTheDocument();
   });
 
   it("온톨로지 페이지로 가는 링크", async () => {

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useMyRules } from "@/hooks/useMyRules";
 import { useWorld } from "@/hooks/useWorld";
-import { multipliersFromConfig, rankWorld, type Multipliers } from "@/lib/ontology/rules";
+import { multipliersFromConfig, rankWorld } from "@/lib/ontology/rules";
 import { EVENT_TYPE_IDS, EVENT_TYPES, LINK_TYPES, OBJECT_TYPES, RULES, type EventType } from "@/ontology/world";
 import type { BoardEvent, WorldBoard } from "@/types/world";
 
 /**
  * 온톨로지 공부 페이지: 시스템이 무엇으로 이루어졌고 어떻게 판단하는지 들여다보고, 규칙을 바꿔 결과를 본다.
- * 규칙 실험은 브라우저 안에서만 다시 계산한다. 저장하지 않는다.
+ * 규칙 실험은 브라우저 안에서 다시 계산하고 내 기준으로 저장한다. 메인 화면도 같은 기준을 쓴다.
  */
 
 const nf = new Intl.NumberFormat("ko-KR");
@@ -163,15 +164,16 @@ function RuleList() {
 }
 
 function RuleLab({ events, actual }: { events: BoardEvent[]; actual: string[] }) {
-  const [multipliers, setMultipliers] = useState<Multipliers>(multipliersFromConfig);
+  const { rules, update } = useMyRules();
+  const multipliers = useMemo(() => rules ?? multipliersFromConfig(), [rules]);
   const ranked = useMemo(() => rankWorld(events, multipliers).slice(0, RULES.worldLimit), [events, multipliers]);
-  const set = (id: EventType, value: number) => setMultipliers((m) => ({ ...m, [id]: value }));
+  const set = (id: EventType, value: number) => update({ ...multipliers, [id]: value });
   return (
     <section aria-labelledby="h-lab" className={SECTION}>
       <h2 id="h-lab" className="mb-1 text-lg font-bold text-headline">
-        규칙 실험
+        내 기준 정하기
       </h2>
-      <p className="mb-3 text-sm text-muted">&quot;무엇이 더 중요한가&quot;를 바꿔 보세요. 지금 사건들로 세계 5를 바로 다시 계산합니다. 저장되지 않아요.</p>
+      <p className="mb-3 text-sm text-muted">&quot;무엇이 더 중요한가&quot;를 바꿔 보세요. 이 브라우저에 저장되고 메인 화면 순위가 함께 바뀌어요.</p>
       <div className="grid gap-6 md:grid-cols-2">
         <div className="grid gap-1.5">
           {EVENT_TYPE_IDS.map((id) => (
@@ -181,7 +183,7 @@ function RuleLab({ events, actual }: { events: BoardEvent[]; actual: string[] })
                 id={`mult-${id}`}
                 type="range"
                 min={0}
-                max={3}
+                max={RULES.multiplierMax}
                 step={0.25}
                 aria-label={`${EVENT_TYPES[id].label} 배수`}
                 value={multipliers[id]}
@@ -191,7 +193,7 @@ function RuleLab({ events, actual }: { events: BoardEvent[]; actual: string[] })
               <span className="w-9 shrink-0 text-right font-mono text-xs text-headline">{multipliers[id]}</span>
             </label>
           ))}
-          <button type="button" onClick={() => setMultipliers(multipliersFromConfig())} className="mt-1 justify-self-start rounded-full border border-line px-3 py-1 text-[13px] text-body hover:border-accent hover:text-headline">
+          <button type="button" onClick={() => update(null)} className="mt-1 justify-self-start rounded-full border border-line px-3 py-1 text-[13px] text-body hover:border-accent hover:text-headline">
             원래 규칙으로
           </button>
         </div>

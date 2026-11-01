@@ -102,5 +102,13 @@ export const RULES = {
   trendDown: 0.7,
   /** 이 시간 넘게 새 기사가 없으면 잦아든 사건으로 보고 화면에서 내린다 */
   fadeHours: 12,
+  /** 내 기준에서 정할 수 있는 유형 배수의 최댓값 */
+  multiplierMax: 3,
+  /** 어제와 비교: 이만큼 전 상황판과 비교한다 */
+  changeHours: 24,
+  /** 보도한 나라가 이만큼 늘면 "커진 일" */
+  changeGrowCountries: 3,
+  /** "새로 오른 일", "커진 일", "내려간 일" 칸마다 보여 줄 수 */
+  changeLimit: 3,
 } as const;
 export type Rules = typeof RULES;

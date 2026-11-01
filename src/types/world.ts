@@ -133,6 +133,18 @@ export interface BoardStats {
   ontology?: OntologyStats;
 }
 
+/** 어제 상황판과의 차이 (규칙으로 계산) */
+export interface BoardChanges {
+  /** 비교한 상황판의 시각 */
+  comparedTo: string;
+  /** 세계 5·IT 5에 새로 오른 사건 */
+  appeared: string[];
+  /** 보도한 나라가 늘어난 사건 */
+  grew: { id: string; countriesBefore: number }[];
+  /** 세계 5·IT 5에서 내려간 사건. 지금 목록에 없을 수 있어 제목을 함께 둔다 */
+  faded: { id: string; title: string }[];
+}
+
 export interface WorldBoard {
   generatedAt: string;
   stats: BoardStats;
@@ -141,6 +153,8 @@ export interface WorldBoard {
   it: string[];
   continents: BoardContinent[];
   events: BoardEvent[];
+  /** 비교할 어제 기록이 없으면 없다 */
+  changes?: BoardChanges;
 }
 
 export interface ActorProfile {

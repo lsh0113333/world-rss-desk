@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BOARD_RULES_KEY } from "@/lib/board-prefs";
 import { boardFixture } from "./__fixtures__/board";
 import { OntologyView } from "./OntologyView";
 
@@ -17,6 +18,7 @@ function renderView() {
 }
 
 beforeEach(() => {
+  window.localStorage.clear();
   fetchMock.mockReset();
   fetchMock.mockImplementation(() => json(boardFixture()));
   vi.stubGlobal("fetch", fetchMock);
@@ -52,7 +54,7 @@ describe("OntologyView", () => {
 
   it("유형 배수를 바꾸면 세계 5 순위가 다시 계산되고, 되돌릴 수 있다", async () => {
     renderView();
-    await screen.findByRole("region", { name: "규칙 실험" });
+    await screen.findByRole("region", { name: "내 기준 정하기" });
     const before = worldNames();
     expect(before[0]).toContain("흑해에서 화물선 침몰");
     const slider = screen.getByRole("slider", { name: "기업·기술 배수" });
@@ -61,6 +63,19 @@ describe("OntologyView", () => {
     expect(worldNames()[0]).not.toContain("흑해에서 화물선 침몰");
     await userEvent.click(screen.getByRole("button", { name: "원래 규칙으로" }));
     expect(worldNames()).toEqual(before);
+  });
+
+  it("바꾼 기준은 저장되고 다시 열어도 남으며, 원래대로 되돌리면 지워진다", async () => {
+    const { unmount } = renderView();
+    await screen.findByRole("region", { name: "내 기준 정하기" });
+    fireEvent.change(screen.getByRole("slider", { name: "무력 충돌 배수" }), { target: { value: "0" } });
+    await waitFor(() => expect(JSON.parse(window.localStorage.getItem(BOARD_RULES_KEY)!)["armed-conflict"]).toBe(0));
+    unmount();
+
+    renderView();
+    await waitFor(() => expect(screen.getByRole("slider", { name: "무력 충돌 배수" })).toHaveValue("0"));
+    await userEvent.click(screen.getByRole("button", { name: "원래 규칙으로" }));
+    await waitFor(() => expect(window.localStorage.getItem(BOARD_RULES_KEY)).toBeNull());
   });
 
   it("규칙 파일과 직접 해 볼 쿼리를 안내한다", async () => {

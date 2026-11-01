@@ -2704,5 +2704,125 @@
     "country": "ME",
     "category": "top",
     "language": "en"
+  },
+  {
+    "id": "br-folha-top",
+    "name": "Folha de S.Paulo",
+    "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml",
+    "homepage": "https://www.folha.uol.com.br",
+    "continent": "south-america",
+    "country": "BR",
+    "category": "top",
+    "language": "pt"
+  },
+  {
+    "id": "br-g1-top",
+    "name": "g1",
+    "url": "https://g1.globo.com/rss/g1/",
+    "homepage": "https://g1.globo.com",
+    "continent": "south-america",
+    "country": "BR",
+    "category": "top",
+    "language": "pt"
+  },
+  {
+    "id": "ar-clarin-top",
+    "name": "Clarín",
+    "url": "https://www.clarin.com/rss/lo-ultimo/",
+    "homepage": "https://www.clarin.com",
+    "continent": "south-america",
+    "country": "AR",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "ar-lanacion-top",
+    "name": "La Nación",
+    "url": "https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.lanacion.com.ar",
+    "continent": "south-america",
+    "country": "AR",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "ar-infobae-top",
+    "name": "Infobae",
+    "url": "https://www.infobae.com/arc/outboundfeeds/rss/",
+    "homepage": "https://www.infobae.com",
+    "continent": "south-america",
+    "country": "AR",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "mx-eluniversal-top",
+    "name": "El Universal",
+    "url": "https://www.eluniversal.com.mx/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.eluniversal.com.mx",
+    "continent": "south-america",
+    "country": "MX",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "mx-jornada-top",
+    "name": "La Jornada",
+    "url": "https://www.jornada.com.mx/rss/edicion.xml",
+    "homepage": "https://www.jornada.com.mx",
+    "continent": "south-america",
+    "country": "MX",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "co-eltiempo-top",
+    "name": "El Tiempo",
+    "url": "https://www.eltiempo.com/rss/colombia.xml",
+    "homepage": "https://www.eltiempo.com",
+    "continent": "south-america",
+    "country": "CO",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "cl-latercera-top",
+    "name": "La Tercera",
+    "url": "https://www.latercera.com/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://www.latercera.com",
+    "continent": "south-america",
+    "country": "CL",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "pe-elcomercio-top",
+    "name": "El Comercio",
+    "url": "https://elcomercio.pe/arc/outboundfeeds/rss/?outputType=xml",
+    "homepage": "https://elcomercio.pe",
+    "continent": "south-america",
+    "country": "PE",
+    "category": "top",
+    "language": "es"
+  },
+  {
+    "id": "gh-myjoyonline-top",
+    "name": "MyJoyOnline",
+    "url": "https://www.myjoyonline.com/feed/",
+    "homepage": "https://www.myjoyonline.com",
+    "continent": "africa",
+    "country": "GH",
+    "category": "top",
+    "language": "en"
+  },
+  {
+    "id": "africa-jeuneafrique-top",
+    "name": "Jeune Afrique",
+    "url": "https://www.jeuneafrique.com/feed/",
+    "homepage": "https://www.jeuneafrique.com",
+    "continent": "africa",
+    "country": "AFRICA",
+    "category": "top",
+    "language": "fr"
   }
 ]

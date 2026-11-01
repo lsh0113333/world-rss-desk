@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EVENT_TYPES, RULES, type EventType } from "@/ontology/world";
 import type { BoardActor, BoardArticle, BoardEvent, EventFact } from "@/types/world";
-import { buildBoard, multipliersFromConfig, rankWorld, scoreEvent, triplesOf } from "./rules";
+import { applyMultipliers, buildBoard, diffBoards, multipliersFromConfig, parseMultipliers, rankWorld, scoreEvent, triplesOf } from "./rules";
 
 const NOW = new Date("2026-11-01T12:00:00Z");
 const ago = (hours: number) => new Date(NOW.getTime() - hours * 3_600_000).toISOString();
@@ -262,6 +262,112 @@ describe("rankWorld: 규칙 실험", () => {
     expect(ids(rankWorld(board.events, multipliersFromConfig()))).toEqual(["tech", "war"]);
     const flipped = { ...multipliersFromConfig(), tech: 0.5 };
     expect(ids(rankWorld(board.events, flipped))).toEqual(["war", "tech"]);
+  });
+});
+
+describe("applyMultipliers: 내 기준", () => {
+  const board = () =>
+    buildBoard(
+      [
+        fact("tech", "tech", spread(["US", "GB"]), { flow: "ai-race", occurs: ["US"] }),
+        fact("tech2", "tech", spread(["KR", "JP"]), { flow: "ai-race", occurs: ["US"] }),
+        fact("war", "armed-conflict", spread(["US", "GB"]), { occurs: ["US"] }),
+        fact("sport", "sports", spread(["US", "GB", "FR", "DE"]), { occurs: ["DE"] }),
+      ],
+      NOW,
+      stats,
+    );
+
+  it("세계 5, 점수, 사건 순서를 다시 계산한다", () => {
+    const original = board();
+    const mine = applyMultipliers(original, { ...multipliersFromConfig(), tech: 0.25 });
+    expect(mine.world[0]).toBe("war");
+    expect(mine.events.find((e) => e.id === "tech")!.score.multiplier).toBe(0.25);
+    expect(mine.generatedAt).toBe(original.generatedAt);
+    expect(original.world[0]).not.toBe("war");
+  });
+
+  it("스포츠는 배수를 올려도 세계 5에 들어오지 않는다", () => {
+    const mine = applyMultipliers(board(), { ...multipliersFromConfig(), sports: 3 });
+    expect(mine.world).not.toContain("sport");
+    expect(mine.events[0].id).toBe("sport");
+  });
+
+  it("IT 5와 흐름, 대륙별도 새 기준을 따른다", () => {
+    const wide = ["US", "GB", "FR", "DE", "KR", "JP"];
+    const full = buildBoard(
+      [
+        ...Array.from({ length: 5 }, (_, i) => fact(`politics${i}`, "politics", spread(wide), { occurs: ["KR"] })),
+        fact("small-tech", "tech", spread(["US", "GB"]), { occurs: ["US"] }),
+        fact("big-tech", "tech", spread(["US", "GB", "FR", "DE"]), { occurs: ["US"] }),
+        fact("war", "armed-conflict", spread(["UA", "PL"]), { flow: "ukraine", occurs: ["UA"] }),
+        fact("talks", "diplomacy", spread(["UA", "PL"]), { flow: "ukraine", occurs: ["UA"] }),
+      ],
+      NOW,
+      stats,
+    );
+    expect(full.it).toEqual(["big-tech", "small-tech"]);
+    expect(full.flows.find((f) => f.id === "ukraine")!.eventIds).toEqual(["war", "talks"]);
+
+    const mine = applyMultipliers(full, { ...multipliersFromConfig(), tech: 3, "armed-conflict": 0 });
+    expect(mine.world).toContain("big-tech");
+    expect(mine.it).not.toContain("big-tech");
+    expect(mine.flows.find((f) => f.id === "ukraine")!.eventIds).toEqual(["talks", "war"]);
+    expect(mine.continents.find((c) => c.id === "europe")!.top).toEqual(["talks", "war"]);
+  });
+});
+
+describe("parseMultipliers", () => {
+  it("모든 유형이 범위 안의 숫자일 때만 받는다", () => {
+    const base = multipliersFromConfig();
+    expect(parseMultipliers({ ...base, sports: 3 })).toEqual({ ...base, sports: 3 });
+    expect(parseMultipliers(base)).toBeNull();
+    expect(parseMultipliers({ ...base, sports: RULES.multiplierMax + 1 })).toBeNull();
+    expect(parseMultipliers({ ...base, sports: -1 })).toBeNull();
+    expect(parseMultipliers({ ...base, sports: "3" })).toBeNull();
+    expect(parseMultipliers(null)).toBeNull();
+    expect(parseMultipliers({ sports: 3 })).toBeNull();
+  });
+});
+
+describe("diffBoards: 어제와 달라진 것", () => {
+  const previous = (over: Partial<Parameters<typeof diffBoards>[1]> = {}) => ({ world: [], it: [], events: [], ...over });
+
+  it("상위권에 새로 들어온 일과 내려간 일", () => {
+    const today = buildBoard([fact("new", "politics", spread(["US", "GB"])), fact("kept", "politics", spread(["FR", "DE"]))], NOW, stats);
+    const changes = diffBoards(today, previous({ world: ["kept", "gone"], events: [{ id: "kept", title: "유지", reporting: ["FR", "DE"] }, { id: "gone", title: "어제의 일", reporting: ["KR"] }] }), ago(24));
+    expect(changes.comparedTo).toBe(ago(24));
+    expect(changes.appeared).toEqual(["new"]);
+    expect(changes.faded).toEqual([{ id: "gone", title: "어제의 일" }]);
+  });
+
+  it("보도한 나라가 기준만큼 늘면 커진 일, 많이 는 순서로", () => {
+    const today = buildBoard(
+      [
+        fact("small", "politics", spread(["US", "GB", "FR", "DE"])),
+        fact("big", "politics", spread(["US", "GB", "FR", "DE", "KR", "JP"])),
+        fact("same", "politics", spread(["US", "GB"])),
+        fact("sport", "sports", spread(["US", "GB", "FR", "DE", "KR", "JP"])),
+      ],
+      NOW,
+      stats,
+    );
+    const was = (id: string, reporting: string[]) => ({ id, title: id, reporting });
+    const changes = diffBoards(today, previous({ world: today.world, it: today.it, events: [was("small", ["US"]), was("big", ["US"]), was("same", ["US"]), was("sport", ["US"])] }), ago(24));
+    expect(changes.grew).toEqual([
+      { id: "big", countriesBefore: 1 },
+      { id: "small", countriesBefore: 1 },
+    ]);
+    expect(RULES.changeGrowCountries).toBe(3);
+  });
+
+  it("새로 오른 일은 커진 일에 겹쳐 나오지 않고, 칸마다 개수를 제한한다", () => {
+    const facts = Array.from({ length: 6 }, (_, i) => fact(`e${i}`, "politics", spread(["US", "GB", "FR", "DE"])));
+    const today = buildBoard(facts, NOW, stats);
+    const changes = diffBoards(today, previous({ events: facts.map((f) => ({ id: f.id, title: f.id, reporting: ["US"] })) }), ago(24));
+    expect(changes.appeared).toHaveLength(RULES.changeLimit);
+    expect(changes.grew.every((g) => !today.world.includes(g.id))).toBe(true);
+    expect(changes.grew.map((g) => g.id)).toEqual([today.events[5].id]);
   });
 });
 

@@ -6,6 +6,7 @@ import type {
   BoardEvent,
   BoardFlow,
   BoardStats,
+  BoardChanges,
   EventFact,
   FlowTrend,
   RelatedEvent,
@@ -47,6 +48,19 @@ export function scoreEvent(
     risingBonus,
     total: Math.round((scale * multiplier + risingBonus) * 100) / 100,
   };
+}
+
+/** 저장된 값이 모든 유형에 쓸 수 있는 배수이고 기본값과 다를 때만 돌려준다 */
+export function parseMultipliers(raw: unknown): Multipliers | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const values = raw as Record<string, unknown>;
+  const valid = EVENT_TYPE_IDS.every((id) => {
+    const value = values[id];
+    return typeof value === "number" && value >= 0 && value <= RULES.multiplierMax;
+  });
+  if (!valid) return null;
+  const parsed = Object.fromEntries(EVENT_TYPE_IDS.map((id) => [id, values[id]])) as Multipliers;
+  return EVENT_TYPE_IDS.some((id) => parsed[id] !== EVENT_TYPES[id].multiplier) ? parsed : null;
 }
 
 const byScore = (a: BoardEvent, b: BoardEvent) => b.score.total - a.score.total || a.id.localeCompare(b.id);
@@ -122,8 +136,68 @@ function mergeDuplicates(facts: EventFact[]): EventFact[] {
 export function rankWorld(events: BoardEvent[], multipliers: Multipliers): BoardEvent[] {
   return events
     .filter((e) => e.scope === "world" && EVENT_TYPES[e.type].worldEligible)
-    .map((e) => ({ ...e, score: scoreEvent({ countries: e.score.countries, continents: e.score.continents, outlets: e.score.outlets, rising: e.rising }, e.type, multipliers) }))
+    .map((e) => rescore(e, multipliers))
     .sort(byScore);
+}
+
+function rescore(e: BoardEvent, multipliers: Multipliers): BoardEvent {
+  return { ...e, score: scoreEvent({ countries: e.score.countries, continents: e.score.continents, outlets: e.score.outlets, rising: e.rising }, e.type, multipliers) };
+}
+
+/** 점수순 사건에서 세계 5와 IT 5를 고른다 */
+function pickTop(events: BoardEvent[]): Pick<WorldBoard, "world" | "it"> {
+  const world = events.filter((e) => e.scope === "world" && EVENT_TYPES[e.type].worldEligible).slice(0, RULES.worldLimit).map((e) => e.id);
+  const worldSet = new Set(world);
+  const it = events.filter((e) => e.type === "tech" && !worldSet.has(e.id)).slice(0, RULES.itLimit).map((e) => e.id);
+  return { world, it };
+}
+
+/** 내 기준(유형 배수)으로 상황판 순위를 다시 계산한다. 원본은 바꾸지 않는다 */
+export function applyMultipliers(board: WorldBoard, multipliers: Multipliers): WorldBoard {
+  const events = board.events.map((e) => rescore(e, multipliers)).sort(byScore);
+  const order = new Map(events.map((e, i) => [e.id, i]));
+  const { world, it } = pickTop(events);
+  return {
+    ...board,
+    events,
+    world,
+    it,
+    flows: board.flows.map((f) => ({ ...f, eventIds: [...f.eventIds].sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0)) })),
+    continents: continentsOf(events, new Set([...world, ...it])),
+  };
+}
+
+/** 어제 상황판에서 비교에 쓰는 부분 */
+export interface PreviousBoard {
+  world: string[];
+  it: string[];
+  events: { id: string; title: string; reporting: string[] }[];
+}
+
+/** 지금 상황판과 어제 상황판의 차이 */
+export function diffBoards(current: Pick<WorldBoard, "world" | "it" | "events">, previous: PreviousBoard, comparedTo: string): BoardChanges {
+  const top = [...current.world, ...current.it];
+  const previousTop = [...previous.world, ...previous.it];
+  const before = new Map(previous.events.map((e) => [e.id, e]));
+  const appeared = top.filter((id) => !previousTop.includes(id));
+  const grew = current.events
+    .flatMap((e) => {
+      const was = before.get(e.id);
+      if (!was || appeared.includes(e.id) || !EVENT_TYPES[e.type].worldEligible) return [];
+      const growth = e.reporting.length - was.reporting.length;
+      return growth >= RULES.changeGrowCountries ? [{ id: e.id, countriesBefore: was.reporting.length, growth }] : [];
+    })
+    .sort((a, b) => b.growth - a.growth)
+    .slice(0, RULES.changeLimit)
+    .map(({ id, countriesBefore }) => ({ id, countriesBefore }));
+  const faded = previousTop
+    .filter((id) => !top.includes(id))
+    .flatMap((id) => {
+      const was = before.get(id);
+      return was ? [{ id, title: was.title }] : [];
+    })
+    .slice(0, RULES.changeLimit);
+  return { comparedTo, appeared: appeared.slice(0, RULES.changeLimit), grew, faded };
 }
 
 const homeContinent = (e: BoardEvent) => {
@@ -206,9 +280,7 @@ export function buildBoard(rawFacts: EventFact[], now: Date, stats: BoardStats, 
   const isCommon = (id: string) => (actorCounts.get(id) ?? 0) >= commonAt;
   for (const e of events) e.related = relatedOf(e, events, isCommon);
 
-  const world = events.filter((e) => e.scope === "world" && EVENT_TYPES[e.type].worldEligible).slice(0, RULES.worldLimit).map((e) => e.id);
-  const worldSet = new Set(world);
-  const it = events.filter((e) => e.type === "tech" && !worldSet.has(e.id)).slice(0, RULES.itLimit).map((e) => e.id);
+  const { world, it } = pickTop(events);
 
   return {
     generatedAt: now.toISOString(),

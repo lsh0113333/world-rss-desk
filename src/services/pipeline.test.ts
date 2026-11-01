@@ -77,6 +77,7 @@ function memoryDb() {
       if (op === "eq") return value === decodeURIComponent(raw);
       if (op === "gte") return value >= raw;
       if (op === "lt") return value < raw;
+      if (op === "lte") return value <= raw;
       if (op === "in") {
         const list = raw.slice(1, -1).split(",").map((v) => decodeURIComponent(v).replace(/^"|"$/g, ""));
         return list.includes(value);
@@ -306,6 +307,26 @@ describe("runPipeline", () => {
     expect(tables.objects.find((o) => o.id === "event:old")).toBeUndefined();
     expect(tables.links.find((l) => l.src === "event:old")).toBeUndefined();
     expect(tables.board_snapshots).toHaveLength(1);
+  });
+
+  it("24시간 전 상황판과 비교해 달라진 것을 넣고, 비교 기록은 이틀 둔다", async () => {
+    const { db, tables } = memoryDb();
+    const yesterday = { world: ["event:gone"], it: [], events: [{ id: "event:gone", title: "어제의 큰일", reporting: ["GB"] }] };
+    await db.insert("board_snapshots", { generated_at: ago(60 * 25), payload: yesterday });
+    await db.insert("board_snapshots", { generated_at: ago(60 * 2), payload: { world: [], it: [], events: [] } });
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract: aiEvent(), now: NOW });
+    const changes = latestBoard(tables).changes!;
+    expect(changes.comparedTo).toBe(ago(60 * 25));
+    expect(changes.faded).toEqual([{ id: "event:gone", title: "어제의 큰일" }]);
+    expect(changes.appeared).toHaveLength(1);
+    expect(tables.board_snapshots).toHaveLength(3);
+  });
+
+  it("24시간 전 기록이 없으면 비교하지 않는다", async () => {
+    const { db, tables } = memoryDb();
+    await db.insert("board_snapshots", { generated_at: ago(60 * 2), payload: { world: [], it: [], events: [] } });
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW });
+    expect(latestBoard(tables).changes).toBeUndefined();
   });
 
   it("기본 수집은 카탈로그 URL도 url-guard를 거친다", async () => {

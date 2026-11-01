@@ -120,7 +120,7 @@ function RelatedRow({ id, title, why }: { id: string; title: string; why: string
 }
 
 /** 사건 한 줄: 제목 + 보도한 대륙·나라 수. 누르면 그 자리에서 근거까지 펼친다 */
-export function EventRow({ event, rank }: { event: BoardEvent; rank?: number }) {
+export function EventRow({ event, rank, note }: { event: BoardEvent; rank?: number; note?: string }) {
   const { since } = useContext(BoardContext);
   const [open, setOpen] = useState(false);
   const fresh = isNewSince(event.firstSeenAt, since);
@@ -132,7 +132,7 @@ export function EventRow({ event, rank }: { event: BoardEvent; rank?: number }) 
           <span className="block text-[15.5px] font-bold leading-snug text-headline group-hover:underline group-hover:underline-offset-4">{event.title}</span>
           <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
             <Dots continents={event.continents} />
-            <span>{event.reporting.length}개 나라</span>
+            <span>{note ?? `${event.reporting.length}개 나라`}</span>
             {fresh && <span className="rounded-full bg-accent px-1.5 font-bold text-page">새</span>}
             {event.rising && <span className="rounded-full border border-[var(--c-asia)] px-1.5 font-bold text-[var(--c-asia)]">떠오름</span>}
           </span>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { advanceVisit, BOARD_PREFS_KEY, isNewSince, LocalStorageBoardPrefsRepository } from "./board-prefs";
+import { advanceVisit, BOARD_PREFS_KEY, BOARD_RULES_KEY, isNewSince, LocalStorageBoardPrefsRepository } from "./board-prefs";
+import { multipliersFromConfig } from "./ontology/rules";
 
 const at = (min: number) => new Date(Date.UTC(2026, 10, 1, 12, min)).toISOString();
 
@@ -10,6 +11,9 @@ function memory(initial: Record<string, string> = {}) {
     getItem: (k: string) => data[k] ?? null,
     setItem: (k: string, v: string) => {
       data[k] = v;
+    },
+    removeItem: (k: string) => {
+      delete data[k];
     },
   };
 }
@@ -38,6 +42,41 @@ describe("isNewSince", () => {
   });
 });
 
+describe("내 기준 저장", () => {
+  it("기본값과 다른 배수를 저장하고 다시 읽는다", async () => {
+    const store = memory();
+    const repo = new LocalStorageBoardPrefsRepository(store);
+    expect(await repo.loadRules()).toBeNull();
+    const mine = { ...multipliersFromConfig(), sports: 3 };
+    await repo.saveRules(mine);
+    expect(JSON.parse(store.data[BOARD_RULES_KEY]).sports).toBe(3);
+    expect(await repo.loadRules()).toEqual(mine);
+  });
+
+  it("저장을 지우면 기본 기준으로 돌아간다", async () => {
+    const store = memory();
+    const repo = new LocalStorageBoardPrefsRepository(store);
+    await repo.saveRules({ ...multipliersFromConfig(), sports: 3 });
+    await repo.saveRules(null);
+    expect(await repo.loadRules()).toBeNull();
+  });
+
+  it("기본값과 같거나, 깨졌거나, 범위를 벗어난 값은 쓰지 않는다", async () => {
+    const load = (raw: string) => new LocalStorageBoardPrefsRepository(memory({ [BOARD_RULES_KEY]: raw })).loadRules();
+    expect(await load(JSON.stringify(multipliersFromConfig()))).toBeNull();
+    expect(await load("{oops")).toBeNull();
+    expect(await load(JSON.stringify({ ...multipliersFromConfig(), sports: 99 }))).toBeNull();
+    expect(await load(JSON.stringify({ sports: 3 }))).toBeNull();
+  });
+
+  it("규칙이 새로 생기면 없는 유형은 기본값으로 채우지 않고 저장을 버린다", async () => {
+    const { sports: _sports, ...partial } = multipliersFromConfig();
+    expect(_sports).toBeTypeOf("number");
+    const repo = new LocalStorageBoardPrefsRepository(memory({ [BOARD_RULES_KEY]: JSON.stringify(partial) }));
+    expect(await repo.loadRules()).toBeNull();
+  });
+});
+
 describe("LocalStorageBoardPrefsRepository", () => {
   it("저장한 값을 다시 읽는다", async () => {
     const store = memory();
@@ -56,6 +95,9 @@ describe("LocalStorageBoardPrefsRepository", () => {
         throw new Error("blocked");
       },
       setItem: () => {
+        throw new Error("blocked");
+      },
+      removeItem: () => {
         throw new Error("blocked");
       },
     };

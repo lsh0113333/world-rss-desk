@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useMyRules } from "@/hooks/useMyRules";
 import { useWorld } from "@/hooks/useWorld";
 import { advanceVisit, isNewSince, LocalStorageBoardPrefsRepository } from "@/lib/board-prefs";
+import { applyMultipliers } from "@/lib/ontology/rules";
 import { formatRelative } from "@/lib/time";
-import type { BoardContinent, BoardEvent, BoardFlow, FlowTrend, WorldBoard } from "@/types/world";
+import type { BoardChanges, BoardContinent, BoardEvent, BoardFlow, FlowTrend, WorldBoard } from "@/types/world";
 import { BoardContext, continentColor, EventRow } from "./EventRow";
 
 /** 파이프라인은 30분마다 돈다. 이보다 오래되면 늦어지고 있다고 알린다 */
@@ -123,6 +125,56 @@ function Ranked({ title, note, ids, events, itStyle = false }: { title: string; 
   );
 }
 
+function ChangeColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-1 border-b border-line pb-1 text-[13px] font-bold text-muted">{title}</h3>
+      <ul>{children}</ul>
+    </div>
+  );
+}
+
+function Changes({ changes, events }: { changes: BoardChanges; events: Map<string, BoardEvent> }) {
+  const appeared = changes.appeared.flatMap((id) => events.get(id) ?? []);
+  const grew = changes.grew.flatMap((g) => {
+    const event = events.get(g.id);
+    return event ? [{ event, before: g.countriesBefore }] : [];
+  });
+  if (appeared.length === 0 && grew.length === 0 && changes.faded.length === 0) return null;
+  return (
+    <section aria-labelledby="h-changes" className="mt-10">
+      <h2 id="h-changes" className="mb-3 text-lg font-bold text-headline">
+        어제와 달라진 것
+      </h2>
+      <div className="grid gap-6 md:grid-cols-3">
+        {appeared.length > 0 && (
+          <ChangeColumn title="새로 오른 일">
+            {appeared.map((e) => (
+              <EventRow key={e.id} event={e} />
+            ))}
+          </ChangeColumn>
+        )}
+        {grew.length > 0 && (
+          <ChangeColumn title="커진 일">
+            {grew.map(({ event, before }) => (
+              <EventRow key={event.id} event={event} note={`${before}개 나라에서 ${event.reporting.length}개 나라로`} />
+            ))}
+          </ChangeColumn>
+        )}
+        {changes.faded.length > 0 && (
+          <ChangeColumn title="내려간 일">
+            {changes.faded.map((f) => (
+              <li key={f.id} className="border-t border-line py-2.5 text-[14.5px] leading-snug text-muted first:border-t-0">
+                {f.title}
+              </li>
+            ))}
+          </ChangeColumn>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function Board({ board, since, now }: { board: WorldBoard; since: string | null; now: Date | null }) {
   const events = useMemo(() => new Map(board.events.map((e) => [e.id, e])), [board]);
   const context = useMemo(() => ({ events, since, now }), [events, since, now]);
@@ -144,6 +196,8 @@ function Board({ board, since, now }: { board: WorldBoard; since: string | null;
         <Ranked title="IT 5" note="최우선 분야" ids={board.it} events={events} itStyle />
       </div>
 
+      {board.changes && <Changes changes={board.changes} events={events} />}
+
       <div className="mt-10">
         <div className="mb-3 flex items-baseline gap-2.5">
           <h2 className="text-lg font-bold text-headline">대륙별</h2>
@@ -161,6 +215,8 @@ function Board({ board, since, now }: { board: WorldBoard; since: string | null;
 
 export function WorldBoardView() {
   const { data, error, preparing, loading, retry } = useWorld();
+  const { rules, update: updateRules } = useMyRules();
+  const board = useMemo(() => (data && rules ? applyMultipliers(data, rules) : data), [data, rules]);
   const prefs = useMemo(() => new LocalStorageBoardPrefsRepository(), []);
   const [since, setSince] = useState<string | null>(null);
   // 시각은 브라우저에서만 (서버 렌더와 어긋나지 않게)
@@ -187,13 +243,21 @@ export function WorldBoardView() {
         <h1 className="font-display text-[clamp(34px,6vw,52px)] font-normal leading-none text-headline">오늘의 세계</h1>
         {data && now && <span className="text-[13px] text-muted">{formatRelative(data.generatedAt, now)} 갱신</span>}
         {newCount > 0 && <span className="text-[13px] font-bold text-accent">지난 방문 이후 새 사건 {newCount}개</span>}
+        {rules && (
+          <span className="flex items-baseline gap-1.5 text-[13px]">
+            <span className="font-bold text-headline">내 기준 적용 중</span>
+            <button type="button" onClick={() => updateRules(null)} className="text-muted underline underline-offset-2 hover:text-headline">
+              원래대로
+            </button>
+          </span>
+        )}
         <Link href="/ontology" className="ml-auto text-[13px] text-muted hover:text-headline">
           온톨로지
         </Link>
       </header>
       {stale && <p className="mt-2 text-[13px] text-[var(--c-south-america)]">갱신이 늦어지고 있어요. 지금 보이는 내용은 조금 전 기준이에요.</p>}
 
-      {data && <Board board={data} since={since} now={now} />}
+      {board && <Board board={board} since={since} now={now} />}
 
       {!data && preparing && <p className="mt-24 text-center text-headline">첫 상황판을 만드는 중이에요</p>}
       {!data && error && !preparing && (

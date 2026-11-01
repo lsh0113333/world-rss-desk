@@ -26,6 +26,7 @@ const HOME_COUNTRY: Record<string, CountryCode> = {
   cna: "SG",
   "the straits times": "SG",
   mercopress: "UY",
+  "jeune afrique": "FR",
   "bbc news": "GB",
   "the new york times": "US",
   "south china morning post": "CN",
