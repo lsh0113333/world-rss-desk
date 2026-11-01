@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatRelative } from "./time";
+import { formatRelative } from "./time";
 
 const now = new Date(2026, 9, 17, 12, 0, 0);
 const ago = (ms: number) => new Date(now.getTime() - ms).toISOString();
@@ -22,11 +22,5 @@ describe("formatRelative", () => {
 
   it("returns an empty string for null", () => {
     expect(formatRelative(null, now)).toBe("");
-  });
-});
-
-describe("formatClock", () => {
-  it("formats HH:mm in local time", () => {
-    expect(formatClock(new Date(2026, 9, 17, 7, 3).toISOString())).toBe("07:03");
   });
 });

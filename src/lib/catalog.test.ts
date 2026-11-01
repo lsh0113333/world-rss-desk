@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  CATALOG,
-  categoriesForCountry,
-  feedsByCountry,
-  feedsFor,
-  getFeedById,
-} from "./catalog";
-import { CATEGORIES, COUNTRIES, getCountry } from "./constants";
+import { baseCountry } from "@/ontology/outlets";
+import { CATALOG } from "./catalog";
+import { CONTINENTS } from "./constants";
+
+const CATEGORIES = ["top", "world", "politics", "economy", "society", "tech", "science", "health", "environment", "culture", "sports"];
 
 describe("catalog schema", () => {
   it("is not empty", () => {
@@ -31,70 +28,27 @@ describe("catalog schema", () => {
     }
   });
 
-  it("references known countries with a matching continent", () => {
+  it("references known continents, and outlets map to a known home country", () => {
+    const continents = CONTINENTS.map((c) => c.id);
     for (const f of CATALOG) {
-      const country = getCountry(f.country);
-      expect(country, f.id).toBeDefined();
-      expect(f.continent, f.id).toBe(country?.continent);
+      expect(continents, f.id).toContain(f.continent);
+      if (!["UN News", "AllAfrica"].includes(f.name)) expect(baseCountry(f), f.id).not.toBeNull();
     }
   });
 
   it("references known categories and has name and language", () => {
-    const categoryIds = CATEGORIES.map((c) => c.id);
     for (const f of CATALOG) {
-      expect(categoryIds, f.id).toContain(f.category);
+      expect(CATEGORIES, f.id).toContain(f.category);
       expect(f.name, f.id).not.toBe("");
       expect(f.language, f.id).toMatch(/^[a-z]{2}$/);
     }
   });
 });
 
-describe("catalog coverage", () => {
-  it("has a top feed for every country (world feed for WORLD)", () => {
-    for (const { code } of COUNTRIES) {
-      const required = code === "WORLD" ? "world" : "top";
-      expect(feedsFor(code, required).length, code).toBeGreaterThan(0);
-    }
-  });
-
-  it("has an economy feed for the major countries", () => {
-    for (const code of ["KR", "US", "JP", "CN", "GB"]) {
-      expect(feedsFor(code, "economy").length, code).toBeGreaterThan(0);
-    }
-  });
-
+describe("catalog notes", () => {
   it("marks Chinese state media with a note", () => {
     const stateMedia = CATALOG.filter((f) => /cgtn|globaltimes/.test(f.id));
     expect(stateMedia.length).toBeGreaterThan(0);
     for (const f of stateMedia) expect(f.note, f.id).toBe("중국 정부 시각");
-  });
-});
-
-describe("catalog queries", () => {
-  it("getFeedById finds a feed or returns undefined", () => {
-    const first = CATALOG[0];
-    expect(getFeedById(first.id)).toBe(first);
-    expect(getFeedById("no-such-feed")).toBeUndefined();
-  });
-
-  it("feedsByCountry returns only that country's feeds", () => {
-    const kr = feedsByCountry("KR");
-    expect(kr.length).toBeGreaterThan(0);
-    expect(kr.every((f) => f.country === "KR")).toBe(true);
-  });
-
-  it("feedsFor filters by country and category, each optional", () => {
-    expect(feedsFor("KR", "economy").every((f) => f.country === "KR" && f.category === "economy")).toBe(true);
-    expect(feedsFor(undefined, "tech").every((f) => f.category === "tech")).toBe(true);
-    expect(feedsFor("KR")).toEqual(feedsByCountry("KR"));
-    expect(feedsFor()).toEqual([...CATALOG]);
-  });
-
-  it("categoriesForCountry lists available categories in display order", () => {
-    const cats = categoriesForCountry("KR");
-    expect(cats[0]).toBe("top");
-    const order = CATEGORIES.map((c) => c.id);
-    expect([...cats].sort((a, b) => order.indexOf(a) - order.indexOf(b))).toEqual(cats);
-    expect(categoriesForCountry("ZZ")).toEqual([]);
   });
 });

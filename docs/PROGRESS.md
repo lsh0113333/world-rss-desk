@@ -12,7 +12,7 @@
 - 파이프라인: Supabase pg_cron 30분 → GitHub Actions → 수집 → 규칙 묶기 → Gemini 읽기(새 묶음만) → objects/links → 규칙 판단 → board_snapshots
 - 화면: `/`(지금 흐름, 세계 5, IT 5, 대륙별, 사건 펼침), `/actors/[id]`, `/ontology`(규칙 실험)
 - 로컬: `npm run query -- "select ..."`, 판단 기준 수정은 `src/ontology/world.ts`
-- **운영 안내: `docs/GUIDE.md`** (목적, 원리, 운영자·온톨로지 엔지니어·개발자가 할 일)
+- **작업 틀: `docs/HARNESS.md`**, **운영 안내: `docs/GUIDE.md`** (목적, 원리, 운영자·온톨로지 엔지니어·개발자가 할 일)
 
 이전 버전(패널, 세계 흐름, 가판대)은 지웠다. 필요하면 git 기록에 있다.
 
@@ -22,7 +22,7 @@
 2. **2단계 분석** (로드맵): 일별 기록 → 어제 대비 변화, 나라 × 나라 관심 행렬, 행위자 관계 온도
 3. **3단계**: "나" 객체 + 규칙 → 나에게 한 문장 + 근거. 그다음 4단계(로그인), 5단계(공공 지원)
 4. **추출 품질**: AI가 장소를 틀리게 잡는 경우가 있다(스포츠 사건이 엉뚱한 나라로). 같은 일의 다른 표현은 제목 합치기로 못 잡는다(프랑스·독일 시위가 따로). 관찰 후 규칙·프롬프트 조정
-5. **사용자 결정 대기**: 안 쓰는 옛 테이블(`stories`, `story_articles`, `story_snapshots`, `story_insights`, `entities`, `story_entities`, 약 3만 행) 삭제 여부. 코드는 더 이상 쓰지 않는다
+5. **사용자 결정 대기**: 운영 DB의 안 쓰는 옛 테이블(`stories`, `story_articles`, `story_snapshots`, `story_insights`, `entities`, `story_entities`, 약 7MB)과 `articles.image` 열 삭제 여부. 코드는 더 이상 쓰지 않는다. 되돌릴 수 없어 명시적 확인을 받는다
 6. **Vercel 자동 배포**: 사용자가 https://vercel.com/account/login-connections 에서 GitHub 연결하면 `npx vercel git connect`. 지금은 `npx vercel deploy --prod --yes`. 파이프라인 코드는 GitHub에 올리면 다음 실행부터 바로 반영된다
 7. 현지어 매체 보강: 번역 문제는 사건 요약이 한국어라 해결됐으므로 "영어판만" 원칙을 풀 수 있다. 중남미·아프리카 보강 후보
 
@@ -36,6 +36,7 @@
 | 2026-10-21~22 | 가판대 시안 1(별로) → 시안 2(대륙 색·1면 제목, "7개의 대륙 좋아") → 국제·묶음 지역 제거 → 번역 방향 결정(기본 한국어, 2단계) → **가판대 1단계 TDD 구현·배포**. 테스트 571개 | 이 파일 커밋 |
 | 2026-10-23 | 사용자: 가판대도 눈에 안 들어옴 → 원인 진단(재료만 보여 줌, 압축과 단순함을 동시에 못 함) → 큰 목표 공유("한문장 솔루션", 팔란티어·온톨로지) → **온톨로지 실험실 intent 초안**(draft, 답변 대기). 코드 변경 없음 | 이 파일 커밋 |
 | 2026-10-24~11-01 | 온톨로지 실험실 0단계(옛 코드 정리, pg_cron 30분, 온톨로지 v0) → 시안 → **1단계 전면 개편**: 파이프라인 교체, 오늘의 세계·행위자·/ontology, 가판대 제거. 실행 결과: 기사 5,332건 → 묶음 122개 → 사건 43개, 110초. 테스트 262개 | 이 파일 커밋 |
+| 2026-11-01 | 운영 안내 GUIDE, README를 개요·목차로 새로 작성, 안 쓰는 코드·실행기 삭제, 우리 하네스 정리(HARNESS, ADR-020). 시연용 claude.ai 링크 삭제. 테스트 230개 | 이 파일 커밋 |
 
 ## 참고
 - 배포: 이 PC는 Vercel CLI 로그인 + 프로젝트 연결 완료(`world-rss-desk`). `npx vercel deploy --prod --yes`. GitHub CLI `C:\gh\bin\gh.exe`(로그인됨), Supabase CLI `C:\supabase\supabase.exe`

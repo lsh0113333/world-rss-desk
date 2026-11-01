@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractTerms, tokenize } from "./keywords";
+import { tokenize } from "./keywords";
 
 describe("tokenize", () => {
   it("keeps the original spelling for display and a lowercase key", () => {
@@ -32,11 +32,5 @@ describe("tokenize", () => {
 
   it("does not strip a particle-like ending from a two-syllable word", () => {
     expect(tokenize("미국 대통령").map((t) => t.key)).toEqual(["미국", "대통령"]);
-  });
-});
-
-describe("extractTerms", () => {
-  it("returns unique keys in order", () => {
-    expect(extractTerms("Iran says Iran will reopen Hormuz")).toEqual(["iran", "reopen", "hormuz"]);
   });
 });

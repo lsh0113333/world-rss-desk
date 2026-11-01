@@ -10,9 +10,3 @@ export function formatRelative(iso: string | null, now: Date = new Date()): stri
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}시간 전`;
   return `${date.getMonth() + 1}/${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
-
-/** "07:03" */
-export function formatClock(iso: string): string {
-  const date = new Date(iso);
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}

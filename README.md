@@ -46,6 +46,7 @@ Supabase가 30분마다 실행 요청 → GitHub Actions에서 파이프라인 �
 | [RSS 수집 기준](docs/FEEDS.md) | 매체 선정 기준과 현황, 뺀 매체와 이유 |
 | [의도 기록](intent/README.md) | 기능마다 "무엇을, 왜"를 사용자의 말로 적은 곳 |
 | [개발 규칙](CLAUDE.md) | 코드를 고칠 때 지킬 규칙 |
+| [우리의 하네스](docs/HARNESS.md) | AI와 일하는 틀: 규칙, 의도, 진행, 검사와 순서 |
 
 ## 실행
 

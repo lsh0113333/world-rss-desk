@@ -2,15 +2,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import {
-  decodeFeedBody,
-  detectCharset,
-  FeedFetchError,
-  fetchFeedText,
-  loadFeed,
-  parseFeed,
-  USER_AGENT,
-} from "./rss";
+import { FeedFetchError } from "@/lib/errors";
+import { decodeBody, detectCharset, USER_AGENT } from "./http";
+import { fetchFeedText, loadFeed, parseFeed } from "./rss";
 
 const fixture = (name: string) => readFileSync(join(__dirname, "__fixtures__", name));
 const now = new Date("2026-10-17T12:00:00Z");
@@ -26,14 +20,14 @@ describe("detectCharset", () => {
   });
 });
 
-describe("decodeFeedBody", () => {
+describe("decodeBody", () => {
   it("decodes EUC-KR bytes using the XML declaration", () => {
-    const text = decodeFeedBody(new Uint8Array(fixture("euckr.xml")), "application/xml");
+    const text = decodeBody(new Uint8Array(fixture("euckr.xml")), "application/xml");
     expect(text).toContain("경제 성장률 발표");
   });
 
   it("falls back to utf-8 for unknown charsets", () => {
-    expect(decodeFeedBody(new TextEncoder().encode("한글"), "text/xml; charset=bogus-1")).toBe("한글");
+    expect(decodeBody(new TextEncoder().encode("한글"), "text/xml; charset=bogus-1")).toBe("한글");
   });
 });
 
@@ -214,57 +208,5 @@ describe("loadFeed", () => {
     const feed = await loadFeed("https://news.example.com/rss", { fetchImpl, source: "Sample", now });
     expect(feed.articles.length).toBeGreaterThan(0);
     expect(feed.articles[0].source).toBe("Sample");
-  });
-});
-
-describe("parseFeed — images", () => {
-  const { articles } = parseFeed(fixture("media.xml").toString("utf8"), { now });
-  const imageOf = (suffix: string) => articles.find((a) => a.link.endsWith(suffix))?.image;
-
-  it("reads media:thumbnail", () => {
-    expect(imageOf("/thumb")).toBe("https://img.example.com/thumb240.jpg");
-  });
-
-  it("picks the widest media:content", () => {
-    expect(imageOf("/sizes")).toBe("https://img.example.com/a.jpg?width=460&q=85");
-  });
-
-  it("reads image enclosures and media:group", () => {
-    expect(imageOf("/enclosure")).toBe("https://img.example.com/enc.jpg");
-    expect(imageOf("/group")).toBe("https://img.example.com/group.jpg");
-  });
-
-  it("ignores video and audio media", () => {
-    expect(imageOf("/video")).toBeUndefined();
-  });
-
-  it("falls back to the first img in the description", () => {
-    expect(imageOf("/desc")).toBe("https://img.example.com/inline.png");
-  });
-
-  it("drops non-http images and leaves articles without images unset", () => {
-    expect(imageOf("/unsafe")).toBeUndefined();
-    expect(imageOf("/none")).toBeUndefined();
-  });
-
-  it("reads images from Atom content", () => {
-    const xml = `<feed xmlns="http://www.w3.org/2005/Atom"><title>A</title><entry><title>t</title><link href="https://a.example.com/1"/><content type="html">&lt;img src="https://img.example.com/atom.jpg"&gt;</content></entry></feed>`;
-    expect(parseFeed(xml).articles[0].image).toBe("https://img.example.com/atom.jpg");
-  });
-});
-
-describe("parseFeed — item <source> (Google News)", () => {
-  const xml = fixture("google-news.xml").toString("utf8");
-
-  it("uses the item source as the outlet and strips it from the title", () => {
-    const { articles } = parseFeed(xml, { now });
-    expect(articles[0]).toMatchObject({ source: "NewsNation", title: "Oil tanker explodes in Strait of Hormuz" });
-    expect(articles[1]).toMatchObject({ source: "Reuters", title: "Iran - US talks: what's next - analysis" });
-  });
-
-  it("still prefers an explicit source name", () => {
-    const { articles } = parseFeed(xml, { now, source: "Catalog Name" });
-    expect(articles[0].source).toBe("Catalog Name");
-    expect(articles[0].title).toBe("Oil tanker explodes in Strait of Hormuz - NewsNation");
   });
 });

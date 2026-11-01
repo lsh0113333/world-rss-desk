@@ -13,10 +13,6 @@ phases/**/step*-output.json
 .vercel/
 coverage/
 
-# python
-__pycache__/
-.pytest_cache/
-
 .vercel
 .env*
 

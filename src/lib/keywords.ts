@@ -69,8 +69,3 @@ export function tokenize(title: string): Token[] {
   }
   return tokens;
 }
-
-/** 제목의 키워드 키 (중복 제거, 순서 유지) */
-export function extractTerms(title: string): string[] {
-  return [...new Set(tokenize(title).map((t) => t.key))];
-}

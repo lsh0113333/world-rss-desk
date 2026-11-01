@@ -1,17 +1,13 @@
 import { XMLParser } from "fast-xml-parser";
 import { FeedFetchError } from "@/lib/errors";
 import { cleanText, hashId, parseFeedDate, truncate } from "@/lib/text";
-import { decodeBody, detectCharset, fetchText, MAX_REDIRECTS, USER_AGENT } from "./http";
+import { fetchText } from "./http";
 import type { Article } from "@/types/article";
 
 export const FETCH_TIMEOUT_MS = 8_000;
 export const MAX_FEED_BYTES = 2 * 1024 * 1024;
 export const REVALIDATE_SECONDS = 120;
 const SUMMARY_MAX = 300;
-
-export { FeedFetchError, USER_AGENT, MAX_REDIRECTS, detectCharset };
-/** 하위 호환: 피드 본문 디코딩 */
-export const decodeFeedBody = decodeBody;
 
 export interface ParsedFeed {
   title: string | null;
@@ -82,71 +78,16 @@ function atomLink(entry: Node): string | null {
   return httpUrl(alternate?.["@_href"]);
 }
 
-interface ImageCandidate {
-  url: string;
-  width: number;
-}
-
-function mediaCandidates(node: Node): ImageCandidate[] {
-  const out: ImageCandidate[] = [];
-  const push = (raw: unknown, kind: "content" | "thumbnail" | "enclosure") => {
-    for (const m of asArray(raw).map(asNode)) {
-      const type = String(m["@_type"] ?? "");
-      const medium = String(m["@_medium"] ?? "");
-      if (kind !== "thumbnail" && (medium === "video" || medium === "audio" || /^(video|audio)\//.test(type))) continue;
-      if (kind === "enclosure" && type && !type.startsWith("image/")) continue;
-      const url = httpUrl(m["@_url"] ?? m["@_href"]);
-      if (url) out.push({ url, width: Number(m["@_width"]) || 0 });
-    }
-  };
-  push(node["media:content"], "content");
-  push(node["media:thumbnail"], "thumbnail");
-  push(node.enclosure, "enclosure");
-  for (const group of asArray(node["media:group"]).map(asNode)) {
-    push(group["media:content"], "content");
-    push(group["media:thumbnail"], "thumbnail");
-  }
-  for (const link of asArray(node.link).map(asNode)) {
-    if (link["@_rel"] === "enclosure" && String(link["@_type"] ?? "").startsWith("image/")) push(link, "enclosure");
-  }
-  return out;
-}
-
-/** 본문 HTML 안 첫 <img src> */
-function inlineImage(...htmlValues: unknown[]): string | null {
-  for (const value of htmlValues) {
-    const html = typeof value === "string" ? value : String(asNode(value)["#text"] ?? "");
-    const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
-    const url = match ? httpUrl(match[1]) : null;
-    if (url) return url;
-  }
-  return null;
-}
-
-/** 대표 이미지: media 태그 중 가장 넓은 것 → 본문 첫 이미지 */
-function pickImage(node: Node, ...htmlValues: unknown[]): string | null {
-  const candidates = mediaCandidates(node);
-  if (candidates.length) return candidates.reduce((best, c) => (c.width > best.width ? c : best)).url;
-  return inlineImage(...htmlValues);
-}
-
 type EntryFields = {
   title: unknown;
   link: string | null;
   date: unknown;
   summary: unknown;
   guid: unknown;
-  image: string | null;
-  /** RSS item의 <source> (구글 뉴스 등 모음 피드의 원래 매체) */
-  itemSource?: unknown;
 };
 
-/** 기사 매체명: 지정한 이름 → item <source> → 채널 제목. item <source>를 쓰면 제목 끝 " - 매체명"을 뗀다 */
-function toArticle(fields: EntryFields, fallbackSource: string, explicit: boolean, now: Date): Article | null {
-  let title = cleanText(fields.title);
-  const itemSource = explicit ? "" : cleanText(fields.itemSource);
-  const source = itemSource || fallbackSource;
-  if (itemSource && title.endsWith(` - ${itemSource}`)) title = title.slice(0, -(itemSource.length + 3)).trim();
+function toArticle(fields: EntryFields, source: string, now: Date): Article | null {
+  const title = cleanText(fields.title);
   if (!title || !fields.link) return null;
   const summary = truncate(cleanText(fields.summary), SUMMARY_MAX);
   return {
@@ -156,7 +97,6 @@ function toArticle(fields: EntryFields, fallbackSource: string, explicit: boolea
     publishedAt: parseFeedDate(fields.date, now),
     source,
     ...(summary ? { summary } : {}),
-    ...(fields.image ? { image: fields.image } : {}),
   };
 }
 
@@ -186,8 +126,6 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: item.pubDate ?? item["dc:date"] ?? item.published ?? item.updated,
       summary: item.description ?? item["content:encoded"],
       guid: item.guid,
-      image: pickImage(item, item["content:encoded"], item.description),
-      itemSource: item.source,
     }));
   } else if (doc.feed !== undefined) {
     title = cleanText(atom.title);
@@ -197,7 +135,6 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: entry.published ?? entry.updated,
       summary: entry.summary ?? entry.content,
       guid: entry.id,
-      image: pickImage(entry, entry.content, entry.summary),
     }));
   } else if (doc["rdf:RDF"] !== undefined) {
     title = cleanText(asNode(rdf.channel).title);
@@ -207,14 +144,13 @@ export function parseFeed(xml: string, opts: ParseOptions = {}): ParsedFeed {
       date: item["dc:date"] ?? item.pubDate,
       summary: item.description,
       guid: item["@_rdf:about"],
-      image: pickImage(item, item.description),
     }));
   } else {
     throw new FeedFetchError("RSS 형식이 아닙니다");
   }
 
   const source = opts.source ?? (title || "알 수 없는 매체");
-  const articles = entries.map((e) => toArticle(e, source, opts.source !== undefined, now)).filter((a): a is Article => a !== null);
+  const articles = entries.map((e) => toArticle(e, source, now)).filter((a): a is Article => a !== null);
   return { title: title || null, articles };
 }
 

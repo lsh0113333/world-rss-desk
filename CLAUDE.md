@@ -27,6 +27,7 @@
 - 컴포넌트는 `src/components/`, 훅은 `src/hooks/`, 타입은 `src/types/`, 순수 로직은 `src/lib/`, 외부 I/O는 `src/services/`에 둔다.
 
 ## 개발 프로세스
+작업 틀 전체는 `docs/HARNESS.md`.
 - CRITICAL: 새 기능(또는 요청 묶음)은 코드보다 먼저 `intent/YYYY-MM-DD-<이름>.md`(형식: `intent/TEMPLATE.md` — 문제·원하는 결과·영향받는 사용자와 시스템·제약·열린 질문)에 사용자의 말로 의도를 적고, 사용자 확인(accepted) 후 구현한다. 구현 중 의도가 바뀌면 intent 파일부터 고친다. 배포까지 끝나면 상태를 done으로. (`intent/README.md`)
 - CRITICAL: 새 기능 구현 시 반드시 테스트를 먼저 작성하고, 테스트가 통과하는 구현을 작성할 것 (TDD)
 - 커밋 메시지는 conventional commits 형식을 따를 것 (feat:, fix:, docs:, refactor:)
