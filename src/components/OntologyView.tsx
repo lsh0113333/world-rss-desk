@@ -236,7 +236,7 @@ function Study() {
         {QUERIES.map((q) => (
           <div key={q.title}>
             <h3 className="mb-1 text-[13px] font-bold text-headline">{q.title}</h3>
-            <pre className="overflow-x-auto rounded-lg border border-line bg-panel p-3 font-mono text-xs leading-relaxed text-body">{q.sql}</pre>
+            <pre className="overflow-x-auto rounded-lg border border-line bg-panel p-3 font-mono text-xs leading-relaxed text-body [font-variant-ligatures:none]">{q.sql}</pre>
           </div>
         ))}
       </div>

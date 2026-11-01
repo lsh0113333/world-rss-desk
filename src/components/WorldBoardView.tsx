@@ -33,8 +33,8 @@ function FlowRow({ flow, events }: { flow: BoardFlow; events: Map<string, BoardE
         onClick={() => setOpen(!open)}
         className="group flex w-full items-baseline gap-3 py-2 text-left disabled:cursor-default"
       >
-        <span className={`w-28 shrink-0 text-[14.5px] font-bold sm:w-36 ${quiet ? "text-faint" : "text-headline"}`}>{flow.label}</span>
-        <span className={`w-14 shrink-0 text-xs font-bold sm:w-20 ${trend.className}`}>
+        <span className={`w-[6.5rem] shrink-0 text-[14px] font-bold sm:w-36 sm:text-[14.5px] ${quiet ? "text-faint" : "text-headline"}`}>{flow.label}</span>
+        <span className={`w-[4.75rem] shrink-0 whitespace-nowrap text-xs font-bold sm:w-20 ${trend.className}`}>
           {trend.mark} {trend.label}
         </span>
         <span className="hidden w-12 shrink-0 text-xs text-muted sm:inline">{quiet ? "" : `사건 ${list.length}`}</span>
@@ -185,7 +185,7 @@ export function WorldBoardView() {
     <div className="mx-auto min-h-dvh max-w-[1240px] px-4 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
       <header className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1 className="font-display text-[clamp(34px,6vw,52px)] font-normal leading-none text-headline">오늘의 세계</h1>
-        {data && now && <span className="text-[13px] text-muted">{formatRelative(data.generatedAt, now).replace(/ 전$/, " 전")} 갱신</span>}
+        {data && now && <span className="text-[13px] text-muted">{formatRelative(data.generatedAt, now)} 갱신</span>}
         {newCount > 0 && <span className="text-[13px] font-bold text-accent">지난 방문 이후 새 사건 {newCount}개</span>}
         <Link href="/ontology" className="ml-auto text-[13px] text-muted hover:text-headline">
           온톨로지
