@@ -88,6 +88,37 @@ function toBoardEvent(fact: EventFact, now: Date, multipliers: Multipliers): Boa
   };
 }
 
+const titleWords = (title: string) => new Set(title.toLowerCase().split(/[^\p{L}\p{N}%]+/u).filter(Boolean));
+
+function titleOverlap(a: Set<string>, b: Set<string>): number {
+  const shared = [...a].filter((w) => b.has(w)).length;
+  return shared / (a.size + b.size - shared || 1);
+}
+
+/** 규칙 묶기가 갈라 놓은 같은 사건을 제목으로 합친다. 기사가 많은 쪽이 대표 */
+function mergeDuplicates(facts: EventFact[]): EventFact[] {
+  const ordered = [...facts].sort((a, b) => b.articles.length - a.articles.length || a.id.localeCompare(b.id));
+  const kept: { fact: EventFact; words: Set<string> }[] = [];
+  for (const fact of ordered) {
+    const words = titleWords(fact.title);
+    const same = kept.find((k) => titleOverlap(k.words, words) >= RULES.mergeTitleOverlap);
+    if (!same) {
+      kept.push({ fact, words });
+      continue;
+    }
+    const f = same.fact;
+    same.fact = {
+      ...f,
+      articles: [...new Map([...f.articles, ...fact.articles].map((a) => [a.id, a])).values()],
+      actors: [...f.actors, ...fact.actors.filter((a) => f.actors.every((x) => x.id !== a.id))],
+      occurs: [...new Set([...f.occurs, ...fact.occurs])],
+      flow: f.flow ?? fact.flow,
+      firstSeenAt: f.firstSeenAt < fact.firstSeenAt ? f.firstSeenAt : fact.firstSeenAt,
+    };
+  }
+  return kept.map((k) => k.fact);
+}
+
 /** 세계 5 후보를 점수순으로 (규칙 실험 화면에서 배수를 바꿔 다시 계산한다) */
 export function rankWorld(events: BoardEvent[], multipliers: Multipliers): BoardEvent[] {
   return events
@@ -162,7 +193,8 @@ function continentsOf(events: BoardEvent[], shown: Set<string>): BoardContinent[
   });
 }
 
-export function buildBoard(facts: EventFact[], now: Date, stats: BoardStats, multipliers: Multipliers = multipliersFromConfig()): WorldBoard {
+export function buildBoard(rawFacts: EventFact[], now: Date, stats: BoardStats, multipliers: Multipliers = multipliersFromConfig()): WorldBoard {
+  const facts = mergeDuplicates(rawFacts);
   const events = facts
     .map((f) => toBoardEvent(f, now, multipliers))
     .filter((e): e is BoardEvent => e !== null)

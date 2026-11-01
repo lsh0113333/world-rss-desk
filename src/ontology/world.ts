@@ -41,8 +41,8 @@ export const ACTOR_KINDS = {
 export type ActorKind = keyof typeof ACTOR_KINDS;
 
 export const EVENT_TYPES = {
-  tech: { label: "기업·기술", hint: "기업 실적·인수, 신기술, AI, 해킹, 산업 정책", multiplier: 2, worldEligible: true, axis: null },
-  "armed-conflict": { label: "무력 충돌", hint: "전투, 공습, 테러", multiplier: 1.75, worldEligible: true, axis: "conflict-action" },
+  tech: { label: "기업·기술", hint: "기업 실적·인수, 소프트웨어·AI·반도체 등 IT, 해킹, 산업 정책. 무기 시험·군사 행동은 해당하지 않는다", multiplier: 2, worldEligible: true, axis: null },
+  "armed-conflict": { label: "무력 충돌", hint: "전투, 공습, 테러, 미사일·무기 시험", multiplier: 1.75, worldEligible: true, axis: "conflict-action" },
   disaster: { label: "재난·사고", hint: "지진, 태풍, 대형 사고, 감염병", multiplier: 1.75, worldEligible: true, axis: null },
   sanction: { label: "제재·압박", hint: "제재, 관세, 수출 통제", multiplier: 1.5, worldEligible: true, axis: "conflict-action" },
   diplomacy: { label: "외교·협상", hint: "정상회담, 협상, 합의, 조약", multiplier: 1.5, worldEligible: true, axis: "cooperation-word" },
@@ -92,6 +92,8 @@ export const RULES = {
   /** 나라별로 고르는 사건 수 */
   countryLimit: 3,
   relatedLimit: 2,
+  /** 제목 단어가 이 비율 이상 겹치면 같은 사건으로 합친다 */
+  mergeTitleOverlap: 0.7,
   /** 하루 사건 중 이 비율 이상에 나오는 행위자는 "흔한 행위자" (하나만 겹치면 연관 아님) */
   commonActorShare: 0.2,
   /** 흐름 추세: 최근 6시간 ÷ 그 전 6시간 */

@@ -136,6 +136,38 @@ describe("buildBoard: IT 5·대륙별", () => {
   });
 });
 
+describe("buildBoard: 같은 사건 합치기", () => {
+  it("제목이 거의 같으면 하나로: 기사·행위자·장소를 합치고 처음 본 시각은 더 이른 쪽", () => {
+    const iran = actor("country:IR", "이란", "country", "subject");
+    const us = actor("country:US", "미국", "country", "target");
+    const a = art("US", "CNN", 7);
+    const big = fact("big", "tech", [a, art("GB", "BBC", 7), art("JP", "NHK", 7)], { title: "FBI, 바이낸스 암호화폐 해킹 배후로 북한 지목", actors: [iran], occurs: ["KP"], firstSeenAt: ago(3) });
+    const small = fact("small", "tech", [a, art("KR", "연합", 7)], { title: "FBI, 바이낸스 해킹 배후로 북한 지목", actors: [iran, us], occurs: ["US"], firstSeenAt: ago(9) });
+    const board = buildBoard([small, big], NOW, stats);
+    expect(ids(board.events)).toEqual(["big"]);
+    const merged = board.events[0];
+    expect(merged.articleCount).toBe(4);
+    expect(merged.reporting.sort()).toEqual(["GB", "JP", "KR", "US"]);
+    expect(merged.actors.map((x) => x.id)).toEqual(["country:IR", "country:US"]);
+    expect(merged.occurs).toEqual(["KP", "US"]);
+    expect(merged.firstSeenAt).toBe(ago(9));
+  });
+
+  it("제목이 다른 사건은 합치지 않는다", () => {
+    const board = buildBoard(
+      [
+        fact("a", "tech", spread(["US", "GB"]), { title: "바이낸스, 해킹 피해 자산의 90% 보전" }),
+        fact("b", "tech", spread(["US", "GB"]), { title: "FBI, 바이낸스 해킹 배후로 북한 지목" }),
+        fact("c", "protest", spread(["US", "GB"]), { title: "프랑스 전역에서 생활고 시위" }),
+        fact("d", "protest", spread(["US", "GB"]), { title: "독일 전역에서 생활고 시위" }),
+      ],
+      NOW,
+      stats,
+    );
+    expect(board.events).toHaveLength(4);
+  });
+});
+
 describe("buildBoard: 장소", () => {
   it("장소가 없어도 한 나라 안 사건이면 그 나라, 여러 나라가 보도했으면 모름", () => {
     const board = buildBoard([fact("kr", "politics", [art("KR", "a", 7), art("KR", "b", 7)]), fact("w", "economy", spread(["US", "GB"]))], NOW, stats);
