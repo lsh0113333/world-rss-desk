@@ -7,9 +7,9 @@ const ok = (text: string) =>
 
 describe("generateJson", () => {
   it("모델 엔드포인트에 JSON 스키마 출력으로 요청하고 결과 JSON을 돌려준다", async () => {
-    const fetchMock = vi.fn(async () => ok('{"stories":[]}'));
+    const fetchMock = vi.fn(async () => ok('{"events":[]}'));
     const out = await generateJson({ apiKey: "key", models: ["m1"], prompt: "p", schema: { type: "OBJECT" }, fetch: fetchMock });
-    expect(out).toEqual({ value: { stories: [] }, model: "m1" });
+    expect(out).toEqual({ value: { events: [] }, model: "m1" });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { headers: Record<string, string> }];
     expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/m1:generateContent");
     expect(init.headers["x-goog-api-key"]).toBe("key");

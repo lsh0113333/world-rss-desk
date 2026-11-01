@@ -7,10 +7,6 @@ export const MAX_REDIRECTS = 3;
 export interface SafeFetchOptions {
   timeoutMs: number;
   maxBytes: number;
-  /** true면 Next 데이터 캐시를 건너뛴다 */
-  fresh?: boolean;
-  /** fresh가 아닐 때 Next 데이터 캐시 유지 시간 */
-  revalidateSeconds?: number;
   accept?: string;
   /** 최초 URL과 모든 리다이렉트 대상에 대해 호출. 거부하려면 throw */
   checkUrl?: (url: URL) => Promise<unknown>;
@@ -85,7 +81,7 @@ async function readLimited(res: Response, maxBytes: number): Promise<Uint8Array>
  * 실패는 모두 사용자에게 보여줄 수 있는 FeedFetchError로 바꾼다.
  */
 export async function fetchText(url: string, opts: SafeFetchOptions): Promise<FetchedText> {
-  const { timeoutMs, maxBytes, fresh = false, revalidateSeconds, accept = "*/*", checkUrl, fetchImpl = fetch } = opts;
+  const { timeoutMs, maxBytes, accept = "*/*", checkUrl, fetchImpl = fetch } = opts;
   const signal = AbortSignal.timeout(timeoutMs);
   let current = new URL(url);
 
@@ -96,8 +92,7 @@ export async function fetchText(url: string, opts: SafeFetchOptions): Promise<Fe
         headers: { "User-Agent": USER_AGENT, Accept: accept },
         redirect: "manual",
         signal,
-        ...(fresh ? { cache: "no-store" as const } : revalidateSeconds ? { next: { revalidate: revalidateSeconds } } : {}),
-      } as RequestInit);
+      });
 
       if (res.status >= 300 && res.status < 400) {
         const location = res.headers.get("location");

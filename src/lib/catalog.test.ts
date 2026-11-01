@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { CONTINENTS } from "@/ontology/countries";
 import { baseCountry } from "@/ontology/outlets";
 import { CATALOG } from "./catalog";
-import { CONTINENTS } from "./constants";
 
 const CATEGORIES = ["top", "world", "politics", "economy", "society", "tech", "science", "health", "environment", "culture", "sports"];
 
@@ -29,7 +29,7 @@ describe("catalog schema", () => {
   });
 
   it("references known continents, and outlets map to a known home country", () => {
-    const continents = CONTINENTS.map((c) => c.id);
+    const continents: string[] = [...CONTINENTS.map((c) => c.id), "global"];
     for (const f of CATALOG) {
       expect(continents, f.id).toContain(f.continent);
       if (!["UN News", "AllAfrica"].includes(f.name)) expect(baseCountry(f), f.id).not.toBeNull();

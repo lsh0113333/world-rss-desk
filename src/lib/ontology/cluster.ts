@@ -1,7 +1,6 @@
-import type { StoryItem } from "@/types/insights";
 import type { PipelineArticle } from "@/types/world";
-import { findEvents } from "../pipeline/events";
 import { hashId } from "../text";
+import { findEvents, type EventItem, type FoundEvent } from "./events";
 
 /**
  * 규칙으로 묶기 + AI에 무엇을 보낼지 정하기 (무료 한도 보호).
@@ -39,16 +38,15 @@ export interface Cluster {
   articles: ClusterArticle[];
 }
 
-function toItem(a: PipelineArticle): StoryItem {
+function toItem(a: PipelineArticle): EventItem {
   return {
     article: { id: a.id, title: a.title, link: a.link, publishedAt: a.publishedAt, source: a.source, ...(a.summary ? { summary: a.summary } : {}) },
-    panelId: a.feedId,
     country: a.country,
     category: a.category,
   };
 }
 
-function toCluster(issue: ReturnType<typeof findEvents>[number], scope: Cluster["scope"]): Cluster {
+function toCluster(issue: FoundEvent, scope: Cluster["scope"]): Cluster {
   return {
     key: `${scope[0]}-${hashId(issue.id)}`,
     scope,
@@ -64,12 +62,12 @@ function toCluster(issue: ReturnType<typeof findEvents>[number], scope: Cluster[
   };
 }
 
-export function findClusters(articles: PipelineArticle[], now: Date): Cluster[] {
+export function findClusters(articles: PipelineArticle[]): Cluster[] {
   const items = articles.map(toItem);
   const clusters: Cluster[] = [];
   const used = new Set<string>();
-  const take = (list: StoryItem[], scope: Cluster["scope"], opts: Parameters<typeof findEvents>[2]) => {
-    for (const issue of findEvents(list, now, opts)) {
+  const take = (list: EventItem[], scope: Cluster["scope"], opts: Parameters<typeof findEvents>[1]) => {
+    for (const issue of findEvents(list, opts)) {
       clusters.push(toCluster(issue, scope));
       for (const i of issue.items) used.add(i.article.id);
     }
@@ -78,7 +76,7 @@ export function findClusters(articles: PipelineArticle[], now: Date): Cluster[] 
 
   take(items, "world", { limit: WORLD_LIMIT });
   take(rest().filter((i) => i.category === "tech"), "it", { limit: IT_LIMIT, minSources: 2, minCountries: 1 });
-  const byCountry = new Map<string, StoryItem[]>();
+  const byCountry = new Map<string, EventItem[]>();
   for (const item of rest()) byCountry.set(item.country ?? "", [...(byCountry.get(item.country ?? "") ?? []), item]);
   for (const [, list] of [...byCountry].sort(([a], [b]) => a.localeCompare(b))) {
     take(list, "country", { limit: COUNTRY_LIMIT, minSources: 2, minCountries: 1 });

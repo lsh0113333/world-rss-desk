@@ -147,6 +147,5 @@
 ```bash
 npm run feeds:check          # 카탈로그 전체를 내 PC에서 받아 OK / STALE / FAIL 표시
 ```
-- **자동 점검**: 매일 06:00(KST) Vercel cron이 `/api/feed-health`를 호출해 전체를 다시 점검한다(결과 24시간 캐시). 결과는 `/api/feed-health`에서 본다.
 - 수집은 GitHub Actions 서버에서 일어난다. 내 PC에서 되어도 그쪽에서 막힐 수 있으니 실행 로그의 실패 피드 수를 함께 본다.
 - 피드 id는 `{나라}-{매체}-{분야}` 형식이며, **기사 기록(`articles.feed_id`)이 참조하므로 한번 정하면 바꾸지 않는다.**

@@ -30,7 +30,7 @@ describe("findClusters", () => {
   const noise = [art("Local bakery wins award", "local", "GB")];
 
   it("세계 → IT → 나라 순으로 찾고, 기사 하나는 묶음 하나에만", () => {
-    const clusters = findClusters([...world, ...domestic, ...tech, ...noise], NOW);
+    const clusters = findClusters([...world, ...domestic, ...tech, ...noise]);
     expect(clusters.map((c) => c.scope)).toEqual(["world", "it", "country"]);
     const ids = clusters.flatMap((c) => c.articles.map((a) => a.id));
     expect(new Set(ids).size).toBe(ids.length);
@@ -40,8 +40,8 @@ describe("findClusters", () => {
   });
 
   it("묶음 이름은 내용이 같으면 같다", () => {
-    const a = findClusters(world, NOW);
-    const b = findClusters(world, NOW);
+    const a = findClusters(world);
+    const b = findClusters(world);
     expect(a[0].key).toBe(b[0].key);
   });
 });

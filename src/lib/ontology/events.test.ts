@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { StoryItem } from "@/types/insights";
-import { findEvents } from "./events";
+import { findEvents, type EventItem } from "./events";
 
 const NOW = new Date("2026-10-19T12:00:00Z");
 let seq = 0;
-function item(title: string, source: string, country: string): StoryItem {
+function item(title: string, source: string, country: string): EventItem {
   seq++;
   return {
     article: { id: `i${seq}`, title, link: `https://${source}.example/${seq}`, publishedAt: new Date(NOW.getTime() - seq * 60_000).toISOString(), source },
-    panelId: "p",
     country,
   };
 }
@@ -35,36 +33,36 @@ const marseille = [
 
 describe("findEvents", () => {
   it("구체적인 단어 쌍을 함께 쓰는 여러 나라 기사를 사건으로 묶는다", () => {
-    const events = findEvents([...haines, ...ai, ...marseille], NOW);
+    const events = findEvents([...haines, ...ai, ...marseille]);
     const h = events.find((e) => e.terms.includes("haines"))!;
     expect(h.items.map((i) => i.article.id).sort()).toEqual(haines.map((i) => i.article.id).sort());
     expect(h.countries).toHaveLength(4);
-    expect(h.label.toLowerCase()).toContain("haines");
+    expect(h.terms).toContain("haines");
   });
 
   it("흔한 단어 하나만 겹치는 서로 다른 기사는 사건이 아니다", () => {
-    const events = findEvents([...haines, ...ai, ...marseille], NOW);
+    const events = findEvents([...haines, ...ai, ...marseille]);
     expect(events.some((e) => e.items.some((i) => ai.includes(i)))).toBe(false);
   });
 
   it("기사 하나는 사건 하나에만 들어간다", () => {
-    const events = findEvents([...haines, ...ai, ...marseille], NOW);
+    const events = findEvents([...haines, ...ai, ...marseille]);
     const ids = events.flatMap((e) => e.items.map((i) => i.article.id));
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("나라가 많은 사건이 앞에 온다", () => {
-    const events = findEvents([...marseille, ...haines], NOW);
+    const events = findEvents([...marseille, ...haines]);
     expect(events.map((e) => e.terms.includes("haines"))).toEqual([true, false]);
   });
 
   it("매체 3곳 미만이면 사건이 아니다", () => {
-    expect(findEvents(haines.slice(0, 2), NOW)).toEqual([]);
+    expect(findEvents(haines.slice(0, 2))).toEqual([]);
   });
 
   it("같은 링크는 한 번만", () => {
-    const dup = { ...haines[0], panelId: "q" };
-    const [e] = findEvents([...haines, dup], NOW);
+    const dup = { ...haines[0], article: { ...haines[0].article, id: "dup" } };
+    const [e] = findEvents([...haines, dup]);
     expect(e.items).toHaveLength(4);
   });
 });
@@ -81,7 +79,7 @@ describe("findEvents 흔한 단어", () => {
       item("Schools receive bomb threat emails in Belfast", "rte", "IE"),
       item("Bomb threat at Mumbai airport", "toi", "IN"),
     ];
-    const events = findEvents([...background, ...mixed], NOW);
+    const events = findEvents([...background, ...mixed]);
     expect(events.some((e) => e.items.some((i) => mixed.includes(i)))).toBe(false);
   });
 
@@ -90,8 +88,8 @@ describe("findEvents 흔한 단어", () => {
       item("Seoul subway fare hike approved by city council", "yna", "KR"),
       item("City council approves Seoul subway fare hike", "koreaherald", "KR"),
     ];
-    expect(findEvents(domestic, NOW).length).toBe(0);
-    const events = findEvents(domestic, NOW, { minSources: 2, minCountries: 1 });
+    expect(findEvents(domestic).length).toBe(0);
+    const events = findEvents(domestic, { minSources: 2, minCountries: 1 });
     expect(events).toHaveLength(1);
     expect(events[0].countries).toEqual(["KR"]);
   });

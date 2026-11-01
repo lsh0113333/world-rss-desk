@@ -1,5 +1,4 @@
-import { CONTINENTS } from "@/lib/constants";
-import { continentOfCountry, countryName } from "@/ontology/countries";
+import { continentOfCountry, CONTINENTS, countryName } from "@/ontology/countries";
 import { EVENT_TYPE_IDS, EVENT_TYPES, FLOWS, RULES, type EventType } from "@/ontology/world";
 import type { Continent } from "@/types/catalog";
 import type {
@@ -173,7 +172,7 @@ function flowsOf(events: BoardEvent[], facts: EventFact[], now: Date): BoardFlow
 }
 
 function continentsOf(events: BoardEvent[], shown: Set<string>): BoardContinent[] {
-  return CONTINENTS.filter((c) => c.id !== "global").map((c) => {
+  return CONTINENTS.map((c) => {
     const inContinent = events.filter((e) => e.occurs.some((code) => continentOfCountry(code) === c.id)).sort(byScore);
     const top = inContinent.filter((e) => !shown.has(e.id)).slice(0, RULES.continentLimit).map((e) => e.id);
     const topSet = new Set(top);

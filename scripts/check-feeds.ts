@@ -3,6 +3,7 @@
  * Usage: npm run feeds:check [-- --stale-hours=72]
  */
 import { CATALOG } from "@/lib/catalog";
+import { assertSafeUrl } from "@/lib/url-guard";
 import { loadFeed } from "@/services/rss";
 
 const staleArg = process.argv.find((a) => a.startsWith("--stale-hours="));
@@ -17,7 +18,7 @@ interface Row {
 
 async function check(feed: (typeof CATALOG)[number]): Promise<Row> {
   try {
-    const { articles } = await loadFeed(feed.url, { source: feed.name });
+    const { articles } = await loadFeed(feed.url, { source: feed.name, checkUrl: assertSafeUrl });
     if (articles.length === 0) return { id: feed.id, status: "FAIL", detail: "기사 0개" };
     const dated = articles.map((a) => a.publishedAt).filter((d): d is string => d !== null);
     const newest = dated.length ? Math.max(...dated.map((d) => Date.parse(d))) : NaN;

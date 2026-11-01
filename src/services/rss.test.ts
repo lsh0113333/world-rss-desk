@@ -151,14 +151,6 @@ describe("fetchFeedText", () => {
     expect(init.redirect).toBe("manual");
   });
 
-  it("uses no-store when fresh, revalidate otherwise", async () => {
-    const fetchImpl = vi.fn().mockImplementation(() => Promise.resolve(response("<rss/>")));
-    await fetchFeedText("https://e.com/rss", { fetchImpl, fresh: true });
-    await fetchFeedText("https://e.com/rss", { fetchImpl });
-    expect(fetchImpl.mock.calls[0][1].cache).toBe("no-store");
-    expect(fetchImpl.mock.calls[1][1].next).toEqual({ revalidate: 120 });
-  });
-
   it("follows redirects and checks every hop", async () => {
     const fetchImpl = vi
       .fn()

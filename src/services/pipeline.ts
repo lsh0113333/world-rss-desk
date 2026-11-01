@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { CONTINENTS } from "@/lib/constants";
 import { normalizeLink } from "@/lib/merge";
 import { findClusters, planClusters, type Cluster, type EventProgress } from "@/lib/ontology/cluster";
 import { buildExtractPrompt, EXTRACT_SCHEMA, parseExtraction, type ExtractedEvent, type ExtractInput } from "@/lib/ontology/extract";
@@ -7,7 +6,7 @@ import { inList, isValidLink } from "@/lib/ontology/graph";
 import { buildBoard } from "@/lib/ontology/rules";
 import { hashId } from "@/lib/text";
 import { assertSafeUrl } from "@/lib/url-guard";
-import { allCountryCodes, continentOfCountry, countryName } from "@/ontology/countries";
+import { allCountryCodes, continentOfCountry, CONTINENTS, countryName } from "@/ontology/countries";
 import { baseCountry } from "@/ontology/outlets";
 import { ACTOR_ROLES, EVENT_TYPES, FLOWS, LINK_TYPES, OBJECT_TYPES, type EventType, type FlowId, type LinkType } from "@/ontology/world";
 import type { CatalogFeed } from "@/types/catalog";
@@ -154,11 +153,10 @@ async function ingest(feeds: readonly CatalogFeed[], load: NonNullable<PipelineD
 async function seedStatic(db: Db, feeds: readonly CatalogFeed[], now: Date) {
   const seen = now.toISOString();
   const outlets = new Map(feeds.filter((f) => baseCountry(f)).map((f) => [outletNode(f.name), { name: f.name, country: baseCountry(f)!, homepage: f.homepage }]));
-  const continents = CONTINENTS.filter((c) => c.id !== "global");
   await db.upsert(
     "objects",
     [
-      ...continents.map((c) => ({ id: `continent:${c.id}`, type: "continent", props: { label: c.label }, last_seen: seen })),
+      ...CONTINENTS.map((c) => ({ id: `continent:${c.id}`, type: "continent", props: { label: c.label }, last_seen: seen })),
       ...allCountryCodes().map((code) => ({ id: `country:${code}`, type: "country", props: { name: countryName(code) }, last_seen: seen })),
       ...FLOWS.map((f) => ({ id: `flow:${f.id}`, type: "flow", props: { label: f.label, hint: f.hint }, last_seen: seen })),
       ...[...outlets].map(([id, o]) => ({ id, type: "outlet", props: { name: o.name, homepage: o.homepage }, last_seen: seen })),
@@ -239,7 +237,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
     });
 
     // 3) 규칙으로 묶기 + AI에 무엇을 보낼지 정하기
-    const clusters = findClusters(articles, now);
+    const clusters = findClusters(articles);
     const since = iso(now.getTime() - ASSIGNMENT_H * HOUR);
     const reports = await db.select<LinkRow>("links", `select=src,dst&type=eq.reports&observed_at=gte.${since}`, { all: true });
     const assigned = new Map(reports.map((l) => [articleOf(l.src), l.dst]));

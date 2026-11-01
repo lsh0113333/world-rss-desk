@@ -10,10 +10,10 @@ describe("createDb", () => {
   it("select: REST 경로·쿼리·키 헤더로 요청한다", async () => {
     const fetchMock = vi.fn(async () => json([{ id: "a" }]));
     const db = createDb({ url: "https://x.supabase.co", key: "k", fetch: fetchMock });
-    const rows = await db.select("stories", "select=id&order=score.desc");
+    const rows = await db.select("objects", "select=id&order=score.desc");
     expect(rows).toEqual([{ id: "a" }]);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe("https://x.supabase.co/rest/v1/stories?select=id&order=score.desc");
+    expect(url).toBe("https://x.supabase.co/rest/v1/objects?select=id&order=score.desc");
     expect((init.headers as Record<string, string>).apikey).toBe("k");
   });
 
@@ -68,7 +68,7 @@ describe("createDb", () => {
   it("실패 응답은 테이블 이름과 함께 오류로 던진다", async () => {
     const fetchMock = vi.fn(async () => json({ message: "permission denied" }, 401));
     const db = createDb({ url: "https://x.supabase.co", key: "k", fetch: fetchMock });
-    await expect(db.select("stories", "select=id")).rejects.toThrow(/stories.*401.*permission denied/);
+    await expect(db.select("objects", "select=id")).rejects.toThrow(/objects.*401.*permission denied/);
   });
 
   it("count: HEAD로 개수만 받는다", async () => {

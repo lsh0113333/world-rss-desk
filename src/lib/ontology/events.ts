@@ -1,4 +1,5 @@
-import type { Issue, StoryItem } from "@/types/insights";
+import type { Article } from "@/types/article";
+import type { Category, CountryCode } from "@/types/catalog";
 import { tokenize } from "../keywords";
 import { normalizeLink } from "../merge";
 
@@ -10,6 +11,23 @@ import { normalizeLink } from "../merge";
  */
 
 export const EVENT_LIMIT = 40;
+
+/** 입력: 기사 + 나라·분야 */
+export interface EventItem {
+  article: Article;
+  country?: CountryCode;
+  category?: Category;
+}
+
+/** 같은 일을 다룬 기사 묶음 */
+export interface FoundEvent {
+  id: string;
+  terms: string[];
+  /** 최신순 */
+  items: EventItem[];
+  countries: CountryCode[];
+  sources: string[];
+}
 const MIN_SOURCES = 3;
 const MIN_COUNTRIES = 2;
 /** 한 제목에서 쌍을 만들 단어 수 (앞에서부터) */
@@ -19,17 +37,16 @@ const MERGE_OVERLAP = 0.34;
 /** 전체 기사의 이 비율(최소 COMMON_MIN건) 넘게 나오는 단어는 "흔한 단어". 둘 다 흔한 쌍("bomb"+"threat")은 서로 다른 일을 섞으므로 쓰지 않는다 */
 const COMMON_SHARE = 0.008;
 const COMMON_MIN = 25;
-const RECENT_MS = 60 * 60 * 1000;
 
 interface PairStats {
   key: string;
   terms: [string, string];
-  items: Set<StoryItem>;
+  items: Set<EventItem>;
   sources: Set<string>;
   countries: Set<string>;
 }
 
-const time = (i: StoryItem) => (i.article.publishedAt ? Date.parse(i.article.publishedAt) : 0);
+const time = (i: EventItem) => (i.article.publishedAt ? Date.parse(i.article.publishedAt) : 0);
 const score = (sources: number, countries: number) => countries * 3 + sources;
 
 function jaccard<T>(a: Set<T>, b: Set<T>): number {
@@ -46,7 +63,7 @@ export interface FindEventsOptions {
   minCountries?: number;
 }
 
-export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOptions = {}): Issue[] {
+export function findEvents(items: EventItem[], opts: FindEventsOptions = {}): FoundEvent[] {
   const limit = opts.limit ?? EVENT_LIMIT;
   const minSources = opts.minSources ?? MIN_SOURCES;
   const minCountries = opts.minCountries ?? MIN_COUNTRIES;
@@ -59,15 +76,11 @@ export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOption
     return true;
   });
 
-  const displays = new Map<string, Map<string, number>>();
   const df = new Map<string, number>();
-  const keysOf = new Map<StoryItem, string[]>();
+  const keysOf = new Map<EventItem, string[]>();
   for (const item of unique) {
     const keys: string[] = [];
-    for (const { key, display } of tokenize(item.article.title)) {
-      const d = displays.get(key) ?? new Map<string, number>();
-      d.set(display, (d.get(display) ?? 0) + 1);
-      displays.set(key, d);
+    for (const { key } of tokenize(item.article.title)) {
       if (!keys.includes(key)) keys.push(key);
     }
     for (const k of keys) df.set(k, (df.get(k) ?? 0) + 1);
@@ -105,7 +118,7 @@ export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOption
     );
 
   // 같은 기사들을 공유하는 쌍을 합친다
-  const groups: { terms: string[]; items: Set<StoryItem> }[] = [];
+  const groups: { terms: string[]; items: Set<EventItem> }[] = [];
   for (const pair of candidates) {
     const group = groups.find((g) => jaccard(g.items, pair.items) >= MERGE_OVERLAP);
     if (group) {
@@ -117,7 +130,7 @@ export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOption
   }
 
   // 기사 하나는 점수 높은 사건 하나에만
-  const measure = (set: Iterable<StoryItem>) => {
+  const measure = (set: Iterable<EventItem>) => {
     const list = [...set];
     return {
       list,
@@ -128,26 +141,20 @@ export function findEvents(items: StoryItem[], now: Date, opts: FindEventsOption
   const ranked = groups
     .map((g) => ({ g, m: measure(g.items) }))
     .sort((a, b) => score(b.m.sources.size, b.m.countries.size) - score(a.m.sources.size, a.m.countries.size));
-  const taken = new Set<StoryItem>();
-  const events: Issue[] = [];
+  const taken = new Set<EventItem>();
+  const events: FoundEvent[] = [];
   for (const { g } of ranked) {
     if (events.length >= limit) break;
     const m = measure([...g.items].filter((i) => !taken.has(i)));
     if (m.sources.size < minSources || m.countries.size < minCountries) continue;
     for (const i of m.list) taken.add(i);
     const sorted = m.list.sort((a, b) => time(b) - time(a));
-    const label = g.terms
-      .slice(0, 2)
-      .map((t) => [...(displays.get(t) ?? new Map([[t, 1]])).entries()].sort((a, b) => b[1] - a[1])[0][0])
-      .join(" · ");
     events.push({
       id: g.terms.join(" "),
-      label,
       terms: g.terms,
       items: sorted,
       countries: [...new Set(sorted.map((i) => i.country).filter((c): c is string => !!c))],
       sources: [...new Set(sorted.map((i) => i.article.source))],
-      recent: sorted.filter((i) => now.getTime() - time(i) <= RECENT_MS).length,
     });
   }
   return events;

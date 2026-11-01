@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG } from "@/lib/catalog";
-import { allCountryCodes, continentOfCountry, countryName, isKnownCountry } from "./countries";
+import { allCountryCodes, continentOfCountry, CONTINENTS, countryName, isKnownCountry } from "./countries";
 import { baseCountry } from "./outlets";
 import { EVENT_TYPES, EVENT_TYPE_IDS, FLOWS, LINK_TYPES, OBJECT_TYPES, RULES } from "./world";
 
@@ -30,6 +30,10 @@ describe("온톨로지 설정", () => {
 });
 
 describe("나라·대륙", () => {
+  it("대륙 7개, 국제 없음", () => {
+    expect(CONTINENTS.map((c) => c.id)).toEqual(["asia", "europe", "north-america", "south-america", "middle-east", "africa", "oceania"]);
+  });
+
   it("매체 없는 나라도 대륙을 안다 (요르단, 베네수엘라)", () => {
     expect(continentOfCountry("JO")).toBe("middle-east");
     expect(continentOfCountry("VE")).toBe("south-america");

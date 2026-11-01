@@ -8,7 +8,7 @@ Anthropic Academy "AI-native SDLC playbook — Capture intent" 방식을 따른�
 2. **초안**: Claude가 `TEMPLATE.md` 형식으로 `intent/YYYY-MM-DD-<짧은-이름>.md`를 쓴다 (Status: draft).
 3. **수정**: 사용자가 읽고 잘못 이해한 부분을 고친다.
 4. **확정**: Status를 `accepted`로 바꿔 커밋한다. 그다음 설계(docs/ADR·ARCHITECTURE) → 테스트 먼저(TDD) → 구현.
-5. **완료**: 배포까지 끝나면 Status를 `done`으로 바꾸고 마지막 커밋을 적는다. 하지 않기로 했으면 `dropped`와 이유.
+5. **완료**: 배포까지 끝나면 이유를 `docs/ADR.md`에 남기고 파일을 지운다 (기록은 git). 하지 않기로 했으면 그냥 지운다.
 
 ## 규칙
 - 기능 하나(또는 한 번에 요청받은 묶음) = 파일 하나. 코드보다 먼저 커밋한다.
@@ -21,5 +21,5 @@ Anthropic Academy "AI-native SDLC playbook — Capture intent" 방식을 따른�
 |------|----|
 | draft | 초안, 사용자 확인 전 |
 | accepted | 사용자 확인, 구현 시작 가능 |
-| done | 구현·배포 완료 |
-| dropped | 하지 않음 (이유 기록) |
+
+**여기에는 진행 중인 일만 있다.**

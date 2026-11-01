@@ -6,7 +6,6 @@ import type { Article } from "@/types/article";
 
 export const FETCH_TIMEOUT_MS = 8_000;
 export const MAX_FEED_BYTES = 2 * 1024 * 1024;
-export const REVALIDATE_SECONDS = 120;
 const SUMMARY_MAX = 300;
 
 export interface ParsedFeed {
@@ -23,8 +22,6 @@ export interface ParseOptions {
 export interface FetchOptions {
   timeoutMs?: number;
   maxBytes?: number;
-  /** true면 Next 데이터 캐시를 건너뛴다 (수동 새로고침) */
-  fresh?: boolean;
   /** 최초 URL과 모든 리다이렉트 대상에 대해 호출. 거부하려면 throw */
   checkUrl?: (url: URL) => Promise<unknown>;
   fetchImpl?: typeof fetch;
@@ -163,8 +160,6 @@ export async function fetchFeedText(url: string, opts: FetchOptions = {}): Promi
   const { text } = await fetchText(url, {
     timeoutMs: opts.timeoutMs ?? FETCH_TIMEOUT_MS,
     maxBytes: opts.maxBytes ?? MAX_FEED_BYTES,
-    fresh: opts.fresh,
-    revalidateSeconds: REVALIDATE_SECONDS,
     accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5",
     checkUrl: opts.checkUrl,
     fetchImpl: opts.fetchImpl,
