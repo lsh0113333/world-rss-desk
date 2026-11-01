@@ -6,6 +6,7 @@ import { buildExtractPrompt, EXTRACT_SCHEMA, parseExtraction, type ExtractedEven
 import { inList, isValidLink } from "@/lib/ontology/graph";
 import { buildBoard } from "@/lib/ontology/rules";
 import { hashId } from "@/lib/text";
+import { assertSafeUrl } from "@/lib/url-guard";
 import { allCountryCodes, continentOfCountry, countryName } from "@/ontology/countries";
 import { baseCountry } from "@/ontology/outlets";
 import { ACTOR_ROLES, EVENT_TYPES, FLOWS, LINK_TYPES, OBJECT_TYPES, type EventType, type FlowId, type LinkType } from "@/ontology/world";
@@ -110,6 +111,8 @@ function chunks<T>(list: readonly T[]): T[][] {
   return out;
 }
 
+const guardedLoad: NonNullable<PipelineDeps["load"]> = (url, opts) => loadFeed(url, { ...opts, checkUrl: assertSafeUrl });
+
 async function ingest(feeds: readonly CatalogFeed[], load: NonNullable<PipelineDeps["load"]>, now: Date) {
   const articles: ArticleRow[] = [];
   let ok = 0;
@@ -213,7 +216,7 @@ async function ontologyStats(db: Db): Promise<OntologyStats> {
 }
 
 export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
-  const { db, feeds, load = loadFeed, extract, now = new Date(), log = () => {} } = deps;
+  const { db, feeds, load = guardedLoad, extract, now = new Date(), log = () => {} } = deps;
   const run = await db.insert<{ id: number }>("pipeline_runs", { started_at: now.toISOString() });
   const seen = now.toISOString();
   const errors: string[] = [];

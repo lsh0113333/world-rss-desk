@@ -1,266 +1,87 @@
 # 아키텍처
 
-## 디렉토리 구조
+한 줄 요약: **30분마다 RSS를 읽어 온톨로지(객체·관계)에 쌓고, 규칙으로 판단한 상황판을 저장한다. 화면은 저장된 상황판만 읽는다.**
+
+```
+ Supabase pg_cron (30분마다)
+   │ workflow_dispatch (토큰은 Vault)
+   ▼
+ GitHub Actions: scripts/run-pipeline.ts → src/services/pipeline.ts
+   1. 감지   RSS 피드 수집 (services/rss, url-guard 통과)             ─규칙
+   2. 묶기   같은 일을 다룬 기사 묶음 (lib/ontology/cluster)          ─규칙
+   3. 읽기   새 묶음만 Gemini로 추출 (lib/ontology/extract)           ─AI
+   4. 저장   objects / links (lib/ontology/graph로 검증)              ─규칙
+   5. 판단   점수·순위·연관·추세 (lib/ontology/rules)                 ─규칙
+   6. 결과   board_snapshots에 상황판 JSON 저장
+   ▼
+ Supabase (PostgreSQL, RLS: 공개 읽기 전용)
+   ▲ publishable 키로 읽기
+ Vercel: /api/world, /api/actors (CDN 캐시)
+   ▲
+ 브라우저: /, /actors/[id], /ontology
+```
+
+## 디렉토리
 ```
 src/
-├── app/
-│   ├── layout.tsx               # 루트 레이아웃, 메타데이터, theme-color
-│   ├── page.tsx                 # 메인: <Dashboard /> 렌더링만
-│   ├── globals.css              # Tailwind v4 + 색상 토큰 (라이트/다크)
-│   ├── manifest.ts              # PWA 웹 앱 매니페스트
-│   ├── icon.tsx, apple-icon.tsx # 파비콘 / iOS 홈 화면 아이콘 (빌드 시 PNG 생성)
-│   ├── icons/[size]/route.tsx   # 매니페스트용 192/512 PNG (정적 생성)
-│   └── api/
-│       ├── feeds/route.ts       # GET 병합 기사 API
-│       ├── article/route.ts     # GET 원문 보기 모드 판정 + 읽기 모드 본문
-│       ├── thumb/route.ts       # GET 기사 og:image로 302 리다이렉트 (RSS에 이미지 없을 때)
-│       ├── discover/route.ts    # GET 사이트 주소 → RSS 후보 (카탈로그 매체 우선)
-│       └── feed-health/route.ts # GET 카탈로그 전체 점검 (24시간 캐시, 매일 cron)
-├── components/                  # UI 컴포넌트
-│   ├── Dashboard.tsx            # 화면 조립: 사이드바 + 상단 바 + 오늘의 톱 + 그리드 + 원문 서랍 + 편집창 ('use client')
-│   ├── Sidebar.tsx              # 왼쪽 메뉴: 내 패널 목록, 새 기사 수, 패널 추가
-│   ├── TopStories.tsx           # 오늘의 톱 사진 카드 줄
-│   ├── Thumb.tsx                # 썸네일: RSS 이미지 → /api/thumb → 매체 이니셜
-│   ├── QuickAdd.tsx             # 2번 클릭 패널 추가 (나라 → 분야)
-│   ├── Onboarding.tsx           # 첫 방문 나라·분야 선택
-│   ├── CommandPalette.tsx       # Ctrl+K 명령창
-│   ├── TopBar.tsx               # 앱 이름, 오프라인, 모두 확인, 전체 새로고침, + 패널, 설정
-│   ├── Panel.tsx                # usePanelFeed 연결 컨테이너
-│   ├── PanelView.tsx            # 패널 표시 전용 (상태별 화면, +N, 새로고침 버튼)
-│   ├── ArticleRow.tsx           # 헤드라인 한 줄
-│   ├── PanelEditor.tsx          # 추가/편집 창 (대륙→나라→분야, 매체, 커스텀 URL)
-│   ├── SettingsMenu.tsx         # 내보내기/가져오기/초기화
-│   ├── UndoToast.tsx            # 삭제 되돌리기 (5초)
-│   ├── ReaderPane.tsx           # 오른쪽 원문 패널 (iframe / 읽기 모드 / 새 탭 안내)
-│   ├── FeedChips.tsx            # 패널 안 매체 켜고 끄기 칩
-│   ├── IssueBar.tsx             # 오늘의 이슈 줄 + 나라별 비교 대화상자
-│   ├── ForYou.tsx               # 내 관심사 추천 + 패널 추가 제안
-│   ├── WatchMenu.tsx            # 키워드 워치 (상단 바 버튼, 키워드 편집, 언급 목록)
-│   ├── HeadlineWall.tsx         # 헤드라인 벽 보기
-│   ├── FeedHealthDialog.tsx     # 설정 메뉴 "피드 상태"
-│   └── Icons.tsx                # 인라인 SVG 아이콘
-├── hooks/
-│   ├── useLayout.ts             # LayoutRepository 기반 레이아웃 상태 + 조작
-│   ├── usePanelFeed.ts          # SWR로 /api/feeds 호출, 수동 새로고침(fresh=1)
-│   ├── useCooldown.ts           # 새로고침 30초 쿨다운
-│   ├── useOnline.ts             # 온라인/오프라인
-│   ├── useNow.ts                # 상대시간용 현재 시각 (1분 갱신)
-│   ├── useMediaQuery.ts         # 데스크톱 너비 여부 (≥1024px)
-│   └── useReadHistory.ts        # 읽은 기사 기록
-├── types/
-│   ├── catalog.ts               # Continent, Category, CountryCode, CatalogFeed
-│   ├── article.ts               # Article, FeedError, FeedsResponse, ArticleView, ReaderBlock
-│   ├── insights.ts              # StoryItem, StoryCluster, Issue, Insights, InsightEngine
-│   └── layout.ts                # Panel, Board, Layout
-├── lib/                         # 순수 로직 (I/O 없음. url-guard의 DNS 조회만 예외 — 서버 전용)
-│   ├── constants.ts             # 대륙/나라(한글명, 국기)/분야 메타데이터, panelTitle
-│   ├── catalog.ts               # 카탈로그 조회 함수
-│   ├── errors.ts                # FeedFetchError (사용자에게 보여줄 메시지)
-│   ├── text.ts                  # HTML 제거·엔티티 디코딩, 날짜 파싱, 해시
-│   ├── url-guard.ts             # SSRF 방지 URL 검증 (서버 전용)
-│   ├── merge.ts                 # 링크 정규화, 중복 제거 + 72시간 필터 + 정렬 + limit
-│   ├── panel-feed.ts            # 패널 → API URL, 새 기사 판정
-│   ├── layout-store.ts          # 프리셋·온보딩/검증/가져오기·내보내기/패널·보드 조작
-│   ├── layout-repository.ts     # LayoutRepository 인터페이스 + LocalStorageLayoutRepository
-│   ├── time.ts                  # 상대시간 포맷 ("12분 전")
-│   ├── frame-policy.ts          # X-Frame-Options / CSP frame-ancestors → iframe 허용 여부
-│   ├── og-image.ts              # HTML에서 og:image / twitter:image 추출
-│   ├── top-stories.ts           # 오늘의 톱 선정 (패널 순서, 링크 중복 제외)
-│   ├── commands.ts              # 명령창 검색 (나라·분야·매체·패널·보드·동작)
-│   ├── read-history.ts          # ReadHistoryRepository(읽은 id + 추천용 ReadEvent) + localStorage 구현
-│   ├── keywords.ts              # 제목 → 키워드 (불용어, 한국어 조사 제거)
-│   ├── story-cluster.ts         # 같은 소식 묶기, 패널 안 중복 합치기("+N개 매체")
-│   ├── trending.ts              # 오늘의 이슈
-│   ├── insights.ts              # 패널 기사 → StoryItem, ruleEngine (InsightEngine 1차 구현)
-│   ├── recommend.ts             # 읽기 기록 → 선호 프로필 → 추천·패널 제안
-│   ├── watch.ts                 # 키워드 워치 (일치, 강조 조각, 언급 목록)
-│   ├── google-news.ts           # 키워드 패널용 구글 뉴스 검색 RSS 주소
-│   ├── feed-discovery.ts        # HTML에서 피드 링크·흔한 경로 후보
-│   ├── layout-download.ts       # 설정 JSON 내려받기
-│   └── app-icon.tsx             # 앱 아이콘 이미지 (next/og)
+├── ontology/                # 온톨로지 정의 (코드가 아니라 데이터)
+│   ├── world.ts             # 객체·관계 종류, 사건 유형과 배수, 큰 흐름, 규칙 숫자 ← 판단 기준은 전부 여기
+│   ├── countries.ts         # 나라 → 대륙 (ISO, 매체 없는 나라 포함)
+│   └── outlets.ts           # 매체 → 본사 나라
+├── lib/ontology/
+│   ├── cluster.ts           # 규칙 묶기, AI에 보낼 묶음 정하기
+│   ├── extract.ts           # AI 프롬프트·스키마·응답 검증
+│   ├── graph.ts             # 관계가 설정에 맞는지 검사
+│   └── rules.ts             # 판단: 점수, 세계 5, IT 5, 대륙별, 흐름, 연관, 같은 사건 합치기
+├── lib/pipeline/events.ts   # 단어 쌍으로 사건 후보 찾기
+├── lib/board-prefs.ts       # 방문 기록 (BoardPrefsRepository, localStorage)
 ├── services/
-│   ├── rss.ts                   # 외부 RSS fetch + 인코딩 판별 + 파싱/정규화 (서버 전용)
-│   ├── http.ts                  # 공용 안전 fetch (리다이렉트 hop별 검사, 타임아웃, 크기 제한, charset)
-│   ├── article.ts               # 기사 페이지 → 원문 보기 모드 판정(읽기 모드 우선) + Readability 추출 → ReaderBlock[]
-│   ├── discover.ts              # 사이트 주소 → 실제로 읽히는 피드 목록
-│   ├── feed-health.ts           # 카탈로그 피드 점검 (정상/오래됨/실패)
-│   └── __fixtures__/            # 테스트용 RSS2/Atom/RDF/EUC-KR XML
-└── data/
-    └── catalog.json             # 큐레이션 피드 카탈로그 (270개, docs/FEEDS.md)
+│   ├── pipeline.ts          # 파이프라인 전체 흐름
+│   ├── world.ts             # 화면용 읽기 (상황판, 행위자)
+│   ├── rss.ts, http.ts      # RSS 수집 (charset 판별, 크기·시간 제한)
+│   ├── gemini.ts            # AI 호출 (무료 모델 순서대로, 재시도)
+│   ├── supabase.ts          # PostgREST 최소 클라이언트
+│   └── feed-health.ts       # 피드 점검
+├── app/
+│   ├── page.tsx             # 오늘의 세계
+│   ├── actors/[id]/, ontology/
+│   └── api/world, api/actors, api/feed-health
+├── components/              # WorldBoardView, EventRow, ActorView, OntologyView
+├── hooks/useWorld.ts
+├── data/catalog.json        # RSS 카탈로그
 scripts/
-├── execute.py                   # Harness 실행기 (현재 미사용)
-└── check-feeds.ts               # 카탈로그 피드 실동작 점검 (npm run feeds:check, 네트워크 사용)
-```
-테스트 파일은 대상 옆에 `*.test.ts(x)`로 둔다.
-
-## 핵심 타입
-```ts
-type Continent = 'asia' | 'europe' | 'north-america' | 'south-america'
-               | 'middle-east' | 'africa' | 'oceania' | 'global';
-type Category  = 'top' | 'world' | 'politics' | 'economy' | 'tech' | 'science';
-type CountryCode = string;            // ISO 3166-1 alpha-2. 지역 단위 'EU'(유럽)·'ME'(중동), 국제 매체 'WORLD'
-
-interface CatalogFeed {
-  id: string;                         // 'kr-yonhap-top' 형식, 전역 유일, 불변
-  name: string;                       // 표시용 매체명
-  url: string;                        // RSS URL (https 우선, 불가하면 http 허용)
-  homepage: string;
-  continent: Continent;
-  country: CountryCode;
-  category: Category;
-  language: string;                   // 'ko' | 'en' | 'ja' ...
-  note?: string;                      // 표시용 주석 (예: '중국 정부 시각')
-}
-
-interface Article {
-  id: string;                         // link(또는 guid) 해시
-  title: string;                      // 순수 텍스트
-  link: string;                       // http(s)만
-  publishedAt: string | null;         // ISO 8601, 없으면 null
-  source: string;                     // 매체명
-  summary?: string;                   // 순수 텍스트, 최대 300자
-}
-
-interface FeedError { feed: string; message: string }   // feed = 카탈로그 id 또는 URL
-interface FeedsResponse { articles: Article[]; errors: FeedError[]; fetchedAt: string }
-
-interface Panel {
-  id: string;                         // crypto.randomUUID()
-  title?: string;                     // 없으면 "국기 + 나라 + 분야"로 자동 생성
-  country?: CountryCode;
-  category?: Category;
-  feedIds: string[];                  // 카탈로그 id
-  customUrls: string[];
-  query?: string;                     // 키워드 패널: 구글 뉴스 검색어 (피드 1개로 계산)
-  limit: number;                      // 5~30, 기본 10
-  lastSeenAt?: string;                // ISO
-}
-
-interface Board { id: string; name: string; view?: "panels" | "wall" }   // wall = 헤드라인 벽
-interface Layout { version: 1; panels: Panel[]; boards?: Board[]; activeBoardId?: string; watchKeywords?: string[] }
-// Panel에 추가 필드: view?("card"|"list"|"text"), wide?, boardId?(없으면 첫 보드)
+├── run-pipeline.ts          # 파이프라인 실행 (npm run pipeline)
+├── query.ts                 # 로컬 읽기 쿼리 (npm run query)
+├── check-feeds.ts           # 카탈로그 점검 (npm run feeds:check)
+├── setup-secrets.sh, setup-scheduler.sh  # 비밀값·예약 실행 설정 (사용자가 직접 실행)
+supabase/migrations/         # 0001 기사, 0002 예약 실행, 0003 온톨로지
 ```
 
-## API 계약
-`GET /api/feeds?ids=kr-yonhap-top,kr-hankyung-economy&urls=<enc1>&urls=<enc2>&limit=10`
-- `ids`: 카탈로그 id 목록(쉼표 구분). 존재하지 않는 id는 `errors`에 기록한다.
-- `urls`: 커스텀 피드 URL. **피드마다 파라미터를 반복**한다(URL 안에 쉼표가 있을 수 있어 쉼표로 합치지 않음). 각각 encodeURIComponent 처리, `assertSafeUrl`을 통과해야 한다.
-- `fresh=1`(선택): 수동 새로고침용. 서버 fetch를 `cache: 'no-store'`로 하고 응답도 `Cache-Control: no-store`로 보낸다.
-- `maxAgeHours`(선택, 기본 72): 이보다 오래된 기사는 제외한다. `publishedAt`이 null이면 제외하지 않는다.
-- `q`(선택, 반복 가능): 키워드 패널 검색어(최대 80자). `https://news.google.com/rss/search?q={q} when:2d` (한글이 있으면 `hl=ko&gl=KR`, 없으면 `hl=en-US&gl=US`). 기사 매체명은 item `<source>`, 제목 끝 " - 매체명"은 뗀다. 오류의 `feed`는 `q:{검색어}`.
-- 제한: ids + urls + q 합계 최대 12개, `limit` 1~50(기본 10). 넘으면 400.
-- 응답 200: `FeedsResponse`. 피드 일부가 실패해도 200이며 실패는 `errors`에 담긴다.
-- 헤더(기본): `Cache-Control: public, s-maxage=120, stale-while-revalidate=600` (2분 준실시간. 피드 fetch도 `revalidate: 120`)
-- 런타임: Node.js (DNS 조회가 필요하므로 Edge 사용 안 함)
+## 저장소 (Supabase)
+| 테이블 | 내용 | 보관 |
+|---|---|---|
+| `articles` | 수집한 기사 | 14일 |
+| `objects` | 사건, 행위자, 큰 흐름, 나라, 대륙, 매체 | 30일 |
+| `links` | 관계 + 관측 시각 + 근거 기사 + 누가 만들었나(ai/rule/config) | 30일 |
+| `extraction_log` | AI에 이미 보낸 기사 (중복 호출 방지) | 14일 |
+| `board_snapshots` | 규칙으로 계산한 화면 결과 | 1일 |
+| `pipeline_runs` | 실행 기록 | - |
 
-## 원문 보기 API
-`GET /api/article?url=<encodeURIComponent(기사 URL)>`
-- `url`은 `assertSafeUrl` 통과 필수. 리다이렉트 최대 3회 hop별 검사, 타임아웃 10초, 응답 5MB 제한.
-- 응답 200 (항상 셋 중 하나):
-  ```ts
-  type ArticleView =
-    | { mode: "frame"; url: string }                       // 최종 URL을 iframe으로
-    | { mode: "reader"; url: string; embeddable: boolean; title: string; siteName?: string; byline?: string;
-        publishedAt?: string; blocks: ReaderBlock[] }                // embeddable이면 "원본 페이지" 전환
-    | { mode: "link"; url: string; reason: string };      // 새 탭 안내
-  type ReaderBlock =
-    | { type: "p" | "h2" | "h3" | "blockquote" | "li"; text: string }
-    | { type: "img"; src: string; alt?: string };          // src는 http(s)만
-  ```
-- 판정 순서(읽기 모드 우선, ADR-014): 페이지 fetch → Readability 추출, 본문 200자 이상이면 `reader`(+`embeddable = canEmbed(headers)`) → 추출 실패 + `canEmbed`면 `frame` → 아니면 `link`. fetch 자체 실패(403·타임아웃 등)도 `link`. 화면은 `link`·오류일 때 RSS의 제목·사진·요약 카드를 보여 준다.
+이전 세계 흐름의 `stories`, `story_*`, `entities`는 더 이상 쓰지 않는다 (코드에서 읽거나 쓰지 않음).
 
-## 그 밖의 API
-- `GET /api/discover?url=<사이트 또는 RSS 주소>` → `{ feeds: { url, title, articleCount?, catalogId? }[], error? }`. 홈페이지가 너무 크거나 막혀도 카탈로그 매체면 카탈로그 피드를 돌려준다. `s-maxage=3600`.
-- `GET /api/feed-health` → `{ checkedAt, total, ok, stale[], failed[] }` (각 `{ id, name, detail }`). `unstable_cache` 24시간, `maxDuration` 300. `Authorization: Bearer $CRON_SECRET`이면 캐시를 지우고 재점검(Vercel cron 매일 21:00 UTC). 응답 `no-store`.
+## AI 호출을 아끼는 방법
+- 이미 사건이 있는 묶음의 새 기사는 AI 없이 규칙으로 붙인다.
+- AI에 보낸 기사는 기록해 두고 사건이 아니었어도 다시 보내지 않는다.
+- 한 번 실행에 새 묶음 최대 48개(6개씩 묶어 8번 호출), 다시 정리 최대 6개. 사건이 2배 커지고 6시간 지나면 다시 정리한다.
 
-## 세계 흐름 분석 (브라우저 안, ADR-013)
-```
-패널별 /api/feeds 결과 ─ Panel.onArticles ─▶ Dashboard.panelArticles
-  → toStoryItems(현재 보드 패널)  : StoryItem { article, panelId, country(매체의 카탈로그 나라 → 패널 나라), category }
-  → ruleEngine(items, now)        : { clusters: StoryCluster[], issues: Issue[] }   ← 2차에서 /api/insights(AI)로 교체 가능
-      ├ clusterIndex → Panel(dedupeByCluster: 패널 안 같은 소식 합치기, "+N개 매체"), 오늘의 톱 중복 제외, 원문 서랍 "같은 소식, 다른 매체"
-      ├ issues → IssueBar / IssueDialog(나라별 비교)
-      └ clusters → HeadlineWall (보드 view = "wall"일 때, PanelFeedReporter가 데이터만 받음)
-  → findMentions(items, watchKeywords) → WatchMenu, ArticleRow 강조
-읽기 기록 ReadEvent(ReadHistoryRepository, 최근 500개) → buildProfile(7일 반감) → recommend / suggestPanels → ForYou
-```
-- 헤더: `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`. 잘못된 url은 400.
-- `frame` 판정: `X-Frame-Options`가 있으면(DENY/SAMEORIGIN/ALLOW-FROM) 불가. CSP `frame-ancestors`가 있으면 `*`가 포함된 경우만 허용(우리 도메인이 명시될 일은 없으므로).
+## 비밀값
+| 값 | 위치 | 쓰는 곳 |
+|---|---|---|
+| SUPABASE_SECRET_KEY, GEMINI_API_KEY | GitHub Secrets | 파이프라인 쓰기 |
+| SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY | Vercel env, `.env.local` | 화면 읽기 |
+| GitHub 실행 토큰 | Supabase Vault | pg_cron |
+| SUPABASE_ACCESS_TOKEN | `.env.local` | 로컬 쿼리·마이그레이션 |
+| CRON_SECRET | Vercel env | 피드 점검 |
 
-## 세계 흐름 파이프라인 (서버, ADR-015)
-```
-GitHub Actions (매시 17분, .github/workflows/pipeline.yml → scripts/run-pipeline.ts → services/pipeline.ts)
-  ① Ingest     CATALOG 전체 loadFeed (동시 20, 48시간 이내·날짜 있는 기사)
-  ② Normalize  articles upsert (id = sha1(normalizeLink).slice(16), ignore-duplicates)      → Supabase
-  ③ Aggregate  최근 24시간 → lib/pipeline/events.findEvents(단어 쌍) → stories.assignStoryIds(이어 쓰기)
-               → stories / story_articles upsert, story_snapshots(시간별 크기)
-  ④ Enrich     lib/pipeline/enrich: selectForEnrichment → buildEnrichPrompt(4개씩) → services/gemini(responseSchema)
-               → parseEnrichment(근거 참조 검증) → story_insights / entities / story_entities
-  ⑤ 정리       articles 14일, stories 30일, snapshots 7일. pipeline_runs에 통계(나라별 기사 수 포함)
-Vercel /api/insights → services/world-insights.readWorldInsights(publishable 키) → WorldInsights (CDN 5분)
-  → useWorldInsights → WorldView: WorldMap(타일 지도, lib/world-map) + StoryCard + StoryDialog(요약·왜 중요한가·나라별 시각·엔티티)
-```
-- 스키마: `supabase/migrations/0001_insights.sql` (모든 테이블 RLS, anon은 select만). 적용은 Supabase Management API(`/v1/projects/{ref}/database/query`).
-- 비밀값: GitHub Secrets `SUPABASE_URL`·`SUPABASE_SECRET_KEY`·`GEMINI_API_KEY`, Vercel env `SUPABASE_URL`·`SUPABASE_PUBLISHABLE_KEY`. 등록은 `bash scripts/setup-secrets.sh`(사용자가 직접 실행).
-- 보드 보기 `world`(세계 흐름)는 패널 데이터와 무관하게 `/api/insights`만 쓴다.
-
-## 패턴
-- Server Component는 셸(`page.tsx`, `layout.tsx`)만 맡는다. 레이아웃이 localStorage에 있으므로 그리드 이하는 Client Component다.
-- `services/`는 I/O만, `lib/`는 순수 함수로 둔다. Route Handler는 둘을 조립하는 얇은 계층이다.
-- **플랫폼 중립 API**: 화면에 필요한 데이터는 모두 `/api/*`의 JSON으로 받는다. 웹 UI만 쓰는 서버 전용 로직(Server Action 등)은 만들지 않는다. 나중에 네이티브 앱이 같은 API를 그대로 재사용하기 위함이다.
-- **저장소 추상화**: 컴포넌트와 훅은 localStorage를 직접 만지지 않고 `LayoutRepository`만 호출한다.
-  ```ts
-  interface LayoutRepository {
-    load(): Promise<Layout | null>;   // 없으면 null
-    save(layout: Layout): Promise<void>;
-  }
-  ```
-  MVP 구현체는 `LocalStorageLayoutRepository` 하나다. 3단계에서 `RemoteLayoutRepository`(DB)로 교체한다. 지금은 동기 저장이지만 원격 전환을 위해 인터페이스는 Promise로 둔다.
-- 파싱 정규화 규칙(`services/rss.ts`):
-  - **문자 인코딩**: 응답을 `ArrayBuffer`로 받는다. 인코딩은 Content-Type의 `charset` → XML 선언의 `encoding` → UTF-8 순으로 정하고, `TextDecoder`로 디코딩한다(EUC-KR, Shift_JIS 등 대응). `res.text()`를 쓰지 않는다.
-  - RSS 2.0 `item`, Atom `entry`, RDF(RSS 1.0) `item`을 모두 지원한다.
-  - 날짜는 `pubDate` / `updated` / `published` / `dc:date` 순으로 찾고, 파싱 실패 시 null.
-  - 제목과 요약에서 HTML 태그를 제거하고 엔티티를 디코딩한다. CDATA를 처리하고 공백을 정규화한다.
-  - link가 http(s)가 아니면 기사를 버린다.
-- 병합 규칙(`lib/merge.ts`): 정규화한 link 기준으로 중복을 제거한다(쿼리의 utm_* 제거). `publishedAt` 내림차순, null은 맨 뒤. 그 뒤 limit을 적용한다.
-
-## 데이터 흐름
-```
-[localStorage Layout]
-      │ useLayout
-      ▼
-PanelGrid ──▶ Panel ──usePanelFeed (SWR, refreshInterval 2분)──▶ GET /api/feeds
-                                                                 │
-                                    ┌────────────────────────────┤
-                                    ▼                            ▼
-                          lib/catalog.getById            lib/url-guard.assertSafeUrl
-                                    └──────────┬─────────────────┘
-                                               ▼
-                         services/rss.fetchFeed × N (Promise.allSettled, 타임아웃 8s, 2MB)
-                                               ▼
-                         services/rss.parseFeed → Article[]
-                                               ▼
-                         lib/merge.mergeArticles (중복 제거, 정렬, limit)
-                                               ▼
-                         FeedsResponse (CDN 캐시 2분) ──▶ Panel 렌더링
-```
-
-## 상태 관리
-- **서버 상태**: SWR. 키는 `/api/feeds?…` URL이며, 같은 패널 구성은 자동으로 dedupe된다. `refreshInterval: 120_000`, `revalidateOnFocus: true`, `keepPreviousData: true`(오프라인·실패 시 마지막 데이터 유지).
-  - 수동 새로고침: `usePanelFeed`가 `refresh()`를 노출한다. `fresh=1`을 붙인 URL로 fetch한 결과를 `mutate(data, { revalidate: false })`로 기본 키 캐시에 덮어쓴다.
-  - 전체 새로고침: 상단 바가 이벤트(예: `refreshAll` 카운터 context)를 올리고 각 패널이 자기 `refresh()`를 호출한다.
-- **사용자 설정**: `useLayout` 훅 하나만 쓴다. 변경 시 `LayoutRepository.save`로 즉시 저장한다(MVP: localStorage 키 `world-rss-desk:layout`).
-  - 읽기 시 `validateLayout`으로 검증하고, 깨진 데이터면 프리셋으로 대체한다(원본은 `…:layout-backup`에 보관).
-  - `version` 필드로 마이그레이션한다(`migrate(raw): Layout`).
-  - SSR hydration mismatch를 막기 위해 첫 렌더는 빈 상태로 그리고, mount 후 localStorage를 읽는다.
-- 전역 상태 라이브러리(Redux, Zustand 등)는 쓰지 않는다.
-
-## 배포와 소스 관리
-```
-노트북(개발) ── git push ──▶ GitHub 공개 repo(lsh0113333/world-rss-desk) ── npx vercel deploy --prod ──▶ Vercel (24시간 서비스)
-     │                                                         ▲
-     └ python scripts/execute.py 0-mvp (로컬 git에 step별 커밋)    └ 폰·다른 PC에서 접속
-```
-- **로컬 git**: Harness 실행기(`execute.py`)가 step마다 브랜치(`feat-0-mvp`)와 커밋을 만들기 때문에 필수다. 외부 저장소 없이도 동작한다.
-- **GitHub**: 배포와 백업용이다. phase가 끝나면 `feat-*` 브랜치를 push하고 main에 머지한다. Vercel은 main을 production으로, 그 외 브랜치를 preview URL로 배포한다.
-- **Vercel 설정**: Framework preset Next.js, 환경변수 없음(MVP). 함수 리전은 `icn1`(서울)로 설정한다(`vercel.json`). 한국 매체의 응답 속도와 지역 차단에 대응하기 위함이다.
+## 캐시
+`/api/world`: CDN 1분 + stale 10분. `/api/actors`: CDN 5분 + stale 15분. 화면은 2분마다 다시 확인한다.

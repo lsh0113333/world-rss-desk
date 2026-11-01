@@ -3,8 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import type { Article } from "@/types/article";
 import type { CatalogFeed } from "@/types/catalog";
 import type { WorldBoard } from "@/types/world";
+import { assertSafeUrl } from "@/lib/url-guard";
 import { articleKey, runPipeline } from "./pipeline";
+import { loadFeed } from "./rss";
 import type { Db } from "./supabase";
+
+vi.mock("./rss", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./rss")>();
+  return { ...actual, loadFeed: vi.fn(async () => ({ title: null, articles: [] })) };
+});
+vi.mock("@/lib/url-guard", () => ({ assertSafeUrl: vi.fn() }));
 
 const NOW = new Date("2026-11-01T12:30:00Z");
 const ago = (min: number) => new Date(NOW.getTime() - min * 60_000).toISOString();
@@ -298,6 +306,12 @@ describe("runPipeline", () => {
     expect(tables.objects.find((o) => o.id === "event:old")).toBeUndefined();
     expect(tables.links.find((l) => l.src === "event:old")).toBeUndefined();
     expect(tables.board_snapshots).toHaveLength(1);
+  });
+
+  it("기본 수집은 카탈로그 URL도 url-guard를 거친다", async () => {
+    const { db } = memoryDb();
+    await runPipeline({ db, feeds: FEEDS.slice(0, 1), now: NOW });
+    expect(vi.mocked(loadFeed).mock.calls[0][1]).toMatchObject({ checkUrl: assertSafeUrl });
   });
 
   it("실패하면 실행 기록에 남기고 다시 던진다", async () => {
