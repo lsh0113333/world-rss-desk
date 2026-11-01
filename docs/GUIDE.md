@@ -13,7 +13,7 @@
 | 1 | [사이트](https://world-rss-desk.vercel.app) | 결과물 | 2분 |
 | 2 | [`README.md`](../README.md) | 목적과 원리 | 2분 |
 | 3 | [`PROGRESS.md`](PROGRESS.md) | 지금 어디까지 왔고 다음에 뭘 하나 | 2분 |
-| 4 | 사이트의 [`/ontology`](https://world-rss-desk.vercel.app/ontology) | 실제 숫자와 규칙, 규칙 실험 | 5분 |
+| 4 | 사이트의 [`/ontology`](https://world-rss-desk.vercel.app/ontology) | 실제 숫자와 규칙, 내 기준 정하기 | 5분 |
 | 5 | [`ONTOLOGY.md`](ONTOLOGY.md) | 판단 기준의 설계 | 10분 |
 | 6 | [`src/ontology/world.ts`](../src/ontology/world.ts) | 판단 기준의 실제 값. **가장 먼저 읽을 코드** | 5분 |
 | 7 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 코드와 데이터 구조 | 10분 |
@@ -70,7 +70,7 @@ Supabase pg_cron이 30분마다 요청 → GitHub Actions에서 파이프라인 
 
 **Claude에게 맡길 때**는 "IT 배수를 3으로 올려 줘"처럼 말하면 된다. 큰 기능이면 Claude가 intent를 먼저 쓰고 확인을 받는다.
 
-**순위를 바꾸기 전에** `/ontology`의 규칙 실험에서 결과를 미리 본다. 실험은 저장되지 않는다.
+**내 화면만 바꾸려면** `/ontology`의 내 기준 정하기를 쓴다. 이 브라우저에 저장되고 메인 순위에 바로 반영된다. 모두의 기본값을 바꾸려면 `world.ts`를 고친다.
 
 ## 4. 평소 운영
 

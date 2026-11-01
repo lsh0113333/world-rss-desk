@@ -1,7 +1,7 @@
 # RSS 수집 기준과 현황
 
 어떤 기준으로 매체를 골랐는지, 지금 어디까지 넣었는지, 무엇을 왜 뺐는지, 더 넣으려면 어떻게 하는지 정리한다.
-(2026-10-18 기준. 카탈로그 원본: `src/data/catalog.json`)
+(표는 2026-10-18 기준이고 이후 추가분은 표 아래에 적는다. 카탈로그 원본: `src/data/catalog.json`)
 
 ## 1. 용어
 
@@ -13,7 +13,7 @@
 
 파이프라인은 매체를 **본사 나라의 시각**으로 다룬다. 묶음 지역·국제 구역 매체의 본사 나라는 `src/ontology/outlets.ts`에 있다(UN News, AllAfrica는 나라의 시각이 아니라서 쓰지 않는다).
 
-## 2. 현재 수록 현황 — 나라·지역 55개, 매체 144개, 피드 270개
+## 2. 현재 수록 현황 — 피드 282개
 
 | 지역 | 매체 (피드 수: 수록 분야) |
 |------|--------------------------|
@@ -74,6 +74,7 @@
 | 🌐 국제 | BBC News (1: 국제), The Guardian (1: 국제), The New York Times (1: 국제), South China Morning Post (1: 국제), UN News (1: 국제), DW (1: 국제), WIRED (1: IT), Ars Technica (1: IT), MIT Technology Review (1: IT), Phys.org (1: 과학), Science News (1: 과학), ScienceDaily (1: 과학), Hacker News (1: IT), The Hacker News (1: IT), InfoQ (1: IT), Rest of World (1: IT), IEEE Spectrum (1: IT) |
 
 - 2026-10-17: 78 → 177개 (분야 6→11개, 나라 13→36개)
+- 2026-11-02: 270 → 282개 — 중남미 10개(Folha, g1, Clarín, La Nación, Infobae, El Universal, La Jornada, El Tiempo, La Tercera, El Comercio: 포르투갈어·스페인어), 아프리카 2개(MyJoyOnline, Jeune Afrique: 프랑스어)
 - 2026-10-18: 177 → 270개 — 노르웨이·북유럽·아일랜드·유럽 각국, 유럽·국제 IT, UAE·사우디·카타르 (**영어판만**, `intent/2026-10-18-rss-expansion-2.md`)
 
 ## 3. 수록 기준
@@ -86,7 +87,7 @@
 4. **살아 있는 피드**: 최신 기사가 72시간 이내
 5. **기사에 발행 시각이 있을 것** (정렬·72시간 필터에 필요. 예외: Nikkei Asia — 대체 매체가 없어 수록)
 6. 11개 분야 중 하나에 **명확히 대응**할 것
-7. 해외 매체는 **영어판만** (현지어 + 제목 번역은 2차 AI 때 검토). 북유럽처럼 영어판이 적은 곳은 The Local·News in English·Yle News 같은 영어 매체로 채운다
+7. 해외 매체는 **영어판 우선**. 영어 매체가 적은 지역은 현지어도 넣는다(사건 요약은 한국어로 만들어진다). 북유럽처럼 영어판이 적은 곳은 The Local·News in English·Yle News 같은 영어 매체로 채운다
 8. 국영·관영 매체는 넣되 `note`로 표시 (CGTN "중국 정부 시각", TASS "러시아 정부 시각", Tehran Times "이란 정부 시각")
 
 ## 4. 확인했지만 뺀 것

@@ -34,7 +34,7 @@ src/
 │   ├── extract.ts           # AI 프롬프트·스키마·응답 검증
 │   ├── graph.ts             # 관계가 설정에 맞는지 검사
 │   └── rules.ts             # 판단: 점수, 세계 5, IT 5, 대륙별, 흐름, 연관, 같은 사건 합치기
-├── lib/board-prefs.ts       # 방문 기록 (BoardPrefsRepository, localStorage)
+├── lib/board-prefs.ts       # 방문 기록과 내 기준 (BoardPrefsRepository, localStorage)
 ├── services/
 │   ├── pipeline.ts          # 파이프라인 전체 흐름
 │   ├── world.ts             # 화면용 읽기 (상황판, 행위자)
@@ -63,7 +63,7 @@ supabase/migrations/         # 0001 기사, 0002 예약 실행, 0003 온톨로�
 | `objects` | 사건, 행위자, 큰 흐름, 나라, 대륙, 매체 | 30일 |
 | `links` | 관계 + 관측 시각 + 근거 기사 + 누가 만들었나(ai/rule/config) | 30일 |
 | `extraction_log` | AI에 이미 보낸 기사 (중복 호출 방지) | 14일 |
-| `board_snapshots` | 규칙으로 계산한 화면 결과 | 1일 |
+| `board_snapshots` | 규칙으로 계산한 화면 결과. 어제와 비교에도 쓴다 | 2일 |
 | `pipeline_runs` | 실행 기록 | - |
 
 ## AI 호출을 아끼는 방법
