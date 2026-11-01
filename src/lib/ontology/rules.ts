@@ -1,0 +1,212 @@
+import { CONTINENTS } from "@/lib/constants";
+import { continentOfCountry, countryName } from "@/ontology/countries";
+import { EVENT_TYPE_IDS, EVENT_TYPES, FLOWS, RULES, type EventType } from "@/ontology/world";
+import type { Continent } from "@/types/catalog";
+import type {
+  BoardContinent,
+  BoardEvent,
+  BoardFlow,
+  BoardStats,
+  EventFact,
+  FlowTrend,
+  RelatedEvent,
+  ScoreBreakdown,
+  WorldBoard,
+} from "@/types/world";
+
+/**
+ * 판단 규칙 (ADR-017: 판단은 규칙, AI는 읽기와 말하기). 순수 함수: 같은 입력이면 항상 같은 결과.
+ * 숫자와 기준은 src/ontology/world.ts, 설명은 docs/ONTOLOGY.md 4절.
+ */
+
+const HOUR = 3_600_000;
+/** 화면에 보내는 사건당 근거 기사 수 */
+const EVIDENCE_LIMIT = 8;
+/** 화면에 보내는 사건 수 (규칙 실험에도 쓰인다) */
+const BOARD_EVENT_LIMIT = 150;
+
+export type Multipliers = Record<EventType, number>;
+
+export function multipliersFromConfig(): Multipliers {
+  return Object.fromEntries(EVENT_TYPE_IDS.map((id) => [id, EVENT_TYPES[id].multiplier])) as Multipliers;
+}
+
+export function scoreEvent(
+  n: { countries: number; continents: number; outlets: number; rising: boolean },
+  type: EventType,
+  multipliers: Multipliers,
+): ScoreBreakdown {
+  const scale = RULES.countryWeight * n.countries + RULES.continentWeight * n.continents + Math.min(n.outlets, RULES.outletCap);
+  const multiplier = multipliers[type];
+  const risingBonus = n.rising ? RULES.risingBonus : 0;
+  return {
+    countries: n.countries,
+    continents: n.continents,
+    outlets: n.outlets,
+    scale,
+    multiplier,
+    risingBonus,
+    total: Math.round((scale * multiplier + risingBonus) * 100) / 100,
+  };
+}
+
+const byScore = (a: BoardEvent, b: BoardEvent) => b.score.total - a.score.total || a.id.localeCompare(b.id);
+const time = (iso: string) => Date.parse(iso);
+
+function isRising(fact: EventFact, now: Date): boolean {
+  const window = RULES.risingWindowHours * HOUR;
+  const ages = fact.articles.map((a) => now.getTime() - time(a.publishedAt));
+  const recent = ages.filter((age) => age <= window).length;
+  const previous = ages.filter((age) => age > window && age <= window * 2).length;
+  return recent >= 2 && recent >= previous * 2;
+}
+
+function toBoardEvent(fact: EventFact, now: Date, multipliers: Multipliers): BoardEvent | null {
+  if (fact.articles.length === 0) return null;
+  const sorted = [...fact.articles].sort((a, b) => time(b.publishedAt) - time(a.publishedAt));
+  const outlets = new Set(sorted.map((a) => a.source)).size;
+  if (outlets < RULES.minOutlets) return null;
+  if (now.getTime() - time(sorted[0].publishedAt) > RULES.fadeHours * HOUR) return null;
+
+  const reporting = [...new Set(sorted.map((a) => a.country))];
+  const continents = [...new Set(reporting.map(continentOfCountry).filter((c): c is Continent => !!c))];
+  const rising = isRising(fact, now);
+  return {
+    ...fact,
+    // 장소를 못 뽑았어도 한 나라 안 사건이면 그 나라다
+    occurs: fact.occurs.length > 0 ? fact.occurs : reporting.length === 1 ? reporting : [],
+    reporting,
+    continents,
+    outlets,
+    articleCount: sorted.length,
+    lastSeenAt: sorted[0].publishedAt,
+    rising,
+    scope: reporting.length >= RULES.worldMinCountries ? "world" : "country",
+    score: scoreEvent({ countries: reporting.length, continents: continents.length, outlets, rising }, fact.type, multipliers),
+    related: [],
+    articles: sorted.slice(0, EVIDENCE_LIMIT),
+  };
+}
+
+/** 세계 5 후보를 점수순으로 (규칙 실험 화면에서 배수를 바꿔 다시 계산한다) */
+export function rankWorld(events: BoardEvent[], multipliers: Multipliers): BoardEvent[] {
+  return events
+    .filter((e) => e.scope === "world" && EVENT_TYPES[e.type].worldEligible)
+    .map((e) => ({ ...e, score: scoreEvent({ countries: e.score.countries, continents: e.score.continents, outlets: e.score.outlets, rising: e.rising }, e.type, multipliers) }))
+    .sort(byScore);
+}
+
+const homeContinent = (e: BoardEvent) => {
+  const code = e.occurs[0] ?? e.reporting[0];
+  return code ? continentOfCountry(code) : undefined;
+};
+
+function relatedOf(event: BoardEvent, events: BoardEvent[], isCommon: (id: string) => boolean): RelatedEvent[] {
+  const relevant = (e: BoardEvent) => e.actors.filter((a) => a.kind === "country" || a.kind === "org");
+  const mine = new Map(relevant(event).map((a) => [a.id, a.nameKo]));
+  const flowLabel = FLOWS.find((f) => f.id === event.flow)?.label;
+  const found: RelatedEvent[] = [];
+  for (const other of events) {
+    if (other.id === event.id) continue;
+    const shared = [...new Set(relevant(other).map((a) => a.id))].filter((id) => mine.has(id));
+    const meaningful = shared.length >= 2 || shared.some((id) => !isCommon(id));
+    const sameFlow = !!event.flow && event.flow === other.flow;
+    if (!meaningful && !sameFlow) continue;
+    found.push({
+      id: other.id,
+      title: other.title,
+      why: sameFlow ? flowLabel! : shared.map((id) => mine.get(id)).join(", "),
+      strength: (meaningful ? shared.length : 0) + (sameFlow ? 2 : 0),
+      crossContinent: homeContinent(other) !== homeContinent(event),
+    });
+  }
+  return found
+    .sort((a, b) => Number(b.crossContinent) - Number(a.crossContinent) || b.strength - a.strength || a.id.localeCompare(b.id))
+    .slice(0, RULES.relatedLimit);
+}
+
+function flowsOf(events: BoardEvent[], facts: EventFact[], now: Date): BoardFlow[] {
+  const window = RULES.trendWindowHours * HOUR;
+  return FLOWS.map((flow) => {
+    const inFlow = events.filter((e) => e.flow === flow.id).sort(byScore);
+    const counted = new Set(inFlow.map((e) => e.id));
+    const ages = facts.filter((f) => counted.has(f.id)).flatMap((f) => f.articles.map((a) => now.getTime() - time(a.publishedAt)));
+    const recentArticles = ages.filter((age) => age <= window).length;
+    const previousArticles = ages.filter((age) => age > window && age <= window * 2).length;
+    let trend: FlowTrend = "flat";
+    if (inFlow.length === 0) trend = "quiet";
+    else if (previousArticles === 0 ? recentArticles > 0 : recentArticles / previousArticles >= RULES.trendUp) trend = "up";
+    else if (previousArticles > 0 && recentArticles / previousArticles <= RULES.trendDown) trend = "down";
+    return { id: flow.id, label: flow.label, eventIds: inFlow.map((e) => e.id), trend, recentArticles, previousArticles };
+  });
+}
+
+function continentsOf(events: BoardEvent[], shown: Set<string>): BoardContinent[] {
+  return CONTINENTS.filter((c) => c.id !== "global").map((c) => {
+    const inContinent = events.filter((e) => e.occurs.some((code) => continentOfCountry(code) === c.id)).sort(byScore);
+    const top = inContinent.filter((e) => !shown.has(e.id)).slice(0, RULES.continentLimit).map((e) => e.id);
+    const topSet = new Set(top);
+    const codes = [...new Set(inContinent.flatMap((e) => e.occurs.filter((code) => continentOfCountry(code) === c.id)))];
+    const countries = codes.map((code) => {
+      const here = inContinent.filter((e) => e.occurs.includes(code));
+      return {
+        code,
+        name: countryName(code),
+        // 대륙 상위에 이미 없는 사건을 앞으로 (같은 제목이 바로 아래 반복되지 않게)
+        eventIds: [...here.filter((e) => !topSet.has(e.id)), ...here.filter((e) => topSet.has(e.id))].slice(0, RULES.countryLimit).map((e) => e.id),
+      };
+    });
+    const rank = (ids: string[]) => Math.max(0, ...ids.map((id) => events.find((e) => e.id === id)?.score.total ?? 0));
+    countries.sort((a, b) => rank(b.eventIds) - rank(a.eventIds) || a.code.localeCompare(b.code));
+    return { id: c.id, label: c.label, top, countries };
+  });
+}
+
+export function buildBoard(facts: EventFact[], now: Date, stats: BoardStats, multipliers: Multipliers = multipliersFromConfig()): WorldBoard {
+  const events = facts
+    .map((f) => toBoardEvent(f, now, multipliers))
+    .filter((e): e is BoardEvent => e !== null)
+    .sort(byScore)
+    .slice(0, BOARD_EVENT_LIMIT);
+
+  const actorCounts = new Map<string, number>();
+  for (const e of events) for (const id of new Set(e.actors.map((a) => a.id))) actorCounts.set(id, (actorCounts.get(id) ?? 0) + 1);
+  const commonAt = Math.max(3, events.length * RULES.commonActorShare);
+  const isCommon = (id: string) => (actorCounts.get(id) ?? 0) >= commonAt;
+  for (const e of events) e.related = relatedOf(e, events, isCommon);
+
+  const world = events.filter((e) => e.scope === "world" && EVENT_TYPES[e.type].worldEligible).slice(0, RULES.worldLimit).map((e) => e.id);
+  const worldSet = new Set(world);
+  const it = events.filter((e) => e.type === "tech" && !worldSet.has(e.id)).slice(0, RULES.itLimit).map((e) => e.id);
+
+  return {
+    generatedAt: now.toISOString(),
+    stats,
+    flows: flowsOf(events, facts, now),
+    world,
+    it,
+    continents: continentsOf(events, new Set([...world, ...it])),
+    events,
+  };
+}
+
+export interface Triple {
+  from: string;
+  relation: string;
+  to: string | null;
+}
+
+/** 사건을 "누가 -무엇을→ 누구에게"로 (온톨로지 공부용 "관계로 보기") */
+export function triplesOf(event: Pick<BoardEvent, "type" | "actors">): Triple[] {
+  const relation = EVENT_TYPES[event.type].label;
+  const subjects = event.actors.filter((a) => a.role === "subject");
+  const targets = event.actors.filter((a) => a.role === "target");
+  const triples: Triple[] = [];
+  for (const s of subjects) {
+    if (targets.length === 0) triples.push({ from: s.nameKo, relation, to: null });
+    for (const t of targets) triples.push({ from: s.nameKo, relation, to: t.nameKo });
+  }
+  if (subjects.length === 0) for (const t of targets) triples.push({ from: t.nameKo, relation: `${relation}의 대상`, to: null });
+  for (const p of event.actors.filter((a) => a.role === "participant")) triples.push({ from: p.nameKo, relation: "참여", to: null });
+  return triples;
+}

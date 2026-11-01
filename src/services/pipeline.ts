@@ -1,56 +1,62 @@
 import { createHash } from "node:crypto";
-import {
-  buildEnrichPrompt,
-  ENRICH_ARTICLE_LIMIT,
-  ENRICH_BATCH,
-  ENRICH_SCHEMA,
-  insightInputHash,
-  parseEnrichment,
-  selectForEnrichment,
-  type EnrichInput,
-} from "@/lib/pipeline/enrich";
-import { assignStoryIds, buildStories, type PreviousStory } from "@/lib/pipeline/stories";
+import { CONTINENTS } from "@/lib/constants";
 import { normalizeLink } from "@/lib/merge";
+import { findClusters, planClusters, type Cluster, type EventProgress } from "@/lib/ontology/cluster";
+import { buildExtractPrompt, EXTRACT_SCHEMA, parseExtraction, type ExtractedEvent, type ExtractInput } from "@/lib/ontology/extract";
+import { inList, isValidLink } from "@/lib/ontology/graph";
+import { buildBoard } from "@/lib/ontology/rules";
+import { hashId } from "@/lib/text";
+import { allCountryCodes, continentOfCountry, countryName } from "@/ontology/countries";
+import { baseCountry } from "@/ontology/outlets";
+import { ACTOR_ROLES, EVENT_TYPES, FLOWS, LINK_TYPES, OBJECT_TYPES, type EventType, type FlowId, type LinkType } from "@/ontology/world";
 import type { CatalogFeed } from "@/types/catalog";
-import type { PipelineArticle } from "@/types/world";
+import type { BoardActor, BoardArticle, BoardStats, EventFact, OntologyStats, PipelineArticle } from "@/types/world";
 import { loadFeed, type ParsedFeed } from "./rss";
 import type { Db } from "./supabase";
 
 /**
- * 세계 흐름 파이프라인 (GitHub Actions에서 매시간 실행, scripts/run-pipeline.ts).
- * Ingest → Normalize(upsert, 링크 기준 멱등) → Aggregate(사건, id 이어 쓰기) → Snapshot(시간축)
- * → Enrich(AI, 선택) → 정리. 화면은 /api/insights로 결과만 읽는다.
+ * 온톨로지 파이프라인 (GitHub Actions, Supabase pg_cron이 30분마다 실행 요청. ADR-017·018).
+ * 감지(수집) → 규칙 묶기 → AI 읽기(새 묶음만) → 객체·관계 저장 → 규칙 판단 → 상황판 저장.
+ * 화면은 /api/world로 가장 최근 상황판만 읽는다.
  */
 
 const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
 /** 수집 시 이보다 오래된 기사는 저장하지 않는다 */
 const INGEST_MAX_AGE_H = 48;
 /** 사건 계산에 쓰는 기간 */
 const WINDOW_H = 24;
-/** 이전 사건 이어 쓰기 대상 기간 */
-const PREVIOUS_H = 48;
+/** 기사-사건 연결을 읽는 기간 */
+const ASSIGNMENT_H = 72;
+const EXTRACT_BATCH = 6;
+/** 묶음 하나에서 AI에 보내는 기사 수 */
+const EXTRACT_ARTICLE_LIMIT = 12;
+const CHUNK = 100;
 const KEEP_ARTICLES_DAYS = 14;
-const KEEP_STORIES_DAYS = 30;
-const KEEP_SNAPSHOTS_DAYS = 7;
+const KEEP_GRAPH_DAYS = 30;
+const KEEP_SNAPSHOTS_DAYS = 1;
 
 export interface PipelineStats {
   feedsOk: number;
   feedsFailed: number;
   ingested: number;
   windowArticles: number;
-  stories: number;
-  enriched: number;
-  enrichErrors: string[];
-  /** 최근 24시간 나라별 기사 수 (지도) */
-  countries: Record<string, number>;
+  clusters: number;
+  extracted: number;
+  refreshed: number;
+  attached: number;
+  boardEvents: number;
+  errors: string[];
 }
+
+export type ExtractFn = (prompt: string, schema: object) => Promise<{ value: unknown; model: string }>;
 
 export interface PipelineDeps {
   db: Db;
   feeds: readonly CatalogFeed[];
   load?: (url: string, opts: { source: string; timeoutMs: number }) => Promise<ParsedFeed>;
-  /** AI 보강. 없으면(키 없음) 건너뛴다 */
-  enrich?: (prompt: string, schema: object) => Promise<{ value: unknown; model: string }>;
+  /** AI 읽기. 없으면(키 없음) 건너뛴다 */
+  extract?: ExtractFn;
   now?: Date;
   log?: (message: string) => void;
 }
@@ -69,67 +75,66 @@ interface ArticleRow {
   country: string;
   continent: string;
   category: string;
-  image: string | null;
   published_at: string;
 }
 
-const toRow = (a: PipelineArticle): ArticleRow => ({
-  id: a.id,
-  link: a.link,
-  title: a.title,
-  summary: a.summary ?? null,
-  source: a.source,
-  feed_id: a.feedId,
-  country: a.country,
-  continent: a.continent,
-  category: a.category,
-  image: a.image ?? null,
-  published_at: a.publishedAt,
-});
+interface LinkRow {
+  src: string;
+  type: LinkType;
+  dst: string;
+  props: Record<string, unknown>;
+  observed_at: string;
+  evidence: string[];
+  made_by: "ai" | "rule" | "config";
+}
 
-const fromRow = (r: ArticleRow): PipelineArticle => ({
-  id: r.id,
-  link: r.link,
-  title: r.title,
-  ...(r.summary ? { summary: r.summary } : {}),
-  source: r.source,
-  feedId: r.feed_id,
-  country: r.country,
-  continent: r.continent,
-  category: r.category as PipelineArticle["category"],
-  ...(r.image ? { image: r.image } : {}),
-  publishedAt: r.published_at,
-});
+interface EventProps {
+  eventType: EventType;
+  title: string;
+  summary: string;
+  flow: FlowId | null;
+  extractedSize: number;
+  extractedAt: string;
+  model: string;
+}
 
 const iso = (ms: number) => new Date(ms).toISOString();
-const hourOf = (d: Date) => iso(Math.floor(d.getTime() / HOUR) * HOUR);
-const inList = (ids: string[]) => `in.(${ids.map((id) => `"${id}"`).join(",")})`;
+const articleNode = (id: string) => `article:${id}`;
+const articleOf = (node: string) => node.slice("article:".length);
+const outletNode = (name: string) => `outlet:${name.toLowerCase()}`;
+const ROLE_LINKS = [...ACTOR_ROLES, "occurs_in", "part_of"] as const;
 
-async function ingest(deps: Required<Pick<PipelineDeps, "feeds" | "load">>, now: Date) {
-  const articles: PipelineArticle[] = [];
+function chunks<T>(list: readonly T[]): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < list.length; i += CHUNK) out.push(list.slice(i, i + CHUNK));
+  return out;
+}
+
+async function ingest(feeds: readonly CatalogFeed[], load: NonNullable<PipelineDeps["load"]>, now: Date) {
+  const articles: ArticleRow[] = [];
   let ok = 0;
   let failed = 0;
-  const queue = [...deps.feeds];
+  const queue = feeds.filter((f) => baseCountry(f));
   await Promise.all(
     Array.from({ length: Math.min(20, queue.length) }, async () => {
       for (let feed = queue.shift(); feed; feed = queue.shift()) {
         try {
-          const { articles: list } = await deps.load(feed.url, { source: feed.name, timeoutMs: 8_000 });
+          const { articles: list } = await load(feed.url, { source: feed.name, timeoutMs: 8_000 });
           ok++;
+          const country = baseCountry(feed)!;
           for (const a of list) {
             if (!a.publishedAt || now.getTime() - Date.parse(a.publishedAt) > INGEST_MAX_AGE_H * HOUR) continue;
             articles.push({
               id: articleKey(a.link),
               link: a.link,
               title: a.title,
-              ...(a.summary ? { summary: a.summary } : {}),
+              summary: a.summary ?? null,
               source: a.source,
-              feedId: feed.id,
-              country: feed.country,
-              continent: feed.continent,
+              feed_id: feed.id,
+              country,
+              continent: continentOfCountry(country) ?? "",
               category: feed.category,
-              ...(a.image ? { image: a.image } : {}),
-              publishedAt: a.publishedAt,
+              published_at: a.publishedAt,
             });
           }
         } catch {
@@ -139,141 +144,246 @@ async function ingest(deps: Required<Pick<PipelineDeps, "feeds" | "load">>, now:
     }),
   );
   // 같은 링크가 여러 피드에 있으면 하나만 (upsert 한 배치 안 충돌 방지)
-  const unique = [...new Map(articles.map((a) => [a.id, a])).values()];
-  return { articles: unique, ok, failed };
+  return { articles: [...new Map(articles.map((a) => [a.id, a])).values()], ok, failed };
+}
+
+/** 설정에서 오는 뼈대(대륙·나라·큰 흐름·매체)를 그래프에 맞춘다. 멱등 */
+async function seedStatic(db: Db, feeds: readonly CatalogFeed[], now: Date) {
+  const seen = now.toISOString();
+  const outlets = new Map(feeds.filter((f) => baseCountry(f)).map((f) => [outletNode(f.name), { name: f.name, country: baseCountry(f)!, homepage: f.homepage }]));
+  const continents = CONTINENTS.filter((c) => c.id !== "global");
+  await db.upsert(
+    "objects",
+    [
+      ...continents.map((c) => ({ id: `continent:${c.id}`, type: "continent", props: { label: c.label }, last_seen: seen })),
+      ...allCountryCodes().map((code) => ({ id: `country:${code}`, type: "country", props: { name: countryName(code) }, last_seen: seen })),
+      ...FLOWS.map((f) => ({ id: `flow:${f.id}`, type: "flow", props: { label: f.label, hint: f.hint }, last_seen: seen })),
+      ...[...outlets].map(([id, o]) => ({ id, type: "outlet", props: { name: o.name, homepage: o.homepage }, last_seen: seen })),
+    ],
+    { onConflict: "id" },
+  );
+  const link = (type: LinkType, src: string, dst: string): LinkRow => ({ src, type, dst, props: {}, observed_at: seen, evidence: [], made_by: "config" });
+  await db.upsert(
+    "links",
+    [
+      ...allCountryCodes().map((code) => link("belongs_to", `country:${code}`, `continent:${continentOfCountry(code)}`)),
+      ...[...outlets].map(([id, o]) => link("based_in", id, `country:${o.country}`)),
+    ],
+    { onConflict: "src,type,dst" },
+  );
+}
+
+function clusterInput(cluster: Cluster): ExtractInput {
+  return {
+    cluster: cluster.key,
+    articles: cluster.articles.slice(0, EXTRACT_ARTICLE_LIMIT).map((a) => ({ id: a.id, title: a.title, source: a.source, country: a.country, ...(a.summary ? { summary: a.summary } : {}) })),
+  };
+}
+
+/** 사건 하나의 관계 (행위자·장소·큰 흐름). 설정에 어긋나는 관계는 저장하지 않는다 */
+function eventLinks(eventId: string, e: ExtractedEvent, seen: string): LinkRow[] {
+  const evidence = e.evidence;
+  const base = { observed_at: seen, evidence, made_by: "ai" as const };
+  const rows: LinkRow[] = [
+    ...e.actors.map((a) => ({ ...base, src: eventId, type: a.role as LinkType, dst: a.id, props: { name: a.name, nameKo: a.nameKo, kind: a.kind } })),
+    ...e.places.map((code) => ({ ...base, src: eventId, type: "occurs_in" as const, dst: `country:${code}`, props: {} })),
+    ...(e.flow ? [{ ...base, src: eventId, type: "part_of" as const, dst: `flow:${e.flow}`, props: {} }] : []),
+  ];
+  return rows.filter((r) => isValidLink(r.type, r.src, r.dst));
+}
+
+async function saveActors(db: Db, events: ExtractedEvent[], seen: string) {
+  const actors = new Map(events.flatMap((e) => e.actors).filter((a) => a.id.startsWith("actor:")).map((a) => [a.id, a]));
+  if (actors.size === 0) return;
+  await db.upsert(
+    "objects",
+    [...actors.values()].map((a) => ({ id: a.id, type: "actor", props: { name: a.name, nameKo: a.nameKo, kind: a.kind }, last_seen: seen })),
+    { onConflict: "id" },
+  );
+}
+
+async function ontologyStats(db: Db): Promise<OntologyStats> {
+  const count = async (filters: [string, string][], table: string) =>
+    Object.fromEntries(await Promise.all(filters.map(async ([key, filter]) => [key, await db.count(table, filter)] as const)));
+  return {
+    objects: await count(Object.keys(OBJECT_TYPES).map((t) => [t, `type=eq.${t}`]), "objects"),
+    links: await count(Object.keys(LINK_TYPES).map((t) => [t, `type=eq.${t}`]), "links"),
+    madeBy: await count(["ai", "rule", "config"].map((m) => [m, `made_by=eq.${m}`]), "links"),
+  };
 }
 
 export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
-  const { db, feeds, load = loadFeed, enrich, now = new Date(), log = () => {} } = deps;
+  const { db, feeds, load = loadFeed, extract, now = new Date(), log = () => {} } = deps;
   const run = await db.insert<{ id: number }>("pipeline_runs", { started_at: now.toISOString() });
+  const seen = now.toISOString();
+  const errors: string[] = [];
 
   try {
-    // 1) Ingest + Normalize
-    const ingested = await ingest({ feeds, load }, now);
-    await db.upsert("articles", ingested.articles.map(toRow), { ignoreDuplicates: true });
+    // 1) 감지: 수집 + 정규화
+    const ingested = await ingest(feeds, load, now);
+    await db.upsert("articles", ingested.articles, { ignoreDuplicates: true });
+    await seedStatic(db, feeds, now);
     log(`수집: 피드 ${ingested.ok}개 성공, ${ingested.failed}개 실패, 기사 ${ingested.articles.length}개`);
 
-    // 2) Aggregate: 최근 24시간 기사로 사건 만들기
-    const since = iso(now.getTime() - WINDOW_H * HOUR);
-    const windowRows = await db.select<ArticleRow>("articles", `select=*&published_at=gte.${since}&order=published_at.desc`, {
-      all: true,
+    // 2) 최근 24시간 기사 (본사 나라는 카탈로그 기준으로 다시 맞춘다)
+    const feedById = new Map(feeds.map((f) => [f.id, f]));
+    const windowRows = await db.select<ArticleRow>("articles", `select=*&published_at=gte.${iso(now.getTime() - WINDOW_H * HOUR)}&order=published_at.desc`, { all: true });
+    const articles: PipelineArticle[] = windowRows.flatMap((r) => {
+      const feed = feedById.get(r.feed_id);
+      const country = feed && baseCountry(feed);
+      if (!country) return [];
+      return [{ id: r.id, link: r.link, title: r.title, ...(r.summary ? { summary: r.summary } : {}), source: r.source, feedId: r.feed_id, country, continent: continentOfCountry(country) ?? "", category: feed.category, publishedAt: r.published_at }];
     });
-    const windowArticles = windowRows.map(fromRow);
-    const previousRows = await db.select<{ id: string; terms: string[]; story_articles: { article_id: string }[] }>(
-      "stories",
-      `select=id,terms,story_articles(article_id)&last_seen_at=gte.${iso(now.getTime() - PREVIOUS_H * HOUR)}`,
-    );
-    const previous: PreviousStory[] = previousRows.map((r) => ({
-      id: r.id,
-      terms: r.terms,
-      articleIds: r.story_articles.map((sa) => sa.article_id),
-    }));
-    const stories = assignStoryIds(buildStories(windowArticles, now), previous, now);
-    log(`사건: ${stories.length}개 (기사 ${windowArticles.length}개 기준)`);
 
-    await db.upsert(
-      "stories",
-      stories.map((s) => ({
-        id: s.id,
-        lead_title: s.leadTitle,
-        lead_link: s.leadLink,
-        image: s.image ?? null,
-        terms: s.terms,
-        countries: s.countries,
-        sources: s.sources,
-        size: s.articleIds.length,
-        score: s.score,
-        last_seen_at: now.toISOString(),
-      })),
-      { onConflict: "id" },
-    );
-    await db.upsert(
-      "story_articles",
-      stories.flatMap((s) => s.articleIds.map((article_id) => ({ story_id: s.id, article_id }))),
-      { onConflict: "story_id,article_id", ignoreDuplicates: true },
-    );
+    // 3) 규칙으로 묶기 + AI에 무엇을 보낼지 정하기
+    const clusters = findClusters(articles, now);
+    const since = iso(now.getTime() - ASSIGNMENT_H * HOUR);
+    const reports = await db.select<LinkRow>("links", `select=src,dst&type=eq.reports&observed_at=gte.${since}`, { all: true });
+    const assigned = new Map(reports.map((l) => [articleOf(l.src), l.dst]));
+    const sentRows = await db.select<{ article_id: string }>("extraction_log", `select=article_id&at=gte.${since}`, { all: true });
+    const sent = new Set(sentRows.map((r) => r.article_id));
+    const eventIds = [...new Set(assigned.values())];
+    const progress = new Map<string, EventProgress>();
+    for (const ids of chunks(eventIds)) {
+      const rows = await db.select<{ id: string; props: EventProps }>("objects", `select=id,props&id=${inList(ids)}`);
+      for (const r of rows) progress.set(r.id, { extractedSize: r.props.extractedSize, extractedAt: r.props.extractedAt });
+    }
+    const plan = planClusters(clusters, assigned, sent, progress, now);
+    log(`묶음 ${clusters.length}개: AI ${plan.extract.length}개, 다시 정리 ${plan.refresh.length}개, 규칙으로 붙임 ${plan.attach.length}건`);
 
-    // 3) Snapshot: 시간축
-    await db.upsert(
-      "story_snapshots",
-      stories.map((s) => ({ story_id: s.id, at: hourOf(now), size: s.articleIds.length, countries: s.countries.length })),
-      { onConflict: "story_id,at" },
-    );
-
-    // 4) Enrich (AI): 새로 생기거나 바뀐 사건만, 무료 한도 안에서
-    let enriched = 0;
-    const enrichErrors: string[] = [];
-    if (enrich && stories.length > 0) {
-      const existingRows = await db.select<{ story_id: string; input_hash: string; generated_at: string }>(
-        "story_insights",
-        `select=story_id,input_hash,generated_at&story_id=${inList(stories.map((s) => s.id))}`,
+    // 4) 규칙으로 기존 사건에 기사 붙이기
+    if (plan.attach.length > 0) {
+      await db.upsert(
+        "links",
+        plan.attach.map(({ articleId, eventId }): LinkRow => ({ src: articleNode(articleId), type: "reports", dst: eventId, props: {}, observed_at: seen, evidence: [articleId], made_by: "rule" })),
+        { onConflict: "src,type,dst" },
       );
-      const existing = new Map(existingRows.map((r) => [r.story_id, { inputHash: r.input_hash, generatedAt: r.generated_at }]));
-      const targets = selectForEnrichment(stories, existing, now);
-      const byId = new Map(windowArticles.map((a) => [a.id, a]));
-
-      for (let i = 0; i < targets.length; i += ENRICH_BATCH) {
-        const batch = targets.slice(i, i + ENRICH_BATCH);
-        const inputs: EnrichInput[] = batch.map((s) => ({
-          storyId: s.id,
-          articles: s.articleIds
-            .slice(0, ENRICH_ARTICLE_LIMIT)
-            .map((id) => byId.get(id))
-            .filter((a): a is PipelineArticle => !!a)
-            .map((a) => ({ id: a.id, title: a.title, source: a.source, country: a.country, ...(a.summary ? { summary: a.summary } : {}) })),
-        }));
-        try {
-          const { value, model } = await enrich(buildEnrichPrompt(inputs), ENRICH_SCHEMA);
-          const results = parseEnrichment(value, inputs);
-          const generatedAt = now.toISOString();
-          const rows = [...results].map(([storyId, r]) => ({
-            story_id: storyId,
-            input_hash: insightInputHash(inputs.find((x) => x.storyId === storyId)!.articles.map((a) => a.id)),
-            model,
-            title_ko: r.title,
-            summary_ko: r.summary,
-            why_ko: r.why ?? null,
-            perspectives: r.perspectives.map((p) => ({ country: p.country, angle_ko: p.angle, article_ids: p.articleIds })),
-            generated_at: generatedAt,
-          }));
-          await db.upsert("story_insights", rows, { onConflict: "story_id" });
-          const entities = [...new Map([...results.values()].flatMap((r) => r.entities).map((e) => [e.id, e])).values()];
-          await db.upsert(
-            "entities",
-            entities.map((e) => ({ id: e.id, name: e.name, name_ko: e.nameKo ?? null, type: e.type })),
-            { onConflict: "id" },
-          );
-          await db.upsert(
-            "story_entities",
-            [...results].flatMap(([storyId, r]) => r.entities.map((e) => ({ story_id: storyId, entity_id: e.id }))),
-            { onConflict: "story_id,entity_id", ignoreDuplicates: true },
-          );
-          enriched += results.size;
-        } catch (err) {
-          enrichErrors.push(err instanceof Error ? err.message : String(err));
-        }
-      }
-      log(`AI 보강: ${enriched}개${enrichErrors.length ? `, 오류 ${enrichErrors.length}건` : ""}`);
+      for (const { articleId, eventId } of plan.attach) assigned.set(articleId, eventId);
     }
 
-    // 5) 지도용 나라별 기사 수
-    const countries: Record<string, number> = {};
-    for (const a of windowArticles) countries[a.country] = (countries[a.country] ?? 0) + 1;
+    // 5) AI 읽기: 새 묶음 → 사건
+    let extracted = 0;
+    let refreshed = 0;
+    if (extract) {
+      for (let i = 0; i < plan.extract.length; i += EXTRACT_BATCH) {
+        const inputs = plan.extract.slice(i, i + EXTRACT_BATCH).map(clusterInput);
+        try {
+          const { value, model } = await extract(buildExtractPrompt(inputs), EXTRACT_SCHEMA);
+          const results = parseExtraction(value, inputs);
+          const newEvents = [...results.values()].flat();
+          await saveActors(db, newEvents, seen);
+          for (const event of newEvents) {
+            const id = `event:${seen.slice(0, 10).replace(/-/g, "")}-${hashId([...event.evidence].sort().join(","))}`;
+            const props: EventProps = { eventType: event.type, title: event.title, summary: event.summary, flow: event.flow, extractedSize: event.evidence.length, extractedAt: seen, model };
+            await db.upsert("objects", [{ id, type: "event", props, first_seen: seen, last_seen: seen }], { onConflict: "id" });
+            await db.upsert(
+              "links",
+              [
+                ...event.evidence.map((a): LinkRow => ({ src: articleNode(a), type: "reports", dst: id, props: {}, observed_at: seen, evidence: [a], made_by: "ai" })),
+                ...eventLinks(id, event, seen),
+              ],
+              { onConflict: "src,type,dst" },
+            );
+            for (const a of event.evidence) assigned.set(a, id);
+            extracted++;
+          }
+          await db.upsert("extraction_log", inputs.flatMap((input) => input.articles.map((a) => ({ article_id: a.id, at: seen }))), { onConflict: "article_id" });
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : String(err));
+        }
+      }
 
-    // 6) 정리 (무료 DB 500MB 안에서)
-    await db.remove("articles", `published_at=lt.${iso(now.getTime() - KEEP_ARTICLES_DAYS * 24 * HOUR)}`);
-    await db.remove("stories", `last_seen_at=lt.${iso(now.getTime() - KEEP_STORIES_DAYS * 24 * HOUR)}`);
-    await db.remove("story_snapshots", `at=lt.${iso(now.getTime() - KEEP_SNAPSHOTS_DAYS * 24 * HOUR)}`);
+      // 6) 커진 사건 다시 정리 (id와 처음 본 시각은 그대로)
+      for (const { eventId, cluster } of plan.refresh) {
+        const input = clusterInput(cluster);
+        try {
+          const { value, model } = await extract(buildExtractPrompt([input]), EXTRACT_SCHEMA);
+          const event = parseExtraction(value, [input]).get(cluster.key)?.[0];
+          if (!event) continue;
+          const size = [...assigned.values()].filter((v) => v === eventId).length;
+          const props: EventProps = { eventType: event.type, title: event.title, summary: event.summary, flow: event.flow, extractedSize: size, extractedAt: seen, model };
+          await saveActors(db, [event], seen);
+          await db.upsert("objects", [{ id: eventId, type: "event", props, last_seen: seen }], { onConflict: "id" });
+          await db.remove("links", `src=eq.${encodeURIComponent(eventId)}&type=${inList(ROLE_LINKS)}`);
+          await db.upsert("links", eventLinks(eventId, event, seen), { onConflict: "src,type,dst" });
+          refreshed++;
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : String(err));
+        }
+      }
+      log(`AI 읽기: 새 사건 ${extracted}개, 다시 정리 ${refreshed}개${errors.length ? `, 오류 ${errors.length}건` : ""}`);
+    }
+
+    // 7) 사건 사실 모으기
+    const articlesByEvent = new Map<string, BoardArticle[]>();
+    for (const a of articles) {
+      const eventId = assigned.get(a.id);
+      if (!eventId) continue;
+      const list = articlesByEvent.get(eventId) ?? [];
+      list.push({ id: a.id, title: a.title, link: a.link, source: a.source, country: a.country, publishedAt: a.publishedAt });
+      articlesByEvent.set(eventId, list);
+    }
+    const activeIds = [...articlesByEvent.keys()];
+    const objects = new Map<string, { id: string; props: EventProps; first_seen: string }>();
+    const linksByEvent = new Map<string, LinkRow[]>();
+    for (const ids of chunks(activeIds)) {
+      for (const r of await db.select<{ id: string; props: EventProps; first_seen: string }>("objects", `select=id,props,first_seen&id=${inList(ids)}`)) objects.set(r.id, r);
+      for (const l of await db.select<LinkRow>("links", `select=*&src=${inList(ids)}&type=${inList(ROLE_LINKS)}`, { all: true })) {
+        linksByEvent.set(l.src, [...(linksByEvent.get(l.src) ?? []), l]);
+      }
+    }
+    for (const ids of chunks(activeIds)) await db.update("objects", `id=${inList(ids)}`, { last_seen: seen });
+    const facts: EventFact[] = activeIds.flatMap((id) => {
+      const object = objects.get(id);
+      if (!object || !EVENT_TYPES[object.props.eventType]) return [];
+      const links = linksByEvent.get(id) ?? [];
+      const actors = links
+        .filter((l) => (ACTOR_ROLES as readonly string[]).includes(l.type))
+        .map((l): BoardActor => ({ id: l.dst, name: String(l.props.name ?? l.dst), nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst), kind: l.props.kind as BoardActor["kind"], role: l.type as BoardActor["role"] }));
+      return [
+        {
+          id,
+          type: object.props.eventType,
+          title: object.props.title,
+          summary: object.props.summary,
+          flow: object.props.flow,
+          actors,
+          occurs: links.filter((l) => l.type === "occurs_in").map((l) => l.dst.replace("country:", "")),
+          firstSeenAt: object.first_seen,
+          articles: articlesByEvent.get(id)!,
+        },
+      ];
+    });
+
+    // 8) 정리 후 규칙 판단 → 상황판 저장
+    await db.remove("articles", `published_at=lt.${iso(now.getTime() - KEEP_ARTICLES_DAYS * DAY)}`);
+    await db.remove("extraction_log", `at=lt.${iso(now.getTime() - KEEP_ARTICLES_DAYS * DAY)}`);
+    await db.remove("links", `observed_at=lt.${iso(now.getTime() - KEEP_GRAPH_DAYS * DAY)}`);
+    await db.remove("objects", `last_seen=lt.${iso(now.getTime() - KEEP_GRAPH_DAYS * DAY)}`);
+    await db.remove("board_snapshots", `generated_at=lt.${iso(now.getTime() - KEEP_SNAPSHOTS_DAYS * DAY)}`);
+
+    const boardStats: BoardStats = {
+      articles: articles.length,
+      clusters: clusters.length,
+      feedsOk: ingested.ok,
+      feedsFailed: ingested.failed,
+      extracted,
+      ontology: await ontologyStats(db),
+    };
+    const board = buildBoard(facts, now, boardStats);
+    await db.insert("board_snapshots", { generated_at: seen, payload: board });
 
     const stats: PipelineStats = {
       feedsOk: ingested.ok,
       feedsFailed: ingested.failed,
       ingested: ingested.articles.length,
-      windowArticles: windowArticles.length,
-      stories: stories.length,
-      enriched,
-      enrichErrors,
-      countries,
+      windowArticles: articles.length,
+      clusters: clusters.length,
+      extracted,
+      refreshed,
+      attached: plan.attach.length,
+      boardEvents: board.events.length,
+      errors,
     };
     await db.update("pipeline_runs", `id=eq.${run.id}`, { finished_at: new Date().toISOString(), stats });
     return stats;

@@ -1,177 +1,311 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
-import type { CatalogFeed } from "@/types/catalog";
 import type { Article } from "@/types/article";
-import type { Db } from "./supabase";
+import type { CatalogFeed } from "@/types/catalog";
+import type { WorldBoard } from "@/types/world";
 import { articleKey, runPipeline } from "./pipeline";
+import type { Db } from "./supabase";
 
-const NOW = new Date("2026-10-19T12:30:00Z");
+const NOW = new Date("2026-11-01T12:30:00Z");
 const ago = (min: number) => new Date(NOW.getTime() - min * 60_000).toISOString();
 
-const feed = (id: string, country: string, name: string): CatalogFeed => ({
+const feed = (id: string, country: string, name: string, continent: CatalogFeed["continent"] = "europe"): CatalogFeed => ({
   id,
   name,
   url: `https://${id}.example/rss`,
   homepage: `https://${id}.example`,
-  continent: "global",
+  continent,
   country,
   category: "world",
   language: "en",
 });
 
-const FEEDS = [feed("gb-bbc", "GB", "BBC"), feed("us-cnbc", "US", "CNBC"), feed("me-aj", "ME", "Al Jazeera"), feed("sg-st", "SG", "Straits Times")];
+const FEEDS = [
+  feed("gb-bbc", "GB", "BBC"),
+  feed("us-cnbc", "US", "CNBC", "north-america"),
+  feed("me-aj", "ME", "Al Jazeera", "middle-east"),
+  feed("sg-st", "SG", "ST", "asia"),
+  feed("world-un", "WORLD", "UN News", "global"),
+];
 
-const FEED_ARTICLES: Record<string, Article[]> = {
+const hormuz: Record<string, Article[]> = {
   "gb-bbc": [
     { id: "1", title: "Iran seizes tanker near Hormuz strait", link: "https://bbc.example/1", publishedAt: ago(10), source: "BBC" },
-    { id: "x", title: "Local bakery wins award", link: "https://bbc.example/2", publishedAt: ago(20), source: "BBC" },
     { id: "old", title: "Very old Hormuz story", link: "https://bbc.example/old", publishedAt: ago(60 * 24 * 5), source: "BBC" },
     { id: "nodate", title: "No date Hormuz", link: "https://bbc.example/nd", publishedAt: null, source: "BBC" },
   ],
   "us-cnbc": [{ id: "2", title: "Oil jumps after Hormuz tanker seizure by Iran", link: "https://cnbc.example/1", publishedAt: ago(15), source: "CNBC" }],
-  "me-aj": [{ id: "3", title: "Tanker seized in Hormuz, Iran says", link: "https://aj.example/1", publishedAt: ago(30), source: "Al Jazeera", image: "https://img/1.jpg" }],
-  "sg-st": [
-    { id: "4", title: "Hormuz tension: Iran tanker move rattles Asia", link: "https://st.example/1", publishedAt: ago(40), source: "Straits Times" },
-    { id: "5", title: "Rain expected over weekend", link: "https://st.example/2", publishedAt: ago(50), source: "Straits Times" },
-  ],
+  "me-aj": [{ id: "3", title: "Tanker seized in Hormuz, Iran says", link: "https://aj.example/1", publishedAt: ago(30), source: "Al Jazeera" }],
+  "sg-st": [{ id: "4", title: "Hormuz tension: Iran tanker move rattles Asia", link: "https://st.example/1", publishedAt: ago(40), source: "ST" }],
+  "world-un": [{ id: "5", title: "UN on Hormuz tanker Iran seizure", link: "https://un.example/1", publishedAt: ago(40), source: "UN News" }],
 };
 
-/** 메모리 DB: articles는 upsert된 것을 그대로 select로 돌려준다 */
-function fakeDb(opts: { previous?: unknown[]; insights?: unknown[] } = {}) {
-  const tables: Record<string, Record<string, unknown>[]> = {};
-  const calls: { op: string; table: string; arg?: unknown }[] = [];
+const loader = (data: Record<string, Article[]>) =>
+  vi.fn(async (url: string) => {
+    const id = FEEDS.find((f) => f.url === url)!.id;
+    if (!data[id]) throw new Error("피드 실패");
+    return { title: null, articles: data[id] };
+  });
+
+type Row = Record<string, unknown>;
+
+/** 메모리 Supabase: eq/in/gte/lt 필터와 키 기준 upsert를 흉내 낸다 */
+function memoryDb() {
+  const tables: Record<string, Row[]> = {};
+  const parse = (query: string) =>
+    query
+      .split("&")
+      .map((part) => {
+        const i = part.indexOf("=");
+        return [part.slice(0, i), part.slice(i + 1)] as const;
+      })
+      .filter(([k]) => k && !["select", "order", "limit"].includes(k));
+  const matches = (row: Row, query: string) =>
+    parse(query).every(([col, expr]) => {
+      const dot = expr.indexOf(".");
+      const op = expr.slice(0, dot);
+      const raw = expr.slice(dot + 1);
+      const value = String(row[col]);
+      if (op === "eq") return value === decodeURIComponent(raw);
+      if (op === "gte") return value >= raw;
+      if (op === "lt") return value < raw;
+      if (op === "in") {
+        const list = raw.slice(1, -1).split(",").map((v) => decodeURIComponent(v).replace(/^"|"$/g, ""));
+        return list.includes(value);
+      }
+      throw new Error(`unknown op ${op}`);
+    });
+  const KEYS: Record<string, string[]> = {
+    articles: ["id"],
+    objects: ["id"],
+    links: ["src", "type", "dst"],
+    extraction_log: ["article_id"],
+  };
   const db: Db = {
     async select<T>(table: string, query: string) {
-      calls.push({ op: "select", table, arg: query });
-      if (table === "articles") return (tables.articles ?? []) as T[];
-      if (table === "stories") return (opts.previous ?? []) as T[];
-      if (table === "story_insights") return (opts.insights ?? []) as T[];
-      return [] as T[];
+      const rows = (tables[table] ?? []).filter((r) => matches(r, query));
+      if (query.includes("order=generated_at.desc")) rows.sort((a, b) => String(b.generated_at).localeCompare(String(a.generated_at)));
+      return rows as T[];
     },
-    async upsert(table, rows) {
-      calls.push({ op: "upsert", table, arg: rows });
-      (tables[table] ??= []).push(...(rows as Record<string, unknown>[]));
+    async upsert(table, rows, opts = {}) {
+      const list = (tables[table] ??= []);
+      const key = KEYS[table] ?? ["id"];
+      for (const row of rows as Row[]) {
+        const existing = list.find((r) => key.every((k) => r[k] === row[k]));
+        if (existing) {
+          if (!opts.ignoreDuplicates) Object.assign(existing, row);
+        } else list.push({ first_seen: NOW.toISOString(), ...row });
+      }
     },
     async insert<T>(table: string, row: object) {
-      calls.push({ op: "insert", table, arg: row });
-      return { id: 1 } as T;
+      const list = (tables[table] ??= []);
+      const created = { id: list.length + 1, ...row };
+      list.push(created);
+      return created as T;
     },
     async update(table, filter, patch) {
-      calls.push({ op: "update", table, arg: { filter, patch } });
+      for (const r of (tables[table] ?? []).filter((r) => matches(r, filter))) Object.assign(r, patch);
     },
     async remove(table, filter) {
-      calls.push({ op: "remove", table, arg: filter });
+      tables[table] = (tables[table] ?? []).filter((r) => !matches(r, filter));
+    },
+    async count(table, filter) {
+      return (tables[table] ?? []).filter((r) => matches(r, filter)).length;
     },
   };
-  return { db, tables, calls };
+  return { db, tables };
 }
 
-const load = vi.fn(async (url: string) => {
-  const id = FEEDS.find((f) => f.url === url)!.id;
-  if (id === "sg-st" && url.includes("fail")) throw new Error("x");
-  return { title: null, articles: FEED_ARTICLES[id] };
-});
+const clusterOf = (prompt: string) => /\[묶음 ([^\]]+)\]/.exec(prompt)![1];
+const idsIn = (prompt: string) => [...prompt.matchAll(/^- \(([^)]+)\)/gm)].map((m) => m[1]);
 
-describe("articleKey", () => {
-  it("정규화 링크 기준 16자 해시 (utm 무시)", () => {
-    expect(articleKey("https://a.example/x?utm_source=rss")).toBe(articleKey("http://a.example/x"));
-    expect(articleKey("https://a.example/x")).toMatch(/^[0-9a-f]{16}$/);
-  });
-});
+/** AI 흉내: 묶음마다 사건 하나 */
+const aiEvent = (over: object = {}) =>
+  vi.fn(async (prompt: string) => ({
+    model: "fake",
+    value: {
+      events: [
+        {
+          cluster: clusterOf(prompt),
+          type: "armed-conflict",
+          title: "이란, 호르무즈서 유조선 나포",
+          summary: "이란이 호르무즈 해협에서 유조선을 나포했다.",
+          flow: "mideast",
+          actors: [
+            { name: "Iran", nameKo: "이란", kind: "country", role: "subject", code: "IR" },
+            { name: "Shell", nameKo: "셸", kind: "org", role: "target", code: "" },
+          ],
+          places: ["IR"],
+          evidence: idsIn(prompt),
+          ...over,
+        },
+      ],
+    },
+  }));
+
+const latestBoard = (tables: Record<string, Row[]>) => tables.board_snapshots.at(-1)!.payload as WorldBoard;
 
 describe("runPipeline", () => {
-  it("수집 → 저장 → 사건 → 스냅샷 → 실행 기록 (AI 없이도 동작)", async () => {
-    const { db, tables, calls } = fakeDb();
-    const stats = await runPipeline({ db, feeds: FEEDS, load, now: NOW });
+  it("수집 → 묶기 → AI 추출 → 객체·관계 저장 → 규칙으로 상황판", async () => {
+    const { db, tables } = memoryDb();
+    const extract = aiEvent();
+    const stats = await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: NOW });
 
-    // 48시간 넘은 기사, 날짜 없는 기사는 저장하지 않는다
-    const titles = tables.articles.map((a) => a.title);
-    expect(titles).toContain("Iran seizes tanker near Hormuz strait");
-    expect(titles).not.toContain("Very old Hormuz story");
-    expect(titles).not.toContain("No date Hormuz");
-    expect(tables.articles[0]).toMatchObject({ feed_id: "gb-bbc", country: "GB", source: "BBC" });
+    // 나라의 시각이 아닌 매체(UN News)는 쓰지 않고, 묶음 지역 매체는 본사 나라로
+    expect(FEEDS.length).toBe(5);
+    expect(tables.articles.map((a) => a.source)).not.toContain("UN News");
+    expect(tables.articles.find((a) => a.source === "Al Jazeera")).toMatchObject({ country: "QA", continent: "middle-east" });
+    // 날짜 없음·오래된 기사 제외
+    expect(tables.articles).toHaveLength(4);
+    expect(tables.articles[0].id).toBe(articleKey("https://bbc.example/1"));
 
-    expect(tables.stories).toHaveLength(1);
-    const story = tables.stories[0];
-    expect(story).toMatchObject({ image: "https://img/1.jpg", size: 4 });
-    expect(story.countries).toEqual(expect.arrayContaining(["GB", "US", "ME", "SG"]));
-    expect(story).not.toHaveProperty("first_seen_at");
-    expect(tables.story_articles).toHaveLength(4);
-    expect(tables.story_snapshots[0]).toMatchObject({ story_id: story.id, at: "2026-10-19T12:00:00.000Z", size: 4, countries: 4 });
+    expect(extract).toHaveBeenCalledTimes(1);
+    const event = tables.objects.find((o) => o.type === "event")!;
+    expect(String(event.id)).toMatch(/^event:20261101-/);
+    expect(event.props).toMatchObject({ eventType: "armed-conflict", title: "이란, 호르무즈서 유조선 나포", flow: "mideast", extractedSize: 4, model: "fake" });
 
-    expect(stats).toMatchObject({ feedsOk: 4, feedsFailed: 0, stories: 1, enriched: 0 });
-    expect(stats.countries).toMatchObject({ GB: 2, US: 1, ME: 1, SG: 2 });
-    const finish = calls.find((c) => c.op === "update" && c.table === "pipeline_runs");
-    expect(finish?.arg).toMatchObject({ filter: "id=eq.1", patch: { finished_at: expect.any(String) } });
-    // 오래된 데이터 정리
-    expect(calls.filter((c) => c.op === "remove").map((c) => c.table)).toEqual(
-      expect.arrayContaining(["articles", "stories", "story_snapshots"]),
-    );
+    const linksOf = (type: string) => tables.links.filter((l) => l.type === type);
+    expect(linksOf("reports")).toHaveLength(4);
+    expect(linksOf("reports")[0]).toMatchObject({ dst: event.id, made_by: "ai" });
+    expect(linksOf("subject")[0]).toMatchObject({ src: event.id, dst: "country:IR", made_by: "ai", props: { nameKo: "이란", kind: "country" } });
+    expect(linksOf("target")[0].dst).toBe("actor:org:shell");
+    expect(linksOf("occurs_in")[0].dst).toBe("country:IR");
+    expect(linksOf("part_of")[0].dst).toBe("flow:mideast");
+    expect((linksOf("subject")[0].evidence as string[]).length).toBe(4);
+    expect(tables.objects.find((o) => o.id === "actor:org:shell")).toMatchObject({ type: "actor", props: { name: "Shell", kind: "org" } });
+
+    // 뼈대 객체·관계 (설정에서 옴)
+    expect(tables.objects.find((o) => o.id === "country:QA")).toMatchObject({ type: "country" });
+    expect(tables.objects.find((o) => o.id === "flow:ai-race")).toMatchObject({ type: "flow" });
+    expect(tables.links.find((l) => l.src === "country:QA" && l.type === "belongs_to")).toMatchObject({ dst: "continent:middle-east", made_by: "config" });
+    expect(tables.links.find((l) => l.type === "based_in" && l.src === "outlet:al jazeera")).toMatchObject({ dst: "country:QA" });
+
+    // 상황판
+    const board = latestBoard(tables);
+    expect(board.world).toEqual([event.id]);
+    const be = board.events[0];
+    expect(be.reporting.sort()).toEqual(["GB", "QA", "SG", "US"]);
+    expect(be.continents).toHaveLength(4);
+    expect(be.flow).toBe("mideast");
+    expect(be.occurs).toEqual(["IR"]);
+    expect(be.actors.find((a) => a.role === "subject")).toMatchObject({ id: "country:IR", nameKo: "이란" });
+    expect(be.score.multiplier).toBe(1.75);
+    expect(board.flows.find((f) => f.id === "mideast")?.eventIds).toEqual([event.id]);
+    expect(board.stats).toMatchObject({ feedsOk: 4, feedsFailed: 0, extracted: 1, articles: 4 });
+    expect(board.stats.ontology?.objects.event).toBe(1);
+    expect(board.stats.ontology?.links.reports).toBe(4);
+    expect(board.stats.ontology?.madeBy.ai).toBeGreaterThan(0);
+    expect(stats.extracted).toBe(1);
+    expect(tables.pipeline_runs[0].finished_at).toBeTruthy();
   });
 
-  it("이전 사건과 겹치면 id를 이어 쓴다", async () => {
-    const { db: db1, tables: t1 } = fakeDb();
-    await runPipeline({ db: db1, feeds: FEEDS, load, now: NOW });
-    const first = t1.stories[0];
-    const prevArticles = t1.story_articles.map((r) => ({ article_id: r.article_id }));
-    const { db, tables } = fakeDb({ previous: [{ id: "s-keep", terms: first.terms, story_articles: prevArticles }] });
-    await runPipeline({ db, feeds: FEEDS, load, now: NOW });
-    expect(tables.stories[0].id).toBe("s-keep");
-  });
+  it("다음 실행: 이미 정리한 사건은 AI 없이 새 기사만 규칙으로 붙인다", async () => {
+    const { db, tables } = memoryDb();
+    const extract = aiEvent();
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: NOW });
+    const firstSeen = tables.objects.find((o) => o.type === "event")!.first_seen;
 
-  it("AI가 있으면 사건을 보강해 한국어 결과·엔티티를 저장한다", async () => {
-    const { db, tables } = fakeDb();
-    const enrich = vi.fn(async (prompt: string) => {
-      const id = /## story (\S+)/.exec(prompt)![1];
-      return {
-        model: "m",
-        value: {
-          stories: [
-            {
-              id,
-              title_ko: "이란, 유조선 나포",
-              summary_ko: ["a", "b", "c"],
-              why_ko: "w",
-              perspectives: [{ country: "US", angle_ko: "유가", refs: ["r1"] }],
-              entities: [{ name: "Iran", name_ko: "이란", type: "place" }],
-            },
-          ],
-        },
-      };
-    });
-    const stats = await runPipeline({ db, feeds: FEEDS, load, now: NOW, enrich });
-    expect(stats.enriched).toBe(1);
-    expect(tables.story_insights[0]).toMatchObject({ title_ko: "이란, 유조선 나포", model: "m", summary_ko: ["a", "b", "c"] });
-    expect(tables.entities[0]).toMatchObject({ id: "place:iran", name_ko: "이란" });
-    expect(tables.story_entities[0]).toMatchObject({ entity_id: "place:iran" });
-  });
-
-  it("AI 호출이 실패해도 실행은 끝나고 오류 수를 남긴다", async () => {
-    const { db } = fakeDb();
-    const enrich = vi.fn(async () => {
-      throw new Error("quota");
-    });
-    const stats = await runPipeline({ db, feeds: FEEDS, load, now: NOW, enrich });
-    expect(stats.enrichErrors).toEqual(["quota"]);
-  });
-
-  it("피드 하나가 실패해도 나머지로 진행한다", async () => {
-    const { db } = fakeDb();
-    const failing = vi.fn(async (url: string) => {
-      if (url.includes("sg-st")) throw new Error("down");
-      return load(url);
-    });
-    const stats = await runPipeline({ db, feeds: FEEDS, load: failing, now: NOW });
-    expect(stats).toMatchObject({ feedsOk: 3, feedsFailed: 1 });
-  });
-
-  it("치명적 오류는 실행 기록에 남기고 다시 던진다", async () => {
-    const { db, calls } = fakeDb();
-    db.upsert = async () => {
-      throw new Error("db down");
+    const later = new Date(NOW.getTime() + 30 * 60_000);
+    const more = {
+      ...hormuz,
+      "gb-bbc": [...hormuz["gb-bbc"], { id: "n", title: "Hormuz tanker seizure: Iran warns navies", link: "https://bbc.example/n", publishedAt: ago(1), source: "BBC" }],
     };
-    await expect(runPipeline({ db, feeds: FEEDS, load, now: NOW })).rejects.toThrow("db down");
-    const fail = calls.find((c) => c.op === "update" && c.table === "pipeline_runs");
-    expect(fail?.arg).toMatchObject({ patch: { error: "db down" } });
+    await runPipeline({ db, feeds: FEEDS, load: loader(more), extract, now: later });
+
+    expect(extract).toHaveBeenCalledTimes(1);
+    const reports = tables.links.filter((l) => l.type === "reports");
+    expect(reports).toHaveLength(5);
+    expect(reports.at(-1)).toMatchObject({ src: `article:${articleKey("https://bbc.example/n")}`, made_by: "rule" });
+    const event = tables.objects.find((o) => o.type === "event")!;
+    expect(event.first_seen).toBe(firstSeen);
+    expect(latestBoard(tables).events[0].articleCount).toBe(5);
+  });
+
+  it("AI가 사건이 아니라고 하면 같은 기사를 다시 보내지 않는다", async () => {
+    const { db, tables } = memoryDb();
+    const extract = vi.fn(async () => ({ model: "fake", value: { events: [] } }));
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: NOW });
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: new Date(NOW.getTime() + 60_000) });
+    expect(extract).toHaveBeenCalledTimes(1);
+    expect(tables.extraction_log).toHaveLength(4);
+    expect(latestBoard(tables).events).toEqual([]);
+  });
+
+  it("AI 호출이 실패하면 다음 실행에 다시 보낸다. 파이프라인은 멈추지 않는다", async () => {
+    const { db, tables } = memoryDb();
+    const extract = vi.fn().mockRejectedValueOnce(new Error("429")).mockImplementation(aiEvent());
+    const first = await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: NOW });
+    expect(first.errors).toEqual(["429"]);
+    expect(tables.extraction_log ?? []).toEqual([]);
+    expect(tables.board_snapshots).toHaveLength(1);
+
+    const second = await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: new Date(NOW.getTime() + 60_000) });
+    expect(second.extracted).toBe(1);
+    expect(second.errors).toEqual([]);
+  });
+
+  it("AI 키가 없으면 추출 없이 상황판을 비워 둔다", async () => {
+    const { db, tables } = memoryDb();
+    const stats = await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW });
+    expect(stats.extracted).toBe(0);
+    expect(latestBoard(tables).events).toEqual([]);
+  });
+
+  it("피드 하나가 실패해도 나머지로 진행", async () => {
+    const { db, tables } = memoryDb();
+    const partial = { ...hormuz };
+    delete partial["sg-st"];
+    const stats = await runPipeline({ db, feeds: FEEDS, load: loader(partial), extract: aiEvent(), now: NOW });
+    expect(stats.feedsFailed).toBe(1);
+    expect(latestBoard(tables).world).toHaveLength(1);
+  });
+
+  it("사건이 2배 커지고 6시간 지나면 같은 사건을 다시 정리한다 (처음 본 시각은 그대로)", async () => {
+    const { db, tables } = memoryDb();
+    const extract = aiEvent();
+    const small = { "gb-bbc": hormuz["gb-bbc"], "us-cnbc": hormuz["us-cnbc"], "me-aj": hormuz["me-aj"] };
+    await runPipeline({ db, feeds: FEEDS, load: loader(small), extract, now: NOW });
+    const firstSeen = tables.objects.find((o) => o.type === "event")!.first_seen;
+
+    const later = new Date(NOW.getTime() + 7 * 3_600_000);
+    const grown = {
+      ...hormuz,
+      "gb-bbc": [
+        { ...hormuz["gb-bbc"][0], publishedAt: new Date(later.getTime() - 60_000).toISOString() },
+        { id: "m", title: "Hormuz tanker seizure Iran latest", link: "https://bbc.example/m", publishedAt: new Date(later.getTime() - 60_000).toISOString(), source: "BBC" },
+        { id: "m2", title: "Iran tanker Hormuz analysis", link: "https://bbc.example/m2", publishedAt: new Date(later.getTime() - 60_000).toISOString(), source: "BBC" },
+      ],
+    };
+    const refreshed = aiEvent({ title: "새 제목", actors: [{ name: "Iran", nameKo: "이란", kind: "country", role: "target", code: "IR" }] });
+    extract.mockImplementation(refreshed);
+    await runPipeline({ db, feeds: FEEDS, load: loader(grown), extract, now: later });
+
+    const events = tables.objects.filter((o) => o.type === "event");
+    expect(events).toHaveLength(1);
+    expect(events[0].props).toMatchObject({ title: "새 제목" });
+    expect(events[0].first_seen).toBe(firstSeen);
+    // 옛 관계는 지우고 새로
+    const roles = tables.links.filter((l) => l.src === events[0].id && ["subject", "target"].includes(String(l.type)));
+    expect(roles.map((l) => [l.type, l.dst])).toEqual([["target", "country:IR"]]);
+  });
+
+  it("오래된 데이터를 정리한다", async () => {
+    const { db, tables } = memoryDb();
+    await db.upsert("objects", [{ id: "event:old", type: "event", props: {}, last_seen: ago(60 * 24 * 40) }]);
+    await db.upsert("links", [{ src: "event:old", type: "subject", dst: "country:US", observed_at: ago(60 * 24 * 40), evidence: [], made_by: "ai", props: {} }]);
+    await db.insert("board_snapshots", { generated_at: ago(60 * 24 * 3), payload: {} });
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW });
+    expect(tables.objects.find((o) => o.id === "event:old")).toBeUndefined();
+    expect(tables.links.find((l) => l.src === "event:old")).toBeUndefined();
+    expect(tables.board_snapshots).toHaveLength(1);
+  });
+
+  it("실패하면 실행 기록에 남기고 다시 던진다", async () => {
+    const { db, tables } = memoryDb();
+    db.upsert = async () => {
+      throw new Error("DB 오류");
+    };
+    await expect(runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW })).rejects.toThrow("DB 오류");
+    expect(tables.pipeline_runs[0].error).toBe("DB 오류");
   });
 });

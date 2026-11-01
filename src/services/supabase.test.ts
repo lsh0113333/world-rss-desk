@@ -70,4 +70,14 @@ describe("createDb", () => {
     const db = createDb({ url: "https://x.supabase.co", key: "k", fetch: fetchMock });
     await expect(db.select("stories", "select=id")).rejects.toThrow(/stories.*401.*permission denied/);
   });
+
+  it("count: HEAD로 개수만 받는다", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200, headers: { "content-range": "*/42" } }));
+    const db = createDb({ url: "https://x.supabase.co", key: "k", fetch: fetchMock as unknown as typeof fetch });
+    expect(await db.count("objects", "type=eq.event")).toBe(42);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { headers: Record<string, string> }];
+    expect(url).toBe("https://x.supabase.co/rest/v1/objects?type=eq.event");
+    expect(init.method).toBe("HEAD");
+    expect(init.headers.Prefer).toBe("count=exact");
+  });
 });

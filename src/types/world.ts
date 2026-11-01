@@ -1,11 +1,12 @@
-import type { Category, CountryCode } from "./catalog";
+import type { Category, Continent, CountryCode } from "./catalog";
+import type { ActorKind, ActorRole, EventType, FlowId } from "@/ontology/world";
 
 /**
- * 세계 흐름 파이프라인(GitHub Actions → Supabase)과 화면(/api/insights)이 주고받는 타입.
- * intent/2026-10-18-sensemaking.md
+ * 세계 상황판: 파이프라인(GitHub Actions → Supabase)이 만들고 화면(/api/world)이 읽는 타입.
+ * intent/2026-10-23-ontology-lab.md, docs/ONTOLOGY.md
  */
 
-/** 파이프라인이 저장하는 기사 (카탈로그 피드에서 수집) */
+/** 수집한 기사. country는 매체 본사 나라 */
 export interface PipelineArticle {
   /** 정규화 링크의 sha1 앞 16자 */
   id: string;
@@ -17,72 +18,137 @@ export interface PipelineArticle {
   country: CountryCode;
   continent: string;
   category: Category;
-  image?: string;
   /** ISO */
   publishedAt: string;
 }
 
-/** 나라별 시각: 같은 사건을 이 나라 매체들은 어떻게 다루는가 (근거 기사 id 포함) */
-export interface Perspective {
-  country: CountryCode;
-  angle: string;
-  articleIds: string[];
-}
-
-export type EntityType = "person" | "org" | "place" | "topic";
-
-export interface EntityRef {
-  id: string;
-  name: string;
-  nameKo?: string;
-  type: EntityType;
-}
-
-/** AI 보강 결과 (한국어) */
-export interface StoryInsight {
-  title: string;
-  summary: string[];
-  why?: string;
-  perspectives: Perspective[];
-  model: string;
-  generatedAt: string;
-}
-
-export interface WorldStoryArticle {
+export interface BoardArticle {
   id: string;
   title: string;
   link: string;
   source: string;
   country: CountryCode;
-  image?: string;
   publishedAt: string;
 }
 
-/** 화면의 사건 카드 하나 */
-export interface WorldStory {
+export interface BoardActor {
+  /** "country:US" 또는 "actor:person:elon musk" */
   id: string;
-  leadTitle: string;
-  image?: string;
-  terms: string[];
-  countries: CountryCode[];
-  sources: string[];
-  size: number;
-  firstSeenAt: string;
-  lastSeenAt: string;
-  /** 최근 시간대별 기사 수 (오래된 → 최신) */
-  trend: number[];
-  /** 최근 몇 시간 동안 빠르게 커지는 중 */
-  rising: boolean;
-  insight?: StoryInsight;
-  entities: EntityRef[];
-  articles: WorldStoryArticle[];
+  name: string;
+  nameKo: string;
+  kind: ActorKind;
+  role: ActorRole;
 }
 
-/** /api/insights 응답 */
-export interface WorldInsights {
-  /** 마지막 파이프라인 실행 시각 (없으면 아직 실행 전) */
-  updatedAt: string | null;
-  stories: WorldStory[];
-  /** 최근 24시간 나라별 기사 수 (지도) */
-  countries: Record<CountryCode, number>;
+/** "왜 이 순위?": 점수의 모든 재료. 같은 입력이면 항상 같은 점수 */
+export interface ScoreBreakdown {
+  countries: number;
+  continents: number;
+  outlets: number;
+  /** 보도 규모 */
+  scale: number;
+  multiplier: number;
+  risingBonus: number;
+  total: number;
+}
+
+export interface RelatedEvent {
+  id: string;
+  title: string;
+  /** 사람이 읽는 이유 ("우크라이나 전쟁", "미국, 중국") */
+  why: string;
+  strength: number;
+  crossContinent: boolean;
+}
+
+/** 규칙의 입력: 사건 객체 + 관계 + 그 사건의 최근 기사 */
+export interface EventFact {
+  id: string;
+  type: EventType;
+  title: string;
+  summary: string;
+  flow: FlowId | null;
+  actors: BoardActor[];
+  /** 일어난 나라 */
+  occurs: CountryCode[];
+  firstSeenAt: string;
+  articles: BoardArticle[];
+}
+
+export interface BoardEvent extends Omit<EventFact, "articles"> {
+  /** 보도한 나라 */
+  reporting: CountryCode[];
+  /** 보도한 대륙 */
+  continents: Continent[];
+  outlets: number;
+  articleCount: number;
+  lastSeenAt: string;
+  rising: boolean;
+  scope: "world" | "country";
+  score: ScoreBreakdown;
+  related: RelatedEvent[];
+  /** 근거 기사 (최신순, 일부) */
+  articles: BoardArticle[];
+}
+
+export type FlowTrend = "up" | "flat" | "down" | "quiet";
+
+export interface BoardFlow {
+  id: FlowId;
+  label: string;
+  /** 점수순 */
+  eventIds: string[];
+  trend: FlowTrend;
+  recentArticles: number;
+  previousArticles: number;
+}
+
+export interface BoardCountry {
+  code: CountryCode;
+  name: string;
+  /** 앞쪽일수록 먼저 보여 줄 사건 */
+  eventIds: string[];
+}
+
+export interface BoardContinent {
+  id: Continent;
+  label: string;
+  top: string[];
+  countries: BoardCountry[];
+}
+
+export interface OntologyStats {
+  objects: Record<string, number>;
+  links: Record<string, number>;
+  /** 관계를 누가 만들었나: ai | rule | config */
+  madeBy: Record<string, number>;
+}
+
+export interface BoardStats {
+  articles: number;
+  clusters: number;
+  feedsOk: number;
+  feedsFailed: number;
+  extracted: number;
+  ontology?: OntologyStats;
+}
+
+export interface WorldBoard {
+  generatedAt: string;
+  stats: BoardStats;
+  flows: BoardFlow[];
+  world: string[];
+  it: string[];
+  continents: BoardContinent[];
+  events: BoardEvent[];
+}
+
+export interface ActorProfile {
+  id: string;
+  name: string;
+  nameKo: string;
+  kind: ActorKind;
+  events: { id: string; title: string; summary: string; type: EventType; role: ActorRole; lastSeenAt: string }[];
+  /** 같은 사건에 함께 나온 행위자 (많은 순) */
+  together: { id: string; nameKo: string; kind: ActorKind; count: number }[];
 }

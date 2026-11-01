@@ -1,7 +1,7 @@
 name: world-pipeline
 
-# 세계 흐름 파이프라인: 매시간 카탈로그 피드 수집 → 사건 묶기 → AI 보강(Gemini 무료) → Supabase 저장
-# 공개 저장소라 Actions는 무료. 정각은 혼잡해서 17분에 실행한다. (스케줄은 기본 브랜치의 이 파일 기준)
+# 온톨로지 파이프라인: 카탈로그 피드 수집 → 규칙 묶기 → AI 읽기(Gemini 무료) → 객체·관계 저장 → 규칙 판단 → 상황판 저장
+# 공개 저장소라 Actions는 무료. Supabase pg_cron이 30분마다 실행을 요청한다(ADR-018). 아래 schedule은 예비
 on:
   schedule:
     - cron: "17 * * * *"

@@ -13,6 +13,7 @@ export interface Db {
   insert<T>(table: string, row: object): Promise<T>;
   update(table: string, filter: string, patch: object): Promise<void>;
   remove(table: string, filter: string): Promise<void>;
+  count(table: string, filter: string): Promise<number>;
 }
 
 export interface DbConfig {
@@ -86,6 +87,11 @@ export function createDb({ url, key, fetch: fetchImpl = fetch }: DbConfig): Db {
 
     async remove(table, filter) {
       await request(table, withQuery(table, filter), { method: "DELETE" });
+    },
+
+    async count(table, filter) {
+      const res = await request(table, withQuery(table, filter), { method: "HEAD", headers: { Prefer: "count=exact" } });
+      return Number(res.headers.get("content-range")?.split("/")[1] ?? 0);
     },
   };
 }
