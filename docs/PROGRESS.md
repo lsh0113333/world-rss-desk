@@ -13,6 +13,7 @@
 
 ## 남은 작업 (사용자 확인 필요한 것 포함)
 0. **사용자가 직접 실행**: `! bash scripts/apply-migration.sh supabase/migrations/0004_drop_old_tables.sql` (옛 테이블 6개와 `articles.image` 삭제, 되돌릴 수 없음. 안전 장치가 Claude의 실행을 막았다. 안 해도 동작에는 영향 없음)
+   `! npx vercel env rm CRON_SECRET production --yes` (안 쓰는 Vercel 비밀값 삭제. 같은 이유로 직접 실행)
 1. **사용자 피드백**: 실제 사이트를 PC와 폰에서 써 본 의견
    - **답변 대기**: `/ontology` 슬라이더를 메인 화면에도 반영되게 할지 (Claude 추천: 브라우저에 저장하는 방식. 사용자는 화면에서 바꾸면 메인이 바뀌는 것으로 이해하고 있었다)
 2. **2단계 분석** (로드맵): 일별 기록 → 어제 대비 변화, 나라 × 나라 관심 행렬, 행위자 관계 온도
