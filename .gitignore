@@ -5,8 +5,6 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 
 # phase execution outputs
-phases/**/phase*-output.json
-phases/**/step*-output.json
 
 # env / deploy / test
 .env*.local
