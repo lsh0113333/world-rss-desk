@@ -1,7 +1,9 @@
+import type { Me } from "@/types/me";
+import { parseMe } from "./ontology/me";
 import { parseMultipliers, type Multipliers } from "./ontology/rules";
 
 /**
- * 사용자 데이터: 방문 기록("지난 방문 이후 새 사건")과 내 기준(유형 배수).
+ * 사용자 데이터: 방문 기록("지난 방문 이후 새 사건"), 내 기준(유형 배수), "나"(내 상황).
  * 인터페이스 뒤에 두어 나중에 계정 저장으로 바꿀 수 있게 한다.
  */
 
@@ -18,10 +20,15 @@ export interface BoardPrefsRepository {
   loadRules(): Promise<Multipliers | null>;
   /** null이면 내 기준을 지운다 */
   saveRules(rules: Multipliers | null): Promise<void>;
+  /** "나" 객체. 없으면 null */
+  loadMe(): Promise<Me | null>;
+  /** null이면 지운다 */
+  saveMe(me: Me | null): Promise<void>;
 }
 
 export const BOARD_PREFS_KEY = "world-rss-desk:visits";
 export const BOARD_RULES_KEY = "world-rss-desk:rules";
+export const BOARD_ME_KEY = "world-rss-desk:me";
 /** 이 시간 안에 다시 열면 같은 방문으로 본다 (새로고침해도 "새" 표시가 사라지지 않게) */
 const SAME_VISIT_MS = 30 * 60_000;
 
@@ -78,6 +85,23 @@ export class LocalStorageBoardPrefsRepository implements BoardPrefsRepository {
     try {
       if (rules) this.store.setItem(BOARD_RULES_KEY, JSON.stringify(rules));
       else this.store.removeItem(BOARD_RULES_KEY);
+    } catch {
+      // 저장 실패는 무시 (사생활 보호 모드 등)
+    }
+  }
+
+  async loadMe(): Promise<Me | null> {
+    try {
+      return parseMe(JSON.parse(this.store.getItem(BOARD_ME_KEY) ?? "null"));
+    } catch {
+      return null;
+    }
+  }
+
+  async saveMe(me: Me | null): Promise<void> {
+    try {
+      if (me) this.store.setItem(BOARD_ME_KEY, JSON.stringify(me));
+      else this.store.removeItem(BOARD_ME_KEY);
     } catch {
       // 저장 실패는 무시 (사생활 보호 모드 등)
     }

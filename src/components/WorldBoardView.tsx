@@ -9,6 +9,7 @@ import { applyMultipliers } from "@/lib/ontology/rules";
 import { formatRelative } from "@/lib/time";
 import type { BoardChanges, BoardContinent, BoardEvent, BoardFlow, FlowTrend, WorldBoard } from "@/types/world";
 import { BoardContext, continentColor, EventRow } from "./EventRow";
+import { MeCard } from "./MeCard";
 
 /** 파이프라인은 30분마다 돈다. 이보다 오래되면 늦어지고 있다고 알린다 */
 const STALE_MS = 2 * 3_600_000;
@@ -180,7 +181,8 @@ function Board({ board, since, now }: { board: WorldBoard; since: string | null;
   const context = useMemo(() => ({ events, since, now }), [events, since, now]);
   return (
     <BoardContext.Provider value={context}>
-      <section aria-labelledby="h-flows" className="mt-5">
+      <MeCard events={board.events} now={now} />
+      <section aria-labelledby="h-flows" className="mt-6">
         <h2 id="h-flows" className="mb-1 text-lg font-bold text-headline">
           지금 흐름
         </h2>

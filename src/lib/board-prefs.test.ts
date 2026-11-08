@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceVisit, BOARD_PREFS_KEY, BOARD_RULES_KEY, isNewSince, LocalStorageBoardPrefsRepository } from "./board-prefs";
+import { advanceVisit, BOARD_ME_KEY, BOARD_PREFS_KEY, BOARD_RULES_KEY, isNewSince, LocalStorageBoardPrefsRepository } from "./board-prefs";
 import { multipliersFromConfig } from "./ontology/rules";
 
 const at = (min: number) => new Date(Date.UTC(2026, 10, 1, 12, min)).toISOString();
@@ -104,5 +104,24 @@ describe("LocalStorageBoardPrefsRepository", () => {
     const repo = new LocalStorageBoardPrefsRepository(broken);
     expect(await repo.load()).toEqual({ lastVisitAt: null, previousVisitAt: null });
     await expect(repo.save({ lastVisitAt: at(0), previousVisitAt: null })).resolves.toBeUndefined();
+  });
+});
+
+describe("나 저장", () => {
+  it("저장하고 다시 읽고, 지우면 null", async () => {
+    const store = memory();
+    const repo = new LocalStorageBoardPrefsRepository(store);
+    expect(await repo.loadMe()).toBeNull();
+    const me = { situations: ["travel" as const], trips: [{ country: "FR", until: "2026-12-01" }] };
+    await repo.saveMe(me);
+    expect(JSON.parse(store.data[BOARD_ME_KEY])).toEqual(me);
+    expect(await repo.loadMe()).toEqual(me);
+    await repo.saveMe(null);
+    expect(store.data[BOARD_ME_KEY]).toBeUndefined();
+  });
+
+  it("깨진 값은 null", async () => {
+    const repo = new LocalStorageBoardPrefsRepository(memory({ [BOARD_ME_KEY]: "{깨짐" }));
+    expect(await repo.loadMe()).toBeNull();
   });
 });
