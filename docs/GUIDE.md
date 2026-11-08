@@ -14,6 +14,7 @@
 | 2 | [`README.md`](../README.md) | 목적과 원리 | 2분 |
 | 3 | [`PROGRESS.md`](PROGRESS.md) | 지금 어디까지 왔고 다음에 뭘 하나 | 2분 |
 | 4 | 사이트의 [`/ontology`](https://world-rss-desk.vercel.app/ontology), [`/relations`](https://world-rss-desk.vercel.app/relations) | 실제 숫자와 규칙, 내 기준 정하기, 나라·행위자 사이 관계 | 5분 |
+| 4-1 | [`ME.md`](ME.md) | 나에게 한 문장: 사용법(1부)과 기술 안내(2부) | 5분 |
 | 5 | [`ONTOLOGY.md`](ONTOLOGY.md) | 판단 기준의 설계 | 10분 |
 | 6 | [`src/ontology/world.ts`](../src/ontology/world.ts) | 판단 기준의 실제 값. **가장 먼저 읽을 코드** | 5분 |
 | 7 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 코드와 데이터 구조 | 10분 |
