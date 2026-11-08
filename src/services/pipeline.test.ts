@@ -198,6 +198,10 @@ describe("runPipeline", () => {
     expect(be.flow).toBe("mideast");
     expect(be.occurs).toEqual(["IR"]);
     expect(be.actors.find((a) => a.role === "subject")).toMatchObject({ id: "country:IR", nameKo: "이란" });
+    // 관계: 보도 나라 × 일어난 나라. 사건이 하나뿐이라 관계 온도 쌍은 아직 없다
+    expect(board.relations).toMatchObject({ days: 7, pairs: [] });
+    expect(board.relations!.interest.targets).toEqual(["IR"]);
+    expect([...board.relations!.interest.reporters].sort()).toEqual(["GB", "QA", "SG", "US"]);
     expect(be.score.multiplier).toBe(1.75);
     expect(board.flows.find((f) => f.id === "mideast")?.eventIds).toEqual([event.id]);
     expect(board.stats).toMatchObject({ feedsOk: 4, feedsFailed: 0, extracted: 1, articles: 4 });
@@ -327,6 +331,18 @@ describe("runPipeline", () => {
     await db.insert("board_snapshots", { generated_at: ago(60 * 2), payload: { world: [], it: [], events: [] } });
     await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW });
     expect(latestBoard(tables).changes).toBeUndefined();
+  });
+
+  it("관계 온도는 최근 7일 사건(지금 상황판에 없어도)의 주체·대상으로 센다", async () => {
+    const { db, tables } = memoryDb();
+    const old = (id: string, days: number) => ({ id, type: "event", props: { eventType: "sanction", title: id, summary: "", flow: null }, first_seen: ago(60 * 24 * days), last_seen: ago(60 * 24 * days) });
+    const role = (src: string, type: string, dst: string, nameKo: string) => ({ src, type, dst, props: { name: dst, nameKo, kind: "country" }, observed_at: ago(60), evidence: [], made_by: "ai" });
+    await db.upsert("objects", [old("event:a", 2), old("event:b", 5), old("event:c", 8)]);
+    await db.upsert("links", ["event:a", "event:b", "event:c"].flatMap((e) => [role(e, "subject", "country:US", "미국"), role(e, "target", "country:CN", "중국")]));
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), now: NOW });
+    const [pair] = latestBoard(tables).relations!.pairs;
+    expect(pair).toMatchObject({ a: { nameKo: "중국" }, b: { nameKo: "미국" }, conflict: 2, cooperation: 0, temperature: -1 });
+    expect(pair.events.map((e) => e.id)).toEqual(["event:a", "event:b"]);
   });
 
   it("기본 수집은 카탈로그 URL도 url-guard를 거친다", async () => {

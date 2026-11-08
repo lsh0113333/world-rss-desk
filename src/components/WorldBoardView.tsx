@@ -251,9 +251,14 @@ export function WorldBoardView() {
             </button>
           </span>
         )}
-        <Link href="/ontology" className="ml-auto text-[13px] text-muted hover:text-headline">
-          온톨로지
-        </Link>
+        <nav className="ml-auto flex gap-3 text-[13px] text-muted">
+          <Link href="/relations" className="hover:text-headline">
+            관계
+          </Link>
+          <Link href="/ontology" className="hover:text-headline">
+            온톨로지
+          </Link>
+        </nav>
       </header>
       {stale && <p className="mt-2 text-[13px] text-[var(--c-south-america)]">갱신이 늦어지고 있어요. 지금 보이는 내용은 조금 전 기준이에요.</p>}
 

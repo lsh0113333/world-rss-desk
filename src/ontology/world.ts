@@ -110,5 +110,20 @@ export const RULES = {
   changeGrowCountries: 3,
   /** "새로 오른 일", "커진 일", "내려간 일" 칸마다 보여 줄 수 */
   changeLimit: 3,
+  /** 관계 온도: 이 기간(일)의 사건을 센다 */
+  relationDays: 7,
+  /** 관계 온도: 이만큼 많은 사건에 함께 나와야 보여 준다 */
+  relationMinEvents: 2,
+  /** 행위자가 이보다 많은 사건은 누가 누구와인지 흐려서 세지 않는다 */
+  relationMaxActors: 6,
+  /** 행동(전투·제재·원조)은 말(비난·협상)보다 무겁게 센다 */
+  relationActionWeight: 2,
+  relationWordWeight: 1,
+  relationLimit: 10,
+  relationEvidenceLimit: 5,
+  /** 온도가 이보다 낮으면 "갈등", 높으면(부호 반대) "협력", 그 사이는 "엇갈림" */
+  relationLean: 0.33,
+  /** 나라끼리 관심 표의 나라 수 (보도 나라, 일어난 나라 각각) */
+  interestCountries: 8,
 } as const;
 export type Rules = typeof RULES;

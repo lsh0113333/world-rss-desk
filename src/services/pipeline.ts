@@ -3,6 +3,7 @@ import { normalizeLink } from "@/lib/merge";
 import { findClusters, planClusters, type Cluster, type EventProgress } from "@/lib/ontology/cluster";
 import { buildExtractPrompt, EXTRACT_SCHEMA, parseExtraction, type ExtractedEvent, type ExtractInput } from "@/lib/ontology/extract";
 import { inList, isValidLink } from "@/lib/ontology/graph";
+import { interestMatrix, relationPairs, type RelationEventInput } from "@/lib/ontology/relations";
 import { buildBoard, diffBoards, type PreviousBoard } from "@/lib/ontology/rules";
 import { hashId } from "@/lib/text";
 import { assertSafeUrl } from "@/lib/url-guard";
@@ -214,6 +215,23 @@ async function ontologyStats(db: Db): Promise<OntologyStats> {
   };
 }
 
+/** 관계 온도의 재료: 최근 며칠 사건과 그 행위자 (이미 저장된 객체·관계만 읽는다) */
+async function recentRelationEvents(db: Db, now: Date): Promise<RelationEventInput[]> {
+  const since = iso(now.getTime() - RULES.relationDays * DAY);
+  const events = await db.select<{ id: string; props: EventProps; last_seen: string }>("objects", `select=id,props,last_seen&type=eq.event&last_seen=gte.${since}`, { all: true });
+  const actors = new Map<string, RelationEventInput["actors"]>();
+  for (const ids of chunks(events.map((e) => e.id))) {
+    for (const l of await db.select<LinkRow>("links", `select=src,type,dst,props&src=${inList(ids)}&type=${inList(ACTOR_ROLES)}`, { all: true })) {
+      const list = actors.get(l.src) ?? [];
+      list.push({ id: l.dst, nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst), kind: l.props.kind as RelationEventInput["actors"][number]["kind"], role: l.type as RelationEventInput["actors"][number]["role"] });
+      actors.set(l.src, list);
+    }
+  }
+  return events
+    .filter((e) => EVENT_TYPES[e.props.eventType])
+    .map((e) => ({ id: e.id, title: e.props.title, type: e.props.eventType, lastSeenAt: e.last_seen, actors: actors.get(e.id) ?? [] }));
+}
+
 export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
   const { db, feeds, load = guardedLoad, extract, now = new Date(), log = () => {} } = deps;
   const run = await db.insert<{ id: number }>("pipeline_runs", { started_at: now.toISOString() });
@@ -378,6 +396,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
       `select=generated_at,payload&generated_at=lte.${iso(now.getTime() - RULES.changeHours * HOUR)}&order=generated_at.desc&limit=1`,
     );
     if (yesterday) board.changes = diffBoards(board, yesterday.payload, yesterday.generated_at);
+    board.relations = { days: RULES.relationDays, pairs: relationPairs(await recentRelationEvents(db, now)), interest: interestMatrix(board.events) };
     await db.insert("board_snapshots", { generated_at: seen, payload: board });
 
     const stats: PipelineStats = {

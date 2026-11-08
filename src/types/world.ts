@@ -145,6 +145,34 @@ export interface BoardChanges {
   faded: { id: string; title: string }[];
 }
 
+/** 관계 온도: 함께 나온 두 행위자 사이 (규칙으로 계산, docs/ONTOLOGY.md) */
+export interface RelationPair {
+  a: { id: string; nameKo: string; kind: ActorKind };
+  b: { id: string; nameKo: string; kind: ActorKind };
+  /** 갈등 사건 수 */
+  conflict: number;
+  /** 협력 사건 수 */
+  cooperation: number;
+  /** -1(갈등) ~ 1(협력) */
+  temperature: number;
+  /** 근거 사건 (최신순, 일부) */
+  events: { id: string; title: string; type: EventType; lastSeenAt: string }[];
+}
+
+/** 나라끼리 관심: reporters[i] 매체가 targets[j]에서 일어난 사건을 보도한 수 = counts[i][j] */
+export interface InterestMatrix {
+  reporters: CountryCode[];
+  targets: CountryCode[];
+  counts: number[][];
+}
+
+export interface BoardRelations {
+  /** 관계 온도를 센 기간(일) */
+  days: number;
+  pairs: RelationPair[];
+  interest: InterestMatrix;
+}
+
 export interface WorldBoard {
   generatedAt: string;
   stats: BoardStats;
@@ -155,6 +183,8 @@ export interface WorldBoard {
   events: BoardEvent[];
   /** 비교할 어제 기록이 없으면 없다 */
   changes?: BoardChanges;
+  /** 관계 (2단계). 예전 상황판에는 없다 */
+  relations?: BoardRelations;
 }
 
 export interface ActorProfile {
