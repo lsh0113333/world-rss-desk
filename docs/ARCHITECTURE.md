@@ -12,13 +12,14 @@
    3. 읽기   새 묶음만 Gemini로 추출 (lib/ontology/extract)           ─AI
    4. 저장   objects / links (lib/ontology/graph로 검증)              ─규칙
    5. 판단   점수·순위·연관·추세 (lib/ontology/rules)                 ─규칙
+            관계 온도·나라끼리 관심 (lib/ontology/relations)          ─규칙
    6. 결과   board_snapshots에 상황판 JSON 저장
    ▼
  Supabase (PostgreSQL, RLS: 공개 읽기 전용)
    ▲ publishable 키로 읽기
  Vercel: /api/world, /api/actors (CDN 캐시)
    ▲
- 브라우저: /, /actors/[id], /ontology
+ 브라우저: /, /actors/[id], /relations, /ontology
 ```
 
 ## 디렉토리
@@ -33,7 +34,8 @@ src/
 │   ├── cluster.ts           # 규칙 묶기, AI에 보낼 묶음 정하기
 │   ├── extract.ts           # AI 프롬프트·스키마·응답 검증
 │   ├── graph.ts             # 관계가 설정에 맞는지 검사
-│   └── rules.ts             # 판단: 점수, 세계 5, IT 5, 대륙별, 흐름, 연관, 같은 사건 합치기
+│   ├── rules.ts             # 판단: 점수, 세계 5, IT 5, 대륙별, 흐름, 연관, 같은 사건 합치기
+│   └── relations.ts         # 관계 온도(7일), 나라끼리 관심(24시간)
 ├── lib/board-prefs.ts       # 방문 기록과 내 기준 (BoardPrefsRepository, localStorage)
 ├── services/
 │   ├── pipeline.ts          # 파이프라인 전체 흐름

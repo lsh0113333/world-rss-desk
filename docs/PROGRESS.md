@@ -1,11 +1,11 @@
 # 진행 상황
 
-마지막 갱신: 2026-11-03. 새 대화는 이 파일 → `CLAUDE.md` → `intent/` 순서로 읽고 "남은 작업"부터 이어 간다. 사람이 처음 볼 때는 `docs/GUIDE.md`.
+마지막 갱신: 2026-11-08. 새 대화는 이 파일 → `CLAUDE.md` → `intent/` 순서로 읽고 "남은 작업"부터 이어 간다. 사람이 처음 볼 때는 `docs/GUIDE.md`.
 
 ## 지금 상태 (배포됨: https://world-rss-desk.vercel.app)
-**오늘의 세계 + 온톨로지 실험실** — `intent/2026-10-23-ontology-lab.md` 로드맵 0·1단계 완료. 구조는 `docs/ARCHITECTURE.md`, 판단 기준은 `docs/ONTOLOGY.md`.
+**오늘의 세계 + 온톨로지 실험실** — `intent/2026-10-23-ontology-lab.md` 로드맵 0·1·2단계 완료. 구조는 `docs/ARCHITECTURE.md`, 판단 기준은 `docs/ONTOLOGY.md`.
 - 파이프라인: Supabase pg_cron 30분 → GitHub Actions → 수집 → 규칙 묶기 → Gemini 읽기(새 묶음만) → objects/links → 규칙 판단 → board_snapshots
-- 화면: `/`(지금 흐름, 세계 5, IT 5, 어제와 달라진 것, 대륙별, 사건 펼침), `/actors/[id]`, `/ontology`(내 기준 정하기: 브라우저에 저장, 메인에 반영)
+- 화면: `/`(지금 흐름, 세계 5, IT 5, 어제와 달라진 것, 대륙별, 사건 펼침), `/actors/[id]`, `/relations`(관계 온도 7일, 나라끼리 관심 24시간, ADR-023), `/ontology`(내 기준 정하기: 브라우저에 저장, 메인에 반영)
 - 로컬: `npm run query -- "select ..."`, 판단 기준 수정은 `src/ontology/world.ts`
 - **매니저 안내: `docs/GUIDE.md`** (보는 순서, 무엇을 어디서 바꾸나), 작업 틀: `docs/HARNESS.md`
 
@@ -16,7 +16,7 @@
    **사용자가 직접 실행**: `! bash scripts/apply-migration.sh supabase/migrations/0004_drop_old_tables.sql` (옛 테이블 6개와 `articles.image` 삭제, 되돌릴 수 없음. 2026-11-02에 다시 시도했지만 안전 장치가 또 막았다. 안 해도 동작에는 영향 없음)
    `! npx vercel env rm CRON_SECRET production --yes` (안 쓰는 Vercel 비밀값 삭제. 같은 이유로 직접 실행)
 1. **사용자 피드백**: 실제 사이트를 PC와 폰에서 써 본 의견
-2. **2단계 분석** (로드맵): 어제 대비 변화는 배포됨. 남은 것은 나라 × 나라 관심 행렬, 행위자 관계 온도
+2. **2단계 관찰** (2026-11-08 배포): 첫 결과 1위는 러시아 ↔ 우크라이나(갈등 15). "트럼프 ↔ 미국"처럼 사람과 자기 나라가 쌍이 되는 잡음이 있고, 관심 표는 하루치라 숫자가 작다(한국 매체가 상위 8개에 안 듦). 며칠 보고 사람→나라 묶기나 기간 조정을 정한다
 3. **3단계**: "나" 객체 + 규칙 → 나에게 한 문장 + 근거. 그다음 4단계(로그인), 5단계(공공 지원)
 4. **추출 품질**: AI가 장소를 틀리게 잡는 경우가 있다(스포츠 사건이 엉뚱한 나라로). 같은 일의 다른 표현은 제목 합치기로 못 잡는다(프랑스·독일 시위가 따로). 관찰 후 규칙·프롬프트 조정
 5. **Vercel 자동 배포**: 사용자가 https://vercel.com/account/login-connections 에서 GitHub 연결하면 `npx vercel git connect`. 지금은 `npx vercel deploy --prod --yes`. 파이프라인 코드는 GitHub에 올리면 다음 실행부터 바로 반영된다
