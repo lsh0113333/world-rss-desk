@@ -27,6 +27,7 @@
 src/
 ├── ontology/                # 온톨로지 정의 (코드가 아니라 데이터)
 │   ├── world.ts             # 객체·관계 종류, 사건 유형과 배수, 큰 흐름, 규칙 숫자 ← 판단 기준은 전부 여기
+│   ├── me.ts                # 나 객체: 내 상황, 권고 규칙과 문장 틀
 │   ├── countries.ts         # 대륙 7개, 나라 → 대륙 (매체 없는 나라 포함)
 │   └── outlets.ts           # 매체 → 본사 나라
 ├── lib/ontology/
@@ -35,8 +36,9 @@ src/
 │   ├── extract.ts           # AI 프롬프트·스키마·응답 검증
 │   ├── graph.ts             # 관계가 설정에 맞는지 검사
 │   ├── rules.ts             # 판단: 점수, 세계 5, IT 5, 대륙별, 흐름, 연관, 같은 사건 합치기
-│   └── relations.ts         # 관계 온도(7일), 나라끼리 관심(24시간)
-├── lib/board-prefs.ts       # 방문 기록과 내 기준 (BoardPrefsRepository, localStorage)
+│   ├── relations.ts         # 관계 온도(7일), 나라끼리 관심(24시간)
+│   └── me.ts                # 나에게 한 문장: 나 객체 × 사건 → 권고 (브라우저에서 계산)
+├── lib/board-prefs.ts       # 방문 기록, 내 기준, 나 (BoardPrefsRepository, localStorage)
 ├── services/
 │   ├── pipeline.ts          # 파이프라인 전체 흐름
 │   ├── world.ts             # 화면용 읽기 (상황판, 행위자)
