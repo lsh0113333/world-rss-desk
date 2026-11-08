@@ -22,7 +22,10 @@ export interface AdviceRule {
   advice: string;
 }
 
-/** 사건 하나에는 위에서부터 처음 맞는 규칙 하나만 쓴다 */
+/**
+ * 사건 하나에는 위에서부터 처음 맞는 규칙 하나만 쓴다.
+ * "기업·기술 전체" 같은 넓은 규칙은 두지 않는다 (2026-11-08 실제 데이터: 드라마 제작 소식에 업무 권고가 붙었다)
+ */
 export const ADVICE_RULES: readonly AdviceRule[] = [
   { id: "travel-conflict", situation: "travel", when: { types: ["armed-conflict"] }, advice: "외교부 해외안전여행 경보를 확인하고 일정을 다시 보세요" },
   { id: "travel-disaster", situation: "travel", when: { types: ["disaster"] }, advice: "현지 교통과 숙소가 정상 운영되는지 확인해 보세요" },
@@ -32,10 +35,11 @@ export const ADVICE_RULES: readonly AdviceRule[] = [
   { id: "it-bigtech", situation: "it-work", when: { flows: ["bigtech"] }, advice: "쓰는 클라우드·플랫폼의 정책이나 약관이 바뀌는지 확인해 보세요" },
   { id: "it-chips", situation: "it-work", when: { flows: ["chips"] }, advice: "반도체 쪽 고객사·장비 일정에 영향이 있는지 확인해 보세요" },
   { id: "it-ai", situation: "it-work", when: { flows: ["ai-race"] }, advice: "업무에 쓰는 AI 도구·API의 정책이나 가격이 바뀌는지 확인해 보세요" },
-  { id: "it-tech", situation: "it-work", when: { types: ["tech"] }, advice: "관련 시스템이나 고객사에 영향이 있는지 확인해 보세요" },
 ];
 
 export const ME_RULES = {
+  /** 이만큼 많은 나라가 보도한 일만 나에게 걸린다 (한 나라만 보도한 작은 사고에 권고하지 않게) */
+  minCountries: 2,
   /** 한 문장 아래에 함께 보여 줄 "더 확인할 것" 수 */
   moreLimit: 2,
   /** 해외 일정 나라 수 */

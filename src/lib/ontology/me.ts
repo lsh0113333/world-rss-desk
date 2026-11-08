@@ -44,6 +44,7 @@ export function adviseMe(me: Me, events: readonly BoardEvent[], today: string): 
   const trips = activeTrips(me.trips, today);
   const out: { advice: Advice; priority: number; score: number }[] = [];
   for (const event of events) {
+    if (event.reporting.length < ME_RULES.minCountries) continue;
     for (const rule of ADVICE_RULES) {
       if (!me.situations.includes(rule.situation) || !matches(rule, event)) continue;
       const reported = `${event.reporting.length}개 나라 보도`;

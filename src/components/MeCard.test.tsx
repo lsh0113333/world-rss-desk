@@ -4,6 +4,13 @@ import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BOARD_ME_KEY } from "@/lib/board-prefs";
 import { boardFixture } from "./__fixtures__/board";
+
+/** 나에게 걸리려면 2개 나라 이상이 보도해야 한다 (ME_RULES.minCountries) */
+function board() {
+  const b = boardFixture();
+  for (const e of b.events) if (e.reporting.length < 2) e.reporting = [...e.reporting, "US"];
+  return b;
+}
 import { WorldBoardView } from "./WorldBoardView";
 
 const fetchMock = vi.fn();
@@ -20,7 +27,7 @@ function renderBoard() {
 beforeEach(() => {
   window.localStorage.clear();
   fetchMock.mockReset();
-  fetchMock.mockImplementation(() => json(boardFixture()));
+  fetchMock.mockImplementation(() => json(board()));
   vi.stubGlobal("fetch", fetchMock);
 });
 afterEach(() => vi.unstubAllGlobals());

@@ -57,6 +57,11 @@ describe("adviseMe", () => {
     expect(list[0].sentence).toBe("사이버 보안: 대형 해킹 소식이 있어요(3개 나라 보도). 연계 시스템의 접속 기록과 인증서를 점검해 보세요.");
   });
 
+  it("한 나라만 보도한 일, 넓은 기업·기술 소식은 걸리지 않는다", () => {
+    const small = [ev("fire-us", { type: "disaster", occurs: ["US"], reporting: ["US"] }), ev("drama", { type: "tech", title: "드라마 제작 발표" })];
+    expect(adviseMe({ situations: ["travel", "it-work"], trips: [{ country: "US" }] }, small, "2026-11-08")).toEqual([]);
+  });
+
   it("일정이 끝났거나 걸리는 일이 없으면 빈 목록", () => {
     expect(adviseMe({ situations: ["travel"], trips: [{ country: "FR", until: "2026-11-01" }] }, EVENTS, "2026-11-08")).toEqual([]);
     expect(adviseMe({ situations: ["travel"], trips: [{ country: "BR" }] }, EVENTS, "2026-11-08")).toEqual([]);
