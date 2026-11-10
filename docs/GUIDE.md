@@ -13,11 +13,10 @@
 | 1 | [사이트](https://world-rss-desk.vercel.app) | 결과물 | 2분 |
 | 2 | [`README.md`](../README.md) | 목적과 원리 | 2분 |
 | 3 | [`PROGRESS.md`](PROGRESS.md) | 지금 어디까지 왔고 다음에 뭘 하나 | 2분 |
-| 4 | 사이트의 [`/ontology`](https://world-rss-desk.vercel.app/ontology), [`/relations`](https://world-rss-desk.vercel.app/relations) | 실제 숫자와 규칙, 내 기준 정하기, 나라·행위자 사이 관계 | 5분 |
-| 4-1 | [`ME.md`](ME.md) | 나에게 한 문장: 사용법(1부)과 기술 안내(2부) | 5분 |
-| 5 | [`ONTOLOGY.md`](ONTOLOGY.md) | 판단 기준의 설계 | 10분 |
+| 4 | [`USAGE.md`](USAGE.md) | 화면별 사용법, 나에게 한 문장 정하기 | 5분 |
+| 5 | [`ONTOLOGY.md`](ONTOLOGY.md) + 사이트 [`/ontology`](https://world-rss-desk.vercel.app/ontology) | 온톨로지의 수준, 정의, 판단 규칙. 페이지에서 실제 숫자 | 10분 |
 | 6 | [`src/ontology/world.ts`](../src/ontology/world.ts) | 판단 기준의 실제 값. **가장 먼저 읽을 코드** | 5분 |
-| 7 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 코드와 데이터 구조 | 10분 |
+| 7 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 원리, 전체 흐름, 코드와 데이터 구조 | 10분 |
 
 코드는 이 순서로 읽으면 흐름대로 따라갈 수 있다.
 
@@ -38,7 +37,9 @@ Supabase pg_cron이 30분마다 요청 → GitHub Actions에서 파이프라인 
  3. 읽기  새 묶음만 사건·행위자·장소 추출         AI (Gemini)
  4. 저장  객체와 관계로 저장                     규칙 (PostgreSQL)
  5. 판단  점수 = 보도 규모 × 유형 배수 + 떠오름   규칙
+          관계 온도, 나라끼리 관심
  6. 결과  상황판 저장 → 사이트는 이것만 읽음      Vercel
+ 브라우저: 내 기준(배수)으로 순위 다시 계산, 나 × 사건 → 나에게 한 문장
 ```
 
 온톨로지는 사람이 정한 설계도이고(`world.ts`), Gemini는 칸을 채우고, PostgreSQL은 저장하고, 규칙이 판단한다. 노트북을 꺼도 전부 돌아간다.
@@ -54,6 +55,8 @@ Supabase pg_cron이 30분마다 요청 → GitHub Actions에서 파이프라인 
 | AI에게 시키는 내용 | `src/lib/ontology/extract.ts` | **B** |
 | 묶는 방식, AI 호출 수 | `src/lib/ontology/cluster.ts`, `events.ts` | **B** |
 | 판단 방식 (연관, 합치기) | `src/lib/ontology/rules.ts` | **A** |
+| 관계 온도, 나라끼리 관심 | `world.ts`의 `RULES`(`relation*`, `interest*`), `src/lib/ontology/relations.ts` | **A** |
+| 나에게 한 문장 (상황, 규칙, 문구) | `src/ontology/me.ts` | **C** |
 | 매체 추가·삭제 | `src/data/catalog.json`, 필요하면 `src/ontology/outlets.ts` ([FEEDS.md](FEEDS.md) 5절) | **B** |
 | 화면 | `src/components/` ([UI_GUIDE.md](UI_GUIDE.md)) | **C** |
 | 저장 구조 | `supabase/migrations/`에 파일 추가 후 `bash scripts/apply-migration.sh <파일>` | 코드와 함께 |

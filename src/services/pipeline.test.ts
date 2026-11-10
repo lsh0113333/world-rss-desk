@@ -269,7 +269,10 @@ describe("runPipeline", () => {
     const { db, tables } = memoryDb();
     const partial = { ...hormuz };
     delete partial["sg-st"];
-    const stats = await runPipeline({ db, feeds: FEEDS, load: loader(partial), extract: aiEvent(), now: NOW });
+    const logs: string[] = [];
+    const stats = await runPipeline({ db, feeds: FEEDS, load: loader(partial), extract: aiEvent(), now: NOW, log: (m) => logs.push(m) });
+    // 어느 피드가 실패했는지 실행 기록에 남긴다
+    expect(logs).toContain("실패 피드: sg-st (피드 실패)");
     expect(stats.feedsFailed).toBe(1);
     expect(latestBoard(tables).world).toHaveLength(1);
   });

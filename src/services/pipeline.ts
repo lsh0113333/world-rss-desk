@@ -117,7 +117,7 @@ const guardedLoad: NonNullable<PipelineDeps["load"]> = (url, opts) => loadFeed(u
 async function ingest(feeds: readonly CatalogFeed[], load: NonNullable<PipelineDeps["load"]>, now: Date) {
   const articles: ArticleRow[] = [];
   let ok = 0;
-  let failed = 0;
+  const failedFeeds: string[] = [];
   const queue = feeds.filter((f) => baseCountry(f));
   await Promise.all(
     Array.from({ length: Math.min(20, queue.length) }, async () => {
@@ -141,14 +141,14 @@ async function ingest(feeds: readonly CatalogFeed[], load: NonNullable<PipelineD
               published_at: a.publishedAt,
             });
           }
-        } catch {
-          failed++;
+        } catch (err) {
+          failedFeeds.push(`${feed.id} (${err instanceof Error ? err.message : String(err)})`);
         }
       }
     }),
   );
   // 같은 링크가 여러 피드에 있으면 하나만 (upsert 한 배치 안 충돌 방지)
-  return { articles: [...new Map(articles.map((a) => [a.id, a])).values()], ok, failed };
+  return { articles: [...new Map(articles.map((a) => [a.id, a])).values()], ok, failed: failedFeeds.length, failedFeeds };
 }
 
 /** 설정에서 오는 뼈대(대륙·나라·큰 흐름·매체)를 그래프에 맞춘다. 멱등 */
@@ -244,6 +244,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
     await db.upsert("articles", ingested.articles, { ignoreDuplicates: true });
     await seedStatic(db, feeds, now);
     log(`수집: 피드 ${ingested.ok}개 성공, ${ingested.failed}개 실패, 기사 ${ingested.articles.length}개`);
+    if (ingested.failedFeeds.length > 0) log(`실패 피드: ${ingested.failedFeeds.join(", ")}`);
 
     // 2) 최근 24시간 기사 (본사 나라는 카탈로그 기준으로 다시 맞춘다)
     const feedById = new Map(feeds.map((f) => [f.id, f]));
