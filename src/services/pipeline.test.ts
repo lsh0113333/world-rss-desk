@@ -201,7 +201,8 @@ describe("runPipeline", () => {
     // 관계: 보도 나라 × 일어난 나라. 사건이 하나뿐이라 관계 온도 쌍은 아직 없다
     expect(board.relations).toMatchObject({ days: 7, pairs: [] });
     expect(board.relations!.interest.targets).toEqual(["IR"]);
-    expect([...board.relations!.interest.reporters].sort()).toEqual(["GB", "QA", "SG", "US"]);
+    // 한국 매체 줄은 보도가 없어도 항상 있다 (RULES.interestAlwaysReporters)
+    expect([...board.relations!.interest.reporters].sort()).toEqual(["GB", "KR", "QA", "SG", "US"]);
     expect(be.score.multiplier).toBe(1.75);
     expect(board.flows.find((f) => f.id === "mideast")?.eventIds).toEqual([event.id]);
     expect(board.stats).toMatchObject({ feedsOk: 4, feedsFailed: 0, extracted: 1, articles: 4 });

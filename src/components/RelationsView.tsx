@@ -100,7 +100,7 @@ function Relations({ relations }: { relations: BoardRelations }) {
           관계 온도 <span className="text-sm font-normal text-muted">최근 {relations.days}일</span>
         </h2>
         <p className="mt-1 text-[13px] text-muted">
-          함께 나온 사건 중 공격·제재·비난은 갈등, 협상·원조는 협력으로 셉니다. 말보다 행동을 {RULES.relationActionWeight}배 무겁게 봅니다. 누르면 근거 사건이 나와요.
+          누가 누구에게 한 일(주체 → 대상)만 셉니다. 공격·제재·비난은 갈등, 협상·원조는 협력입니다. 말보다 행동을 {RULES.relationActionWeight}배 무겁게 봅니다. 누르면 근거 사건이 나와요.
         </p>
         {relations.pairs.length > 0 ? (
           <ul aria-label="관계 온도" className="mt-3">

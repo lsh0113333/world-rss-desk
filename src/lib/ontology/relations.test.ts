@@ -51,6 +51,15 @@ describe("relationPairs", () => {
     expect(pairs[0]).toMatchObject({ cooperation: 2, conflict: 0, temperature: 1 });
   });
 
+  it("둘 다 주체(같은 편)인 쌍은 관계로 세지 않는다 — 트럼프 ↔ 미국 잡음", () => {
+    const TRUMP: A = { id: "actor:person:donald trump", nameKo: "도널드 트럼프", kind: "person" };
+    const pairs = relationPairs([ev("sanction", [s(TRUMP), s(US), t(CN)]), ev("sanction", [s(TRUMP), s(US), t(CN)])]);
+    const names = pairs.map((x) => [x.a.nameKo, x.b.nameKo].sort().join("-"));
+    expect(names).toContain("도널드 트럼프-중국");
+    expect(names).toContain("미국-중국");
+    expect(names).not.toContain("도널드 트럼프-미국");
+  });
+
   it("무게가 큰 쌍이 먼저, 근거는 최신순으로 자른다", () => {
     const pairs = relationPairs([
       ev("verbal-conflict", [s(KR), t(UN)]),
@@ -76,6 +85,14 @@ describe("interestMatrix", () => {
     expect(at("JP", "US")).toBe(1);
     expect(at("US", "JP")).toBe(1);
     expect(m.targets).not.toContain("KR");
+  });
+
+  it("한국 매체 줄은 상위에 없어도 항상 넣는다 (보는 사람이 한국)", () => {
+    const codes = "AA BB CC DD EE FF GG HH".split(" ");
+    const m = interestMatrix([...codes.flatMap((c) => [be([c], ["ZZ"]), be([c], ["YY"])]), be(["KR"], ["ZZ"])]);
+    expect(m.reporters).toHaveLength(8);
+    expect(m.reporters).toContain("KR");
+    expect(m.counts[m.reporters.indexOf("KR")][m.targets.indexOf("ZZ")]).toBe(1);
   });
 
   it("나라 수를 규칙 숫자로 자른다", () => {

@@ -17,17 +17,17 @@ export interface RelationEventInput {
 
 type Actor = RelationEventInput["actors"][number];
 
-/** 사건 하나에서 나오는 쌍: 주체가 있으면 주체와 나머지, 없으면 모두끼리 */
+/**
+ * 사건 하나에서 나오는 쌍: "누가 누구에게". 주체가 있으면 주체 × (대상·참여자),
+ * 없으면 참여자끼리. 주체끼리(같은 편, 예: 트럼프와 미국)는 쌍으로 보지 않는다.
+ */
 function pairsOf(actors: Actor[]): [Actor, Actor][] {
+  const subjectIds = new Set(actors.filter((a) => a.role === "subject").map((a) => a.id));
   const unique = [...new Map(actors.map((a) => [a.id, a])).values()];
-  const subjects = new Set(actors.filter((a) => a.role === "subject").map((a) => a.id));
-  const out: [Actor, Actor][] = [];
-  for (let i = 0; i < unique.length; i++) {
-    for (let j = i + 1; j < unique.length; j++) {
-      if (subjects.size === 0 || subjects.has(unique[i].id) || subjects.has(unique[j].id)) out.push([unique[i], unique[j]]);
-    }
-  }
-  return out;
+  const subjects = unique.filter((a) => subjectIds.has(a.id));
+  const others = unique.filter((a) => !subjectIds.has(a.id));
+  if (subjects.length > 0) return subjects.flatMap((s) => others.map((o): [Actor, Actor] => [s, o]));
+  return others.flatMap((a, i) => others.slice(i + 1).map((b): [Actor, Actor] => [a, b]));
 }
 
 export function relationPairs(events: readonly RelationEventInput[], rules = RULES): RelationPair[] {
@@ -91,6 +91,10 @@ export function interestMatrix(events: readonly Pick<BoardEvent, "reporting" | "
       .slice(0, rules.interestCountries)
       .map(([k]) => k);
   const reporters = top(byReporter);
+  // 보는 사람의 나라 줄은 상위에 없어도 넣는다 (마지막 자리와 바꾼다)
+  for (const code of rules.interestAlwaysReporters) {
+    if (!reporters.includes(code)) reporters.splice(Math.max(0, Math.min(reporters.length, rules.interestCountries - 1)), 1, code);
+  }
   const targets = top(byTarget);
   return { reporters, targets, counts: reporters.map((r) => targets.map((t) => counts.get(`${r}|${t}`) ?? 0)) };
 }

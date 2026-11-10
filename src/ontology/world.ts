@@ -125,5 +125,7 @@ export const RULES = {
   relationLean: 0.33,
   /** 나라끼리 관심 표의 나라 수 (보도 나라, 일어난 나라 각각) */
   interestCountries: 8,
+  /** 상위에 없어도 관심 표에 항상 넣는 보도 나라 (보는 사람의 나라) */
+  interestAlwaysReporters: ["KR"],
 } as const;
 export type Rules = typeof RULES;
