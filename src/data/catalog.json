@@ -150,17 +150,6 @@
     "language": "en"
   },
   {
-    "id": "jp-nikkei-economy",
-    "name": "Nikkei Asia",
-    "url": "https://asia.nikkei.com/rss/feed/nar",
-    "homepage": "https://asia.nikkei.com",
-    "continent": "asia",
-    "country": "JP",
-    "category": "economy",
-    "language": "en",
-    "note": "발행 시각 없음"
-  },
-  {
     "id": "cn-scmp-top",
     "name": "South China Morning Post",
     "url": "https://www.scmp.com/rss/4/feed/",
@@ -1506,13 +1495,13 @@
   },
   {
     "id": "de-spiegel-top",
-    "name": "DER SPIEGEL International",
-    "url": "https://www.spiegel.de/international/index.rss",
-    "homepage": "https://www.spiegel.de/international/",
+    "name": "DER SPIEGEL",
+    "url": "https://www.spiegel.de/schlagzeilen/index.rss",
+    "homepage": "https://www.spiegel.de",
     "continent": "europe",
     "country": "DE",
     "category": "top",
-    "language": "en"
+    "language": "de"
   },
   {
     "id": "fr-rfi-top",
@@ -1786,26 +1775,6 @@
     "language": "en"
   },
   {
-    "id": "no-newsinenglish-top",
-    "name": "News in English",
-    "url": "https://www.newsinenglish.no/feed/",
-    "homepage": "https://www.newsinenglish.no",
-    "continent": "europe",
-    "country": "NO",
-    "category": "top",
-    "language": "en"
-  },
-  {
-    "id": "no-newsinenglish-economy",
-    "name": "News in English",
-    "url": "https://www.newsinenglish.no/category/business/feed/",
-    "homepage": "https://www.newsinenglish.no",
-    "continent": "europe",
-    "country": "NO",
-    "category": "economy",
-    "language": "en"
-  },
-  {
     "id": "no-lifeinnorway-culture",
     "name": "Life in Norway",
     "url": "https://www.lifeinnorway.net/feed/",
@@ -1860,16 +1829,6 @@
     "name": "Yle News",
     "url": "https://yle.fi/rss/news",
     "homepage": "https://yle.fi/news",
-    "continent": "europe",
-    "country": "FI",
-    "category": "top",
-    "language": "en"
-  },
-  {
-    "id": "fi-helsinkitimes-top",
-    "name": "Helsinki Times",
-    "url": "https://www.helsinkitimes.fi/?format=feed&type=rss",
-    "homepage": "https://www.helsinkitimes.fi",
     "continent": "europe",
     "country": "FI",
     "category": "top",

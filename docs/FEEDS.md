@@ -13,12 +13,12 @@
 
 파이프라인은 매체를 **본사 나라의 시각**으로 다룬다. 묶음 지역·국제 구역 매체의 본사 나라는 `src/ontology/outlets.ts`에 있다(UN News, AllAfrica는 나라의 시각이 아니라서 쓰지 않는다).
 
-## 2. 현재 수록 현황 — 피드 282개
+## 2. 현재 수록 현황 — 피드 278개
 
 | 지역 | 매체 (피드 수: 수록 분야) |
 |------|--------------------------|
 | 🇰🇷 한국 | 연합뉴스 (7: 종합·정치·경제·국제·사회·문화·스포츠), 한국경제 (7: 종합·정치·경제·IT·국제·사회·스포츠), 매일경제 (3: 종합·경제·국제), 전자신문 (1: IT), 조선일보 (5: 종합·정치·경제·사회·국제), 동아일보 (7: 종합·정치·경제·국제·문화·스포츠·과학), 경향신문 (4: 종합·정치·경제·사회), SBS 뉴스 (6: 정치·경제·사회·국제·문화·스포츠) |
-| 🇯🇵 일본 | The Japan Times (1: 종합), The Mainichi (1: 종합), Nikkei Asia (1: 경제) |
+| 🇯🇵 일본 | The Japan Times (1: 종합), The Mainichi (1: 종합) |
 | 🇨🇳 중국 | South China Morning Post (3: 종합·경제·IT), CGTN (3: 종합·경제·과학) |
 | 🇮🇳 인도 | The Times of India (2: 종합·경제), The Hindu (3: 종합·경제·IT), The Economic Times (2: 경제·IT) |
 | 🇻🇳 베트남 | VnExpress International (2: 종합·경제) |
@@ -30,7 +30,7 @@
 | 🇺🇸 미국 | The New York Times (8: 종합·정치·경제·IT·과학·건강·문화·환경), NPR (7: 종합·정치·경제·IT·과학·문화·건강), CNBC (3: 종합·경제·IT), TechCrunch (1: IT), The Verge (1: IT), ESPN (1: 스포츠), Engadget (1: IT), ZDNET (1: IT), BleepingComputer (1: IT), TechSpot (1: IT), 9to5Mac (1: IT), Android Authority (1: IT) |
 | 🇨🇦 캐나다 | CBC News (7: 종합·정치·경제·IT·건강·문화·스포츠), Global News (1: 종합) |
 | 🇬🇧 영국 | BBC News (7: 종합·정치·경제·IT·과학·건강·문화), The Guardian (10: 종합·정치·경제·IT·과학·사회·건강·환경·문화·스포츠), BBC Sport (1: 스포츠), The Register (1: IT), Computer Weekly (1: IT), TechRadar (1: IT) |
-| 🇩🇪 독일 | DW (2: 종합·경제), DER SPIEGEL International (1: 종합), The Local Germany (1: 종합) |
+| 🇩🇪 독일 | DW (2: 종합·경제), DER SPIEGEL (1: 종합, 독일어), The Local Germany (1: 종합) |
 | 🇫🇷 프랑스 | Le Monde (1: 종합), France 24 (2: 국제·경제), RFI (1: 종합), The Local France (1: 종합) |
 | 🇪🇸 스페인 | EL PAÍS English (1: 종합), The Local Spain (1: 종합) |
 | 🇮🇹 이탈리아 | ANSA English (1: 종합), The Local Italy (1: 종합) |
@@ -43,10 +43,10 @@
 | 🇦🇹 오스트리아 | The Local Austria (1: 종합) |
 | 🇵🇹 포르투갈 | The Portugal News (1: 종합), Portugal Resident (1: 종합) |
 | 🇬🇷 그리스 | Kathimerini English (1: 종합) |
-| 🇳🇴 노르웨이 | The Local Norway (1: 종합), News in English (2: 종합·경제), Life in Norway (1: 문화) |
+| 🇳🇴 노르웨이 | The Local Norway (1: 종합), Life in Norway (1: 문화) |
 | 🇸🇪 스웨덴 | The Local Sweden (1: 종합), Radio Sweden (1: 종합) |
 | 🇩🇰 덴마크 | The Local Denmark (1: 종합), The Copenhagen Post (1: 종합) |
-| 🇫🇮 핀란드 | Yle News (1: 종합), Helsinki Times (1: 종합) |
+| 🇫🇮 핀란드 | Yle News (1: 종합) |
 | 🇮🇸 아이슬란드 | RÚV English (1: 종합), Reykjavik Grapevine (1: 문화) |
 | 🇵🇱 폴란드 | Notes from Poland (1: 종합) |
 | 🇨🇿 체코 | Prague Morning (1: 종합) |
@@ -74,6 +74,7 @@
 | 🌐 국제 | BBC News (1: 국제), The Guardian (1: 국제), The New York Times (1: 국제), South China Morning Post (1: 국제), UN News (1: 국제), DW (1: 국제), WIRED (1: IT), Ars Technica (1: IT), MIT Technology Review (1: IT), Phys.org (1: 과학), Science News (1: 과학), ScienceDaily (1: 과학), Hacker News (1: IT), The Hacker News (1: IT), InfoQ (1: IT), Rest of World (1: IT), IEEE Spectrum (1: IT) |
 
 - 2026-10-17: 78 → 177개 (분야 6→11개, 나라 13→36개)
+- 2026-11-10: 282 → 278개 — 실패·정체 피드 정리. 뺌: Helsinki Times(HTTP 403), News in English 2개(시간 초과, 4일째 새 기사 없음), Nikkei Asia(발행 시각 없음 → 수집돼도 버려짐). 고침: DER SPIEGEL International이 7일째 멈춰 독일어 헤드라인 피드로 교체
 - 2026-11-02: 270 → 282개 — 중남미 10개(Folha, g1, Clarín, La Nación, Infobae, El Universal, La Jornada, El Tiempo, La Tercera, El Comercio: 포르투갈어·스페인어), 아프리카 2개(MyJoyOnline, Jeune Afrique: 프랑스어)
 - 2026-10-18: 177 → 270개 — 노르웨이·북유럽·아일랜드·유럽 각국, 유럽·국제 IT, UAE·사우디·카타르 (**영어판만**, `intent/2026-10-18-rss-expansion-2.md`)
 
@@ -85,7 +86,7 @@
 2. **무료, 로그인 불필요**
 3. **실제 접속 성공**: 내 PC(`npm run feeds:check`)와 **수집 서버**(GitHub Actions 실행 로그) 양쪽에서
 4. **살아 있는 피드**: 최신 기사가 72시간 이내
-5. **기사에 발행 시각이 있을 것** (정렬·72시간 필터에 필요. 예외: Nikkei Asia — 대체 매체가 없어 수록)
+5. **기사에 발행 시각이 있을 것** (정렬·72시간 필터에 필요. 날짜가 없으면 파이프라인이 버린다)
 6. 11개 분야 중 하나에 **명확히 대응**할 것
 7. 해외 매체는 **영어판 우선**. 영어 매체가 적은 지역은 현지어도 넣는다(사건 요약은 한국어로 만들어진다). 북유럽처럼 영어판이 적은 곳은 The Local·News in English·Yle News 같은 영어 매체로 채운다
 8. 국영·관영 매체는 넣되 `note`로 표시 (CGTN "중국 정부 시각", TASS "러시아 정부 시각", Tehran Times "이란 정부 시각")
@@ -123,6 +124,10 @@
 | News of Bahrain, The New Arab | 집에서는 되지만 Vercel 서버 IP 차단 (403) |
 | Arabian Business, AGBI | 이 앱의 요청을 차단 (403 / 405) |
 | Al Arabiya English, Jordan Times, L'Orient Today, Gulf Business, Gulf Today, Iceland Review, Euractiv | 403 |
+| **수록 후 뺀 것(2026-11-10)** | |
+| Helsinki Times | 403 |
+| News in English (노르웨이) | 시간 초과, 새 기사 멈춤 |
+| Nikkei Asia | 기사에 발행 시각 없음 |
 | Swissinfo | RSS 폐지 (410) |
 | Brussels Times, The Peninsula, Qatar Tribune, WAM, SPA | 피드에 기사 0개 |
 | NL Times, Wamda | 기사에 날짜 없음 |
