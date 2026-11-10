@@ -25,7 +25,7 @@
    1. 감지   RSS 275개 수집 (services/rss, url-guard, charset 판별)        규칙
    2. 묶기   같은 일을 다룬 기사 묶음 (lib/ontology/events, cluster)        규칙
    3. 읽기   새 묶음만 Gemini로 추출 (lib/ontology/extract, services/gemini) AI
-   4. 저장   objects / links (lib/ontology/graph로 관계 검사)               규칙
+   4. 저장   objects / links, 행위자 소속 (lib/ontology/graph로 관계 검사) 규칙
    5. 판단   점수·세계 5·IT 5·대륙별·연관·추세·어제와 비교 (rules)         규칙
             관계 온도(7일)·나라끼리 관심(24시간) (relations)              규칙
    6. 결과   board_snapshots에 상황판 JSON 한 줄 저장
