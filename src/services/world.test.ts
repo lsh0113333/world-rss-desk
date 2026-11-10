@@ -63,6 +63,18 @@ describe("readActor", () => {
     ]);
   });
 
+  it("소속 나라는 가장 최근 소속 관계에서", async () => {
+    const db = fakeDb((table, query) => {
+      if (table === "links" && query.includes("type=eq.affiliated_with")) return [{ dst: "country:KR" }];
+      if (table === "links" && query.includes("dst=")) return [{ src: "event:1", type: "target", dst: "actor:org:samsung", props: { name: "Samsung", nameKo: "삼성전자", kind: "org" } }];
+      if (table === "links") return [];
+      return [{ id: "event:1", last_seen: "2026-11-01T00:00:00Z", props: eventProps("사건") }];
+    });
+    const profile = await readActor(db, "actor:org:samsung");
+    expect(profile?.country).toBe("KR");
+    expect(vi.mocked(db.select).mock.calls.some(([, q]) => q.includes("src=eq.actor%3Aorg%3Asamsung") && q.includes("order=observed_at.desc&limit=1"))).toBe(true);
+  });
+
   it("없는 행위자는 null", async () => {
     expect(await readActor(fakeDb(() => []), "actor:org:none")).toBeNull();
   });

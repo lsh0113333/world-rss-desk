@@ -49,6 +49,7 @@ export async function readActor(db: Db, id: string): Promise<ActorProfile | null
     together.set(l.dst, entry);
   }
 
+  const [affiliation] = await db.select<{ dst: string }>("links", `select=dst&src=eq.${encodeURIComponent(id)}&type=eq.affiliated_with&order=observed_at.desc&limit=1`);
   const first = own[0].props;
   const roleOf = new Map(own.map((l) => [l.src, l.type]));
   return {
@@ -56,6 +57,7 @@ export async function readActor(db: Db, id: string): Promise<ActorProfile | null
     name: first.name ?? id,
     nameKo: first.nameKo ?? first.name ?? id,
     kind: first.kind ?? "group",
+    ...(affiliation ? { country: affiliation.dst.replace("country:", "") } : {}),
     events: [...events]
       .sort((a, b) => b.last_seen.localeCompare(a.last_seen))
       .slice(0, EVENT_LIMIT)

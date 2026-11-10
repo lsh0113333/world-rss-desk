@@ -60,6 +60,14 @@ describe("relationPairs", () => {
     expect(names).not.toContain("도널드 트럼프-미국");
   });
 
+  it("소속을 알면 사람·기관 ↔ 자기 나라는 같은 편이라 세지 않는다", () => {
+    const SAMSUNG = { id: "actor:org:samsung", nameKo: "삼성전자", kind: "org" as const, country: "KR" };
+    const pairs = relationPairs([ev("sanction", [s(CN), t(SAMSUNG), t(KR)]), ev("sanction", [s(CN), t(SAMSUNG), t(KR)]), ev("cooperation", [p(SAMSUNG), p(KR)]), ev("cooperation", [p(SAMSUNG), p(KR)])]);
+    const names = pairs.map((x) => [x.a.nameKo, x.b.nameKo].sort().join("-"));
+    expect(names).toEqual(expect.arrayContaining(["삼성전자-중국", "중국-한국"]));
+    expect(names).not.toContain("삼성전자-한국");
+  });
+
   it("무게가 큰 쌍이 먼저, 근거는 최신순으로 자른다", () => {
     const pairs = relationPairs([
       ev("verbal-conflict", [s(KR), t(UN)]),

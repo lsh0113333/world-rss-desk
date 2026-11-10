@@ -44,6 +44,8 @@ describe("buildExtractPrompt", () => {
     for (const id of EVENT_TYPE_IDS) expect(prompt).toContain(id);
     for (const id of FLOW_IDS) expect(prompt).toContain(id);
     expect(prompt).toContain("의견");
+    // 사람·기관·집단은 소속 나라 코드 (국제기구·모르면 빈 문자열)
+    expect(prompt).toContain("소속 나라");
   });
 });
 
@@ -62,6 +64,17 @@ describe("parseExtraction", () => {
     expect(event).toMatchObject({ type: "sanction", title: "미국, 중국 반도체 기업 제재", flow: "chips", places: ["US", "CN"], evidence: ["a1", "a2", "a3"] });
     expect(event.actors[0]).toEqual({ id: "country:US", name: "United States", nameKo: "미국", kind: "country", role: "subject" });
     expect(event.actors[1]).toEqual({ id: "actor:org:smic", name: "SMIC", nameKo: "SMIC", kind: "org", role: "target" });
+  });
+
+  it("사람·기관·집단의 code는 소속 나라. 모르는 코드는 버린다", () => {
+    const actors = [
+      { name: "Lee Jae-myung", nameKo: "이재명", kind: "person", role: "subject", code: "kr" },
+      { name: "Samsung", nameKo: "삼성전자", kind: "org", role: "target", code: "KR" },
+      { name: "NATO", nameKo: "나토", kind: "org", role: "participant", code: "ZZ" },
+    ];
+    const [event] = parseExtraction(raw([{ ...good, actors }]), inputs).get("c1")!;
+    expect(event.actors.map((a) => a.country)).toEqual(["KR", "KR", undefined]);
+    expect(event.actors[2]).not.toHaveProperty("country");
   });
 
   it("목록 밖 유형·입력에 없는 묶음·빈 제목은 버린다", () => {

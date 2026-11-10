@@ -188,7 +188,9 @@ function eventLinks(eventId: string, e: ExtractedEvent, seen: string): LinkRow[]
   const evidence = e.evidence;
   const base = { observed_at: seen, evidence, made_by: "ai" as const };
   const rows: LinkRow[] = [
-    ...e.actors.map((a) => ({ ...base, src: eventId, type: a.role as LinkType, dst: a.id, props: { name: a.name, nameKo: a.nameKo, kind: a.kind } })),
+    ...e.actors.map((a) => ({ ...base, src: eventId, type: a.role as LinkType, dst: a.id, props: { name: a.name, nameKo: a.nameKo, kind: a.kind, ...(a.country ? { country: a.country } : {}) } })),
+    // 소속: 행위자 → 나라 (사건이 아니라 행위자에 붙는 사실)
+    ...e.actors.flatMap((a) => (a.country ? [{ ...base, src: a.id, type: "affiliated_with" as const, dst: `country:${a.country}`, props: {} }] : [])),
     ...e.places.map((code) => ({ ...base, src: eventId, type: "occurs_in" as const, dst: `country:${code}`, props: {} })),
     ...(e.flow ? [{ ...base, src: eventId, type: "part_of" as const, dst: `flow:${e.flow}`, props: {} }] : []),
   ];
@@ -223,7 +225,13 @@ async function recentRelationEvents(db: Db, now: Date): Promise<RelationEventInp
   for (const ids of chunks(events.map((e) => e.id))) {
     for (const l of await db.select<LinkRow>("links", `select=src,type,dst,props&src=${inList(ids)}&type=${inList(ACTOR_ROLES)}`, { all: true })) {
       const list = actors.get(l.src) ?? [];
-      list.push({ id: l.dst, nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst), kind: l.props.kind as RelationEventInput["actors"][number]["kind"], role: l.type as RelationEventInput["actors"][number]["role"] });
+      list.push({
+        id: l.dst,
+        nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst),
+        kind: l.props.kind as RelationEventInput["actors"][number]["kind"],
+        role: l.type as RelationEventInput["actors"][number]["role"],
+        ...(typeof l.props.country === "string" ? { country: l.props.country } : {}),
+      });
       actors.set(l.src, list);
     }
   }
@@ -360,7 +368,14 @@ export async function runPipeline(deps: PipelineDeps): Promise<PipelineStats> {
       const links = linksByEvent.get(id) ?? [];
       const actors = links
         .filter((l) => (ACTOR_ROLES as readonly string[]).includes(l.type))
-        .map((l): BoardActor => ({ id: l.dst, name: String(l.props.name ?? l.dst), nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst), kind: l.props.kind as BoardActor["kind"], role: l.type as BoardActor["role"] }));
+        .map((l): BoardActor => ({
+          id: l.dst,
+          name: String(l.props.name ?? l.dst),
+          nameKo: String(l.props.nameKo ?? l.props.name ?? l.dst),
+          kind: l.props.kind as BoardActor["kind"],
+          role: l.type as BoardActor["role"],
+          ...(typeof l.props.country === "string" ? { country: l.props.country } : {}),
+        }));
       return [
         {
           id,

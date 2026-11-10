@@ -26,6 +26,8 @@ export const LINK_TYPES = {
   participant: { label: "참여", from: ["event"], to: ["actor", "country"] },
   occurs_in: { label: "일어난 곳", from: ["event"], to: ["country"] },
   part_of: { label: "일부", from: ["event"], to: ["flow"] },
+  /** 사람의 국적, 기관의 본사, 정부가 속한 나라. 같은 편을 아는 데 쓴다 (2026-11-10) */
+  affiliated_with: { label: "소속", from: ["actor"], to: ["country"] },
 } as const satisfies Record<string, { label: string; from: readonly NodeType[]; to: readonly NodeType[] }>;
 export type LinkType = keyof typeof LINK_TYPES;
 

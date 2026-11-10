@@ -12,10 +12,14 @@ export interface RelationEventInput {
   title: string;
   type: EventType;
   lastSeenAt: string;
-  actors: { id: string; nameKo: string; kind: ActorKind; role: ActorRole }[];
+  /** country: 소속 나라 (사람·기관·집단, 알 때만) */
+  actors: { id: string; nameKo: string; kind: ActorKind; role: ActorRole; country?: string }[];
 }
 
 type Actor = RelationEventInput["actors"][number];
+
+/** 사람·기관과 그 소속 나라는 같은 편 (소속 관계 affiliated_with) */
+const sameSide = (a: Actor, b: Actor) => (!!a.country && b.id === `country:${a.country}`) || (!!b.country && a.id === `country:${b.country}`);
 
 /**
  * 사건 하나에서 나오는 쌍: "누가 누구에게". 주체가 있으면 주체 × (대상·참여자),
@@ -39,7 +43,7 @@ export function relationPairs(events: readonly RelationEventInput[], rules = RUL
     if (unique.size > rules.relationMaxActors) continue;
     const side = axis.startsWith("conflict") ? "conflict" : "cooperation";
     const weight = axis.endsWith("action") ? rules.relationActionWeight : rules.relationWordWeight;
-    for (const pair of pairsOf(event.actors)) {
+    for (const pair of pairsOf(event.actors).filter(([a, b]) => !sameSide(a, b))) {
       const [a, b] = pair.sort((x, y) => x.id.localeCompare(y.id));
       const key = `${a.id}|${b.id}`;
       const entry = acc.get(key) ?? {

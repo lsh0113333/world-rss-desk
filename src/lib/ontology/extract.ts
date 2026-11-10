@@ -95,7 +95,7 @@ export function buildExtractPrompt(inputs: ExtractInput[]): string {
 - title: 한국어 한 줄 제목 (30자 안팎, 사실만)
 - summary: 한국어 한 문장 ("누가 누구에게 무엇을")
 - flow: 아래 큰 흐름 id 중 하나. 해당 없으면 빈 문자열
-- actors: 사건의 행위자 최대 ${MAX_ACTORS}개. name은 영어 이름, nameKo는 한국어 이름, kind는 ${ACTOR_KIND_IDS.join("/")}, role은 subject(주체)/target(대상)/participant(참여). kind가 country면 code에 ISO 2글자 나라 코드, 아니면 빈 문자열
+- actors: 사건의 행위자 최대 ${MAX_ACTORS}개. name은 영어 이름, nameKo는 한국어 이름, kind는 ${ACTOR_KIND_IDS.join("/")}, role은 subject(주체)/target(대상)/participant(참여). code는 ISO 2글자 나라 코드: kind가 country면 그 나라, person/org/group이면 소속 나라(국적, 본사, 정부가 속한 나라). 국제기구(UN, NATO 등)이거나 확실하지 않으면 빈 문자열
 - places: 사건이 실제로 일어난 나라의 ISO 2글자 코드. 보도한 나라가 아니다. 기업 발표는 그 기업 본사 나라
 - evidence: 이 사건의 근거 기사 id (입력에 있는 것만)
 
@@ -133,8 +133,11 @@ function parseActors(raw: unknown): BoardActor[] {
     const kind = a.kind as ActorKind;
     const role = a.role as ActorRole;
     if (!name || !ACTOR_KIND_IDS.includes(kind) || !ACTOR_ROLES.includes(role)) continue;
-    const id = actorId(kind, name, text(a.code, 4).toUpperCase());
-    if (!actors.has(id)) actors.set(id, { id, name, nameKo: text(a.nameKo, 80) || name, kind, role });
+    const code = text(a.code, 4).toUpperCase();
+    const id = actorId(kind, name, code);
+    // 나라가 아닌 행위자의 code는 소속 나라 (아는 나라만)
+    const country = kind !== "country" && isKnownCountry(code) ? { country: code } : {};
+    if (!actors.has(id)) actors.set(id, { id, name, nameKo: text(a.nameKo, 80) || name, kind, role, ...country });
     if (actors.size >= MAX_ACTORS) break;
   }
   return [...actors.values()];

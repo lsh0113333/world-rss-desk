@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActor } from "@/hooks/useWorld";
+import { countryName } from "@/ontology/countries";
 import { ACTOR_KINDS, EVENT_TYPES, LINK_TYPES } from "@/ontology/world";
 
 /** 행위자 페이지: 온톨로지의 관계를 따라가 보는 곳. 사건 → 행위자 → 다른 행위자 */
@@ -23,6 +24,14 @@ export function ActorView({ id }: { id: string }) {
             <h1 className="font-display text-4xl font-normal leading-tight text-headline">{data.nameKo}</h1>
             <p className="mt-1 text-[13px] text-muted">
               {ACTOR_KINDS[data.kind]} · {data.name}
+              {data.country && (
+                <>
+                  {" · "}
+                  <Link href={`/actors/${encodeURIComponent(`country:${data.country}`)}`} aria-label={`소속 ${countryName(data.country)}`} className="underline underline-offset-2 hover:text-headline">
+                    소속 {countryName(data.country)}
+                  </Link>
+                </>
+              )}
             </p>
           </header>
 

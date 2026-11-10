@@ -213,6 +213,22 @@ describe("runPipeline", () => {
     expect(tables.pipeline_runs[0].finished_at).toBeTruthy();
   });
 
+  it("행위자의 소속 나라를 소속 관계로 저장하고 상황판 행위자에도 붙인다", async () => {
+    const { db, tables } = memoryDb();
+    const extract = aiEvent({
+      actors: [
+        { name: "Iran", nameKo: "이란", kind: "country", role: "subject", code: "IR" },
+        { name: "Shell", nameKo: "셸", kind: "org", role: "target", code: "GB" },
+      ],
+    });
+    await runPipeline({ db, feeds: FEEDS, load: loader(hormuz), extract, now: NOW });
+    const link = tables.links.find((l) => l.type === "affiliated_with");
+    expect(link).toMatchObject({ src: "actor:org:shell", dst: "country:GB", made_by: "ai" });
+    expect((link!.evidence as string[]).length).toBe(4);
+    expect(tables.links.some((l) => l.type === "affiliated_with" && l.src === "country:IR")).toBe(false);
+    expect(latestBoard(tables).events[0].actors.find((a) => a.id === "actor:org:shell")).toMatchObject({ country: "GB" });
+  });
+
   it("다음 실행: 이미 정리한 사건은 AI 없이 새 기사만 규칙으로 붙인다", async () => {
     const { db, tables } = memoryDb();
     const extract = aiEvent();

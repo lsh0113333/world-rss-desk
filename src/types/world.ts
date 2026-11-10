@@ -38,6 +38,8 @@ export interface BoardActor {
   nameKo: string;
   kind: ActorKind;
   role: ActorRole;
+  /** 소속 나라 (사람·기관·집단만, AI가 알 때) */
+  country?: CountryCode;
 }
 
 /** "왜 이 순위?": 점수의 모든 재료. 같은 입력이면 항상 같은 점수 */
@@ -192,6 +194,8 @@ export interface ActorProfile {
   name: string;
   nameKo: string;
   kind: ActorKind;
+  /** 소속 나라 (소속 관계가 있을 때) */
+  country?: CountryCode;
   events: { id: string; title: string; summary: string; type: EventType; role: ActorRole; lastSeenAt: string }[];
   /** 같은 사건에 함께 나온 행위자 (많은 순) */
   together: { id: string; nameKo: string; kind: ActorKind; count: number }[];

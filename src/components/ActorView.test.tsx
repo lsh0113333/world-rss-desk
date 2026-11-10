@@ -16,6 +16,15 @@ const profile: ActorProfile = {
   together: [{ id: "actor:org:un", nameKo: "유엔", kind: "org", count: 3 }],
 };
 
+describe("소속", () => {
+  it("소속 나라가 있으면 이름과 링크를 보여 준다", async () => {
+    fetchMock.mockImplementation(() => json({ ...profile, id: "actor:org:samsung", name: "Samsung", nameKo: "삼성전자", kind: "org", country: "KR" }));
+    renderActor("actor:org:samsung");
+    const link = await screen.findByRole("link", { name: "소속 한국" });
+    expect(link).toHaveAttribute("href", `/actors/${encodeURIComponent("country:KR")}`);
+  });
+});
+
 function renderActor(id = "country:US") {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0, shouldRetryOnError: false }}>
