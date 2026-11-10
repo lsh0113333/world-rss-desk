@@ -22,7 +22,7 @@
    │ GitHub workflow_dispatch 요청 (토큰은 Supabase Vault)
    ▼
  GitHub Actions: scripts/run-pipeline.ts → src/services/pipeline.ts
-   1. 감지   RSS 278개 수집 (services/rss, url-guard, charset 판별)        규칙
+   1. 감지   RSS 275개 수집 (services/rss, url-guard, charset 판별)        규칙
    2. 묶기   같은 일을 다룬 기사 묶음 (lib/ontology/events, cluster)        규칙
    3. 읽기   새 묶음만 Gemini로 추출 (lib/ontology/extract, services/gemini) AI
    4. 저장   objects / links (lib/ontology/graph로 관계 검사)               규칙
@@ -84,7 +84,7 @@ src/
 ├── components/              # WorldBoardView, MeCard, EventRow, RelationsView, ActorView, OntologyView
 ├── hooks/                   # useWorld(상황판), useMyRules(내 기준), useMe(나)
 ├── types/                   # world.ts(상황판), me.ts(나), catalog.ts
-└── data/catalog.json        # RSS 카탈로그 278개
+└── data/catalog.json        # RSS 카탈로그 275개
 scripts/
 ├── run-pipeline.ts          # 파이프라인 실행 (npm run pipeline)
 ├── query.ts                 # 로컬 읽기 쿼리 (npm run query)

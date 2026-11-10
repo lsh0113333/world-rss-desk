@@ -1093,16 +1093,6 @@
     "language": "en"
   },
   {
-    "id": "us-espn-sports",
-    "name": "ESPN",
-    "url": "https://www.espn.com/espn/rss/news",
-    "homepage": "https://www.espn.com",
-    "continent": "north-america",
-    "country": "US",
-    "category": "sports",
-    "language": "en"
-  },
-  {
     "id": "gb-bbc-health",
     "name": "BBC News",
     "url": "https://feeds.bbci.co.uk/news/health/rss.xml",
@@ -2319,26 +2309,6 @@
     "name": "Sifted",
     "url": "https://sifted.eu/feed",
     "homepage": "https://sifted.eu",
-    "continent": "europe",
-    "country": "EU",
-    "category": "tech",
-    "language": "en"
-  },
-  {
-    "id": "eu-techeu-tech",
-    "name": "Tech.eu",
-    "url": "https://tech.eu/feed/",
-    "homepage": "https://tech.eu",
-    "continent": "europe",
-    "country": "EU",
-    "category": "tech",
-    "language": "en"
-  },
-  {
-    "id": "eu-eustartups-tech",
-    "name": "EU-Startups",
-    "url": "https://www.eu-startups.com/feed/",
-    "homepage": "https://www.eu-startups.com",
     "continent": "europe",
     "country": "EU",
     "category": "tech",

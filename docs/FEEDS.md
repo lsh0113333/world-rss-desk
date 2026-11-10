@@ -13,7 +13,7 @@
 
 파이프라인은 매체를 **본사 나라의 시각**으로 다룬다. 묶음 지역·국제 구역 매체의 본사 나라는 `src/ontology/outlets.ts`에 있다(UN News, AllAfrica는 나라의 시각이 아니라서 쓰지 않는다).
 
-## 2. 현재 수록 현황 — 피드 278개
+## 2. 현재 수록 현황 — 피드 275개
 
 | 지역 | 매체 (피드 수: 수록 분야) |
 |------|--------------------------|
@@ -27,7 +27,7 @@
 | 🇵🇭 필리핀 | Inquirer (1: 종합), Rappler (1: 종합) |
 | 🇹🇭 태국 | Bangkok Post (1: 종합) |
 | 🌏 아시아 | CNA (1: 종합), The Straits Times (1: 종합), BBC News (1: 종합) |
-| 🇺🇸 미국 | The New York Times (8: 종합·정치·경제·IT·과학·건강·문화·환경), NPR (7: 종합·정치·경제·IT·과학·문화·건강), CNBC (3: 종합·경제·IT), TechCrunch (1: IT), The Verge (1: IT), ESPN (1: 스포츠), Engadget (1: IT), ZDNET (1: IT), BleepingComputer (1: IT), TechSpot (1: IT), 9to5Mac (1: IT), Android Authority (1: IT) |
+| 🇺🇸 미국 | The New York Times (8: 종합·정치·경제·IT·과학·건강·문화·환경), NPR (7: 종합·정치·경제·IT·과학·문화·건강), CNBC (3: 종합·경제·IT), TechCrunch (1: IT), The Verge (1: IT), Engadget (1: IT), ZDNET (1: IT), BleepingComputer (1: IT), TechSpot (1: IT), 9to5Mac (1: IT), Android Authority (1: IT) |
 | 🇨🇦 캐나다 | CBC News (7: 종합·정치·경제·IT·건강·문화·스포츠), Global News (1: 종합) |
 | 🇬🇧 영국 | BBC News (7: 종합·정치·경제·IT·과학·건강·문화), The Guardian (10: 종합·정치·경제·IT·과학·사회·건강·환경·문화·스포츠), BBC Sport (1: 스포츠), The Register (1: IT), Computer Weekly (1: IT), TechRadar (1: IT) |
 | 🇩🇪 독일 | DW (2: 종합·경제), DER SPIEGEL (1: 종합, 독일어), The Local Germany (1: 종합) |
@@ -53,7 +53,7 @@
 | 🇭🇺 헝가리 | Hungary Today (1: 종합) |
 | 🇪🇪 에스토니아 | ERR News (2: 종합·경제) |
 | 🇱🇹 리투아니아 | LRT English (1: 종합) |
-| 🇪🇺 유럽 | Euronews (1: 종합), DW (1: 종합), The Guardian (1: 종합), France 24 (1: 종합), Politico Europe (1: 정치), POLITICO Europe (2: IT·환경), EUobserver (1: 정치), Balkan Insight (1: 국제), Sifted (1: IT), Tech.eu (1: IT), EU-Startups (1: IT), The Next Web (1: IT) |
+| 🇪🇺 유럽 | Euronews (1: 종합), DW (1: 종합), The Guardian (1: 종합), France 24 (1: 종합), Politico Europe (1: 정치), POLITICO Europe (2: IT·환경), EUobserver (1: 정치), Balkan Insight (1: 국제), Sifted (1: IT), The Next Web (1: IT) |
 | 🌍 중동 | Al Jazeera (1: 종합), Middle East Eye (1: 종합), Arab News (1: 종합), Al-Monitor (1: 종합) |
 | 🇮🇱 이스라엘 | The Jerusalem Post (1: 종합), Haaretz (1: 종합) |
 | 🇮🇷 이란 | Iran International (1: 종합), Tehran Times (1: 종합) |
@@ -74,7 +74,7 @@
 | 🌐 국제 | BBC News (1: 국제), The Guardian (1: 국제), The New York Times (1: 국제), South China Morning Post (1: 국제), UN News (1: 국제), DW (1: 국제), WIRED (1: IT), Ars Technica (1: IT), MIT Technology Review (1: IT), Phys.org (1: 과학), Science News (1: 과학), ScienceDaily (1: 과학), Hacker News (1: IT), The Hacker News (1: IT), InfoQ (1: IT), Rest of World (1: IT), IEEE Spectrum (1: IT) |
 
 - 2026-10-17: 78 → 177개 (분야 6→11개, 나라 13→36개)
-- 2026-11-10: 282 → 278개 — 실패·정체 피드 정리. 뺌: Helsinki Times(HTTP 403), News in English 2개(시간 초과, 4일째 새 기사 없음), Nikkei Asia(발행 시각 없음 → 수집돼도 버려짐). 고침: DER SPIEGEL International이 7일째 멈춰 독일어 헤드라인 피드로 교체
+- 2026-11-10: 282 → 275개 — 실패·정체 피드 정리. 실행 기록에 실패 피드 이름을 남기게 한 뒤 확인한 GitHub 서버 IP 차단 3개도 뺌: ESPN(RSS 대신 차단 페이지), Tech.eu·EU-Startups(403). 뺌: Helsinki Times(HTTP 403), News in English 2개(시간 초과, 4일째 새 기사 없음), Nikkei Asia(발행 시각 없음 → 수집돼도 버려짐). 고침: DER SPIEGEL International이 7일째 멈춰 독일어 헤드라인 피드로 교체
 - 2026-11-02: 270 → 282개 — 중남미 10개(Folha, g1, Clarín, La Nación, Infobae, El Universal, La Jornada, El Tiempo, La Tercera, El Comercio: 포르투갈어·스페인어), 아프리카 2개(MyJoyOnline, Jeune Afrique: 프랑스어)
 - 2026-10-18: 177 → 270개 — 노르웨이·북유럽·아일랜드·유럽 각국, 유럽·국제 IT, UAE·사우디·카타르 (**영어판만**, `intent/2026-10-18-rss-expansion-2.md`)
 
@@ -128,6 +128,7 @@
 | Helsinki Times | 403 |
 | News in English (노르웨이) | 시간 초과, 새 기사 멈춤 |
 | Nikkei Asia | 기사에 발행 시각 없음 |
+| ESPN, Tech.eu, EU-Startups | 집에서는 되지만 GitHub Actions 서버 IP 차단 |
 | Swissinfo | RSS 폐지 (410) |
 | Brussels Times, The Peninsula, Qatar Tribune, WAM, SPA | 피드에 기사 0개 |
 | NL Times, Wamda | 기사에 날짜 없음 |
